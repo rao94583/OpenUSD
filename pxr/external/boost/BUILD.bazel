@@ -1,4 +1,5 @@
-# Generated from CMakeLists.txt by bazel/tools/cmake2bazel.py.
+# Generated from pxr/external/boost/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
 
 pxr_library(

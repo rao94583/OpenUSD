@@ -1,0 +1,66 @@
+# Generated from pxr/base/trace/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "trace",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/js",
+        "//pxr/base/tf",
+        "//vendor/onetbb:tbb",
+    ],
+    public_classes = [
+        "aggregateTree",
+        "aggregateNode",
+        "category",
+        "collection",
+        "collectionNotice",
+        "collector",
+        "counterAccumulator",
+        "dataBuffer",
+        "dynamicKey",
+        "event",
+        "eventContainer",
+        "eventData",
+        "eventList",
+        "eventNode",
+        "eventTree",
+        "key",
+        "reporter",
+        "reporterBase",
+        "reporterDataSourceBase",
+        "reporterDataSourceCollection",
+        "reporterDataSourceCollector",
+        "serialization",
+        "staticKeyData",
+        "threads",
+    ],
+    public_headers = [
+        "api.h",
+        "concurrentList.h",
+        "stringHash.h",
+        "trace.h",
+    ],
+    private_classes = [
+        "aggregateTreeBuilder",
+        "eventTreeBuilder",
+        "jsonSerialization",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapAggregateNode.cpp",
+        "wrapAggregateTree.cpp",
+        "wrapCollector.cpp",
+        "wrapReporter.cpp",
+        "wrapTestTrace.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+        "__main__.py",
+    ],
+    doxygen_files = [
+        "overview.dox",
+        "detailedOverview.dox",
+    ],
+)

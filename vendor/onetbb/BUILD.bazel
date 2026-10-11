@@ -59,6 +59,9 @@ cc_library(
         _X86_64: ["src/tbb/tools_api/ittnotify_static.c"],
         "//conditions:default": [],
     }),
+    # Keep every object in //pxr:usd_ms, which exports tbb to the shared
+    # objects linked against it.
+    alwayslink = True,
 )
 
 cc_library(

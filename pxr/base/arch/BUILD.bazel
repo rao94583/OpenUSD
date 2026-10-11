@@ -1,5 +1,5 @@
-# Generated from CMakeLists.txt by bazel/tools/cmake2bazel.py; per_os is
-# hand-written until the generator evaluates if(APPLE)/if(WIN32) blocks.
+# Generated from pxr/base/arch/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
 
 pxr_library(
@@ -50,11 +50,26 @@ pxr_library(
     doxygen_files = [
         "overview.dox",
     ],
+    linkopts = [
+        "-lm",
+    ],
     per_os = {
         "macos": {
-            "private_headers": ["darwin.h"],
-            "cppfiles": ["darwin.mm"],
-            "linkopts": ["-framework", "Foundation"],
+            "private_headers": [
+                "darwin.h",
+            ],
+            "cppfiles": [
+                "darwin.mm",
+            ],
+            "linkopts": [
+                "-framework",
+                "Foundation",
+            ],
+        },
+        "linux": {
+            "linkopts": [
+                "-ldl",
+            ],
         },
     },
 )

@@ -1,0 +1,63 @@
+# Generated from pxr/base/work/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library", "pxr_configure_file")
+
+pxr_configure_file(
+    name = "impl_h",
+    src = "impl.h.in",
+    out = "impl.h",
+    substitutions = {
+        "@PXR_WORK_IMPL_HEADER@": "\"pxr/base/work/workTBB/impl.h\"",
+    },
+)
+
+pxr_library(
+    name = "work",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+        "//vendor/onetbb:tbb",
+    ],
+    public_classes = [
+        "dispatcher",
+        "taskGraph",
+        "taskGraph_defaultImpl",
+        "threadLimits",
+        "utils",
+        "workTBB/detachedTask_impl",
+        "workTBB/dispatcher_impl",
+        "workTBB/isolatingDispatcher_impl",
+        "workTBB/taskGraph_impl",
+        "workTBB/threadLimits_impl",
+    ],
+    public_headers = [
+        "api.h",
+        "detachedTask.h",
+        "isolatingDispatcher.h",
+        "loops.h",
+        "reduce.h",
+        "singularTask.h",
+        "sort.h",
+        "withScopedParallelism.h",
+        "zeroAllocator.h",
+        "workTBB/impl.h",
+        "workTBB/loops_impl.h",
+        "workTBB/reduce_impl.h",
+        "workTBB/sort_impl.h",
+        "workTBB/tbb_version.h",
+        "workTBB/withScopedParallelism_impl.h",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapThreadLimits.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+    generated_headers = [
+        ":impl_h",
+    ],
+)

@@ -1,0 +1,2 @@
+# Templates used by the Bazel build (see //bazel:pxr_python.bzl).
+exports_files(["moduleDeps.cpp.in"])

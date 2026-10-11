@@ -1,5 +1,8 @@
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+load("//bazel:pxr_libraries.bzl", "PXR_LIBRARIES")
+load("//bazel:pxr_python.bzl", "PXR_PY_SHARED_LINKOPTS")
 load(
     "//bazel:version.bzl",
     "PXR_EXTERNAL_NAMESPACE",
@@ -44,4 +47,17 @@ cc_library(
         "GL_GLEXT_PROTOTYPES",
         "GLX_GLXEXT_PROTOTYPES",
     ],
+)
+
+# The monolithic library (CMake's PXR_BUILD_MONOLITHIC usd_ms): every pxr
+# library plus the vendored dependencies they use, so that Python extensions
+# and other shared objects share one copy of each registry.
+cc_shared_library(
+    name = "usd_ms",
+    deps = PXR_LIBRARIES,
+    exports_filter = [
+        "//pxr:__subpackages__",
+        "//vendor:__subpackages__",
+    ],
+    user_link_flags = PXR_PY_SHARED_LINKOPTS,
 )

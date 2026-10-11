@@ -1,0 +1,47 @@
+# Generated from pxr/base/plug/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "plug",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/base/js",
+        "//pxr/base/trace",
+        "//pxr/base/work",
+        "//vendor/onetbb:tbb",
+    ],
+    public_classes = [
+        "interfaceFactory",
+        "notice",
+        "plugin",
+        "registry",
+        "staticInterface",
+    ],
+    public_headers = [
+        "api.h",
+        "thisPlugin.h",
+    ],
+    private_classes = [
+        "debugCodes",
+        "info",
+        "testPlugBase",
+    ],
+    cppfiles = [
+        "initConfig.cpp",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapNotice.cpp",
+        "wrapPlugin.cpp",
+        "wrapRegistry.cpp",
+        "wrapTestPlugBase.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)
