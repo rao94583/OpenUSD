@@ -3,3 +3,7 @@
 .AppleDouble
 /CMakeUserPresets.json
 
+
+# Bazel
+/bazel-*
+/user.bazelrc

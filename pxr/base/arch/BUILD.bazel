@@ -1,0 +1,60 @@
+# Generated from CMakeLists.txt by bazel/tools/cmake2bazel.py; per_os is
+# hand-written until the generator evaluates if(APPLE)/if(WIN32) blocks.
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "arch",
+    public_classes = [
+        "align",
+        "attributes",
+        "daemon",
+        "debugger",
+        "demangle",
+        "env",
+        "error",
+        "errno",
+        "fileSystem",
+        "function",
+        "hash",
+        "library",
+        "mallocHook",
+        "regex",
+        "stackTrace",
+        "symbols",
+        "systemInfo",
+        "threads",
+        "timing",
+        "virtualMemory",
+        "vsnprintf",
+    ],
+    public_headers = [
+        "api.h",
+        "buildMode.h",
+        "defines.h",
+        "export.h",
+        "functionLite.h",
+        "hints.h",
+        "inttypes.h",
+        "math.h",
+        "pragmas.h",
+        "prefetch.h",
+    ],
+    private_headers = [
+        "testArchAbi.h",
+        "testArchUtil.h",
+    ],
+    cppfiles = [
+        "assumptions.cpp",
+        "initConfig.cpp",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+    per_os = {
+        "macos": {
+            "private_headers": ["darwin.h"],
+            "cppfiles": ["darwin.mm"],
+            "linkopts": ["-framework", "Foundation"],
+        },
+    },
+)

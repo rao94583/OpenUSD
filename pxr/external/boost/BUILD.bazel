@@ -1,0 +1,12 @@
+# Generated from CMakeLists.txt by bazel/tools/cmake2bazel.py.
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "boost",
+    public_headers = [
+        "python.hpp",
+    ],
+    cppfiles = [
+        "build-workaround.cpp",
+    ],
+)

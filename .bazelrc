@@ -1,0 +1,17 @@
+# OpenUSD requires C++17 (see cmake/defaults/CXXDefaults.cmake).
+common --cxxopt=-std=c++17
+common --host_cxxopt=-std=c++17
+
+# macOS: build for the host architecture with the deployment target used by
+# Pixar's CI (VERSIONS.md lists macOS 15).
+common:macos --macos_minimum_os=13.0
+common:macos --host_macos_minimum_os=13.0
+
+# Pick up the per-OS config above automatically.
+common --enable_platform_specific_config
+
+# Keep test output readable.
+test --test_output=errors
+
+# Local, untracked overrides (e.g. --disk_cache).
+try-import %workspace%/user.bazelrc

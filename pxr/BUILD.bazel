@@ -1,0 +1,47 @@
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load(
+    "//bazel:version.bzl",
+    "PXR_EXTERNAL_NAMESPACE",
+    "PXR_INTERNAL_NAMESPACE",
+    "PXR_MAJOR_VERSION",
+    "PXR_MINOR_VERSION",
+    "PXR_PATCH_VERSION",
+    "PXR_VERSION",
+)
+
+package(default_visibility = ["//visibility:public"])
+
+# Equivalent of configure_file(pxr/pxr.h.in) in cmake/macros/Public.cmake,
+# with the CMake option defaults from cmake/defaults/Options.cmake.
+expand_template(
+    name = "pxr_h",
+    out = "pxr.h",
+    substitutions = {
+        "@PXR_MAJOR_VERSION@": PXR_MAJOR_VERSION,
+        "@PXR_MINOR_VERSION@": PXR_MINOR_VERSION,
+        "@PXR_PATCH_VERSION@": PXR_PATCH_VERSION,
+        "@PXR_VERSION@": PXR_VERSION,
+        "@PXR_USE_NAMESPACES@": "1",
+        "@PXR_EXTERNAL_NAMESPACE@": PXR_EXTERNAL_NAMESPACE,
+        "@PXR_INTERNAL_NAMESPACE@": PXR_INTERNAL_NAMESPACE,
+        "@PXR_PYTHON_SUPPORT_ENABLED@": "1",
+        "@PXR_PREFER_SAFETY_OVER_SPEED@": "1",
+        "@PXR_ARCH_PREFER_TSC_TIMING@": "0",
+        "@PXR_ARCH_SUPPORT_MALLOC_HOOKS@": "0",
+    },
+    template = "pxr.h.in",
+)
+
+# Every pxr_library depends on this. Its defines are the project-wide
+# add_definitions() from cmake/defaults/CXXDefaults.cmake and Packages.cmake,
+# so they also reach anything that includes USD headers.
+cc_library(
+    name = "pxr",
+    hdrs = [":pxr_h"],
+    defines = [
+        "BOOST_NO_CXX98_FUNCTION_BASE",
+        "GL_GLEXT_PROTOTYPES",
+        "GLX_GLXEXT_PROTOTYPES",
+    ],
+)

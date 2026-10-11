@@ -1,0 +1,19 @@
+# Phase 0 smoke tests, until the CMake tests are ported (Phase 3).
+
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+cc_test(
+    name = "archSmoke",
+    srcs = ["archSmoke.cpp"],
+    deps = ["//pxr/base/arch"],
+)
+
+cc_test(
+    name = "tfSmoke",
+    srcs = ["tfSmoke.cpp"],
+    deps = [
+        "//pxr/base/tf",
+        # tf contains Python support code, so executables link libpython.
+        "@rules_python//python/cc:current_py_cc_libs",
+    ],
+)
