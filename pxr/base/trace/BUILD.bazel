@@ -1,6 +1,7 @@
 # Generated from pxr/base/trace/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "trace",
@@ -62,5 +63,396 @@ pxr_library(
     doxygen_files = [
         "overview.dox",
         "detailedOverview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceCategory",
+    srcs = [
+        "testenv/testTraceCategory.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceData",
+    srcs = [
+        "testenv/testTraceData.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceHash",
+    srcs = [
+        "testenv/testTraceHash.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceMacros",
+    srcs = [
+        "testenv/testTraceMacros.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceOverhead",
+    srcs = [
+        "testenv/testTraceOverhead.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceThreading",
+    srcs = [
+        "testenv/testTraceThreading.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceSerialization",
+    srcs = [
+        "testenv/testTraceSerialization.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceCounters",
+    srcs = [
+        "testenv/testTraceCounters.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceMarkers",
+    srcs = [
+        "testenv/testTraceMarkers.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceReportPerf",
+    srcs = [
+        "testenv/testTraceReportPerf.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_program(
+    name = "testTraceEventContainer",
+    srcs = [
+        "testenv/testTraceEventContainer.cpp",
+    ],
+    libraries = [
+        "//pxr/base/trace",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testTrace": "testenv/testTrace.py",
+        "testTraceRecursion": "testenv/testTraceRecursion.py",
+        "testTraceReporter": "testenv/testTraceReporter.py",
+        "testTraceReporterLoadTrace": "testenv/testTraceReporterLoadTrace.py",
+        "testTraceReports": "testenv/testTraceReports.py",
+    },
+    testenvs = {
+        "testTraceRecursion.testenv": "testenv/testTraceRecursion.testenv",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testTraceCategory",
+        ":tests/testTraceData",
+        ":tests/testTraceHash",
+        ":tests/testTraceMacros",
+        ":tests/testTraceOverhead",
+        ":tests/testTraceThreading",
+        ":tests/testTraceSerialization",
+        ":tests/testTraceCounters",
+        ":tests/testTraceMarkers",
+        ":tests/testTraceReportPerf",
+        ":tests/testTraceEventContainer",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testTraceCategory",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceCategory",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceData",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceData",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceHash",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceHash",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceMacros",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceMacros",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceThreading",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceThreading",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTrace",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTrace",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceRecursion1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceRecursion",
+        "TESTENV": "testenv/testTraceRecursion.testenv",
+        "DIFF_COMPARE": [
+            "recursion_5begins.out",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceRecursion2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceRecursion",
+        "TESTENV": "testenv/testTraceRecursion.testenv",
+        "DIFF_COMPARE": [
+            "recursion_typical.out",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceRecursion3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceRecursion",
+        "TESTENV": "testenv/testTraceRecursion.testenv",
+        "DIFF_COMPARE": [
+            "recursion_newnode.out",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceRecursion4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceRecursion",
+        "TESTENV": "testenv/testTraceRecursion.testenv",
+        "DIFF_COMPARE": [
+            "recursion_inner.out",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceRecursion5",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceRecursion",
+        "TESTENV": "testenv/testTraceRecursion.testenv",
+        "DIFF_COMPARE": [
+            "recursion_1817.out",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceRecursion6",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceRecursion",
+        "TESTENV": "testenv/testTraceRecursion.testenv",
+        "DIFF_COMPARE": [
+            "recursion_branch.out",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceRecursion7",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceRecursion",
+        "TESTENV": "testenv/testTraceRecursion.testenv",
+        "DIFF_COMPARE": [
+            "recursion_marker_merge.out",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceReports",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceReports",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceReporter",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceReporter",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceReporterLoadTrace",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTraceReporterLoadTrace",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceSerialization",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceSerialization",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceCounters",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceCounters",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceMarkers",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceMarkers",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceReportPerf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceReportPerf",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTraceEventContainer",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTraceEventContainer",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

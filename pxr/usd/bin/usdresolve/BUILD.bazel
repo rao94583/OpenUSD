@@ -1,8 +1,44 @@
 # Generated from pxr/usd/bin/usdresolve/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_python_bin")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
 
 pxr_python_bin(
     name = "usdresolve",
     python_file = "usdresolve.py",
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testResolveRelPath": "testenv/testResolveRelPath",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testResolveRelPath",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdresolve input.usda",
+        "TESTENV": "testenv/testResolveRelPath",
+        "STDOUT_REDIRECT": "output.txt",
+        "DIFF_COMPARE": [
+            "output.txt",
+        ],
+        "CLEAN_OUTPUT": "(?:[A-Za-z]:)?\\/.*\\/",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+    },
 )

@@ -1,6 +1,7 @@
 # Generated from pxr/usdValidation/usdValidation/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "usdValidation",
@@ -46,5 +47,249 @@ pxr_library(
     ],
     doxygen_files = [
         "README.md",
+    ],
+)
+
+pxr_test_library(
+    name = "TestUsdValidationContextValidators",
+    srcs = [
+        "testenv/testUsdValidationContextValidators.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usdValidation/usdValidation",
+    ],
+)
+
+pxr_test_library(
+    name = "TestUsdValidationRegistryPy",
+    srcs = [
+        "testenv/testUsdValidationRegistryPy.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usdValidation/usdValidation",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdCoreValidators",
+    srcs = [
+        "testenv/testUsdCoreValidators.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/usd",
+        "//pxr/usdValidation/usdValidation",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdValidator",
+    srcs = [
+        "testenv/testUsdValidator.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usdValidation/usdValidation",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdValidationContext",
+    srcs = [
+        "testenv/testUsdValidationContext.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usdValidation/usdValidation",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdValidationRegistry",
+    srcs = [
+        "testenv/testUsdValidationRegistry.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usdValidation/usdValidation",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdValidationContextPy": "testenv/testUsdValidationContextPy.py",
+        "testUsdValidationError": "testenv/testUsdValidationError.py",
+        "testUsdValidationFixerPy": "testenv/testUsdValidationFixerPy.py",
+        "testUsdValidationPyPlugin": "testenv/testUsdValidationPyPlugin.py",
+        "testUsdValidationRegistryPy": "testenv/testUsdValidationRegistryPy.py",
+        "testUsdValidationRegistryPyRegister": "testenv/testUsdValidationRegistryPyRegister.py",
+        "testUsdValidatorMetadata": "testenv/testUsdValidatorMetadata.py",
+    },
+    testenvs = {
+        "testUsdValidationContext": "testenv/testUsdValidationContext",
+        "testUsdValidationFixerPy": "testenv/testUsdValidationFixerPy",
+        "testUsdValidationPyPlugin": "testenv/testUsdValidationPyPlugin",
+        "testUsdValidationRegistry": "testenv/testUsdValidationRegistry",
+    },
+    plug_infos = {
+        "UsdValidationPlugins/lib/TestUsdValidationContextValidators/Resources/plugInfo.json": "testenv/TestUsdValidationContextValidators_plugInfo.json",
+        "UsdValidationPlugins/lib/TestUsdValidationRegistryPy/Resources/plugInfo.json": "testenv/TestUsdValidationRegistryPy_plugInfo.json",
+    },
+    library_paths = {
+        "UsdValidationPlugins/lib/TestUsdValidationContextValidators/Resources/plugInfo.json": "../../../lib/libTestUsdValidationContextValidators",
+        "UsdValidationPlugins/lib/TestUsdValidationRegistryPy/Resources/plugInfo.json": "../../../lib/libTestUsdValidationRegistryPy",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":_testlib_TestUsdValidationContextValidators",
+        ":_testlib_TestUsdValidationRegistryPy",
+        ":tests/testUsdCoreValidators",
+        ":tests/testUsdValidator",
+        ":tests/testUsdValidationContext",
+        ":tests/testUsdValidationRegistry",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdCoreValidators",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdCoreValidators",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidator",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdValidator",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidationRegistry",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdValidationRegistry",
+        "TESTENV": "testenv/testUsdValidationRegistry",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidationContext",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdValidationContext",
+        "TESTENV": "testenv/testUsdValidationContext",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidatorMetadata",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdValidatorMetadata",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidationError",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdValidationError",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidationContextPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdValidationContextPy",
+        "TESTENV": "testenv/testUsdValidationContext",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidationPyPlugin",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdValidationPyPlugin",
+        "TESTENV": "testenv/testUsdValidationPyPlugin",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidationRegistryPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdValidationRegistryPy",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidationRegistryPyRegister",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdValidationRegistryPyRegister",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdValidationFixerPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdValidationFixerPy",
+        "TESTENV": "testenv/testUsdValidationFixerPy",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

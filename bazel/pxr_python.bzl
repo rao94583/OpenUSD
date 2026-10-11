@@ -81,20 +81,22 @@ def pxr_python_package(
         name,
         prefix,
         modules,
-        monolithic,
+        dynamic_deps,
         runtime = [],
         visibility = None):
     """The importable pxr package, at <prefix>/pxr in this package.
 
     Builds <prefix>/pxr/<Module>/_<library>.so for every module, linked
-    against the monolithic library, next to the module's Python files.
+    against the shared libraries in dynamic_deps, next to the module's
+    Python files.
 
     Args:
       name: name of the resulting py_library.
       prefix: directory of the pxr package, relative to this package.
       modules: structs with library, module and package fields
         (PXR_PYTHON_MODULES from pxr_libraries.bzl).
-      monolithic: label of the cc_shared_library holding all pxr libraries.
+      dynamic_deps: cc_shared_library targets the extensions link against
+        (the monolithic library and oneTBB).
       runtime: other files the modules need at runtime (resources).
       visibility: visibility of the py_library.
     """
@@ -105,7 +107,7 @@ def pxr_python_package(
             name = extension,
             shared_lib_name = extension + ".so",
             deps = ["%s:_%s" % (m.package, m.library)],
-            dynamic_deps = [monolithic],
+            dynamic_deps = dynamic_deps,
             user_link_flags = PXR_PY_SHARED_LINKOPTS,
         )
         extensions.append(":" + extension)
@@ -122,7 +124,7 @@ def pxr_python_package(
 
     py_library(
         name = name,
-        data = [":" + name + "_tree", monolithic] + extensions + runtime,
+        data = [":" + name + "_tree"] + dynamic_deps + extensions + runtime,
         imports = [prefix],
         visibility = visibility,
     )

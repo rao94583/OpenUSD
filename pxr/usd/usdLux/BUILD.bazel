@@ -1,6 +1,7 @@
 # Generated from pxr/usd/usdLux/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
 
 pxr_library(
     name = "usdLux",
@@ -80,5 +81,63 @@ pxr_library(
     ],
     doxygen_files = [
         "overview.dox",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdLuxLight": "testenv/testUsdLuxLight.py",
+        "testUsdLuxLightListAPI": "testenv/testUsdLuxLightListAPI.py",
+        "testUsdLuxLinkingAPI": "testenv/testUsdLuxLinkingAPI.py",
+    },
+    testenvs = {
+        "testUsdLuxLightListAPI": "testenv/testUsdLuxLightListAPI",
+        "testUsdLuxLinkingAPI": "testenv/testUsdLuxLinkingAPI",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdLuxLight",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdLuxLight",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdLuxLinkingAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdLuxLinkingAPI",
+        "TESTENV": "testenv/testUsdLuxLinkingAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdLuxLightListAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdLuxLightListAPI",
+        "TESTENV": "testenv/testUsdLuxLightListAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

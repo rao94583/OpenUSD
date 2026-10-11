@@ -1,6 +1,7 @@
 # Generated from pxr/base/gf/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "gf",
@@ -153,5 +154,394 @@ pxr_library(
     ],
     doxygen_files = [
         "overview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testGfHardToReach",
+    srcs = [
+        "testenv/testGfHardToReach.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testGfColorCpp",
+    srcs = [
+        "testenv/testGfColorCpp.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testGfIsFloatingPoint",
+    srcs = [
+        "testenv/testGfIsFloatingPoint.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testGfBBox3d": "testenv/testGfBBox3d.py",
+        "testGfCamera": "testenv/testGfCamera.py",
+        "testGfColorPy": "testenv/testGfColorPy.py",
+        "testGfDecomposeRotation": "testenv/testGfDecomposeRotation.py",
+        "testGfDualQuaternion": "testenv/testGfDualQuaternion.py",
+        "testGfDuration": "testenv/testGfDuration.py",
+        "testGfFrustum": "testenv/testGfFrustum.py",
+        "testGfGamma": "testenv/testGfGamma.py",
+        "testGfHomogeneous": "testenv/testGfHomogeneous.py",
+        "testGfInterval": "testenv/testGfInterval.py",
+        "testGfLine": "testenv/testGfLine.py",
+        "testGfLineSeg": "testenv/testGfLineSeg.py",
+        "testGfMath": "testenv/testGfMath.py",
+        "testGfMatrix": "testenv/testGfMatrix.py",
+        "testGfMultiInterval": "testenv/testGfMultiInterval.py",
+        "testGfPlane": "testenv/testGfPlane.py",
+        "testGfQuaternion": "testenv/testGfQuaternion.py",
+        "testGfRange": "testenv/testGfRange.py",
+        "testGfRay": "testenv/testGfRay.py",
+        "testGfRect2i": "testenv/testGfRect2i.py",
+        "testGfRotation": "testenv/testGfRotation.py",
+        "testGfSize": "testenv/testGfSize.py",
+        "testGfTimeCode": "testenv/testGfTimeCode.py",
+        "testGfTraits": "testenv/testGfTraits.py",
+        "testGfTransform": "testenv/testGfTransform.py",
+        "testGfVec": "testenv/testGfVec.py",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testGfHardToReach",
+        ":tests/testGfColorCpp",
+        ":tests/testGfIsFloatingPoint",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testGfBBox3d",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfBBox3d",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfColorPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfColorPy",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfColorCpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testGfColorCpp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfDecomposeRotation",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfDecomposeRotation",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfDualQuaternion",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfDualQuaternion",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfDuration",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfDuration",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfFrustum",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfFrustum",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfGamma",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfGamma",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfHardToReach",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testGfHardToReach",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfIsFloatingPoint",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testGfIsFloatingPoint",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfHomogeneous",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfHomogeneous",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfInterval",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfInterval",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfMultiInterval",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfMultiInterval",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfLine",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfLine",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfLineSeg",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfLineSeg",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfMath",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfMath",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfMatrix",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfMatrix",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfPlane",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfPlane",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfQuaternion",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfQuaternion",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfRange",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfRange",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfRay",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfRay",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfRect2i",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfRect2i",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfRotation",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfRotation",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfSize",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfSize",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfTimeCode",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfTimeCode",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfTraits",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfTraits",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfTransform",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfTransform",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfVec",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfVec",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testGfCamera",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testGfCamera",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

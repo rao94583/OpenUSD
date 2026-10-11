@@ -1,6 +1,7 @@
 # Generated from pxr/base/js/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "js",
@@ -59,5 +60,201 @@ pxr_library(
     ],
     doxygen_files = [
         "overview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testJsIO",
+    srcs = [
+        "testenv/testJsIO.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/js",
+    ],
+)
+
+pxr_test_program(
+    name = "testJsConverter",
+    srcs = [
+        "testenv/testJsConverter.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/js",
+    ],
+)
+
+pxr_test_program(
+    name = "testJsUtils",
+    srcs = [
+        "testenv/testJsUtils.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/js",
+    ],
+)
+
+pxr_test_program(
+    name = "testJsWriter",
+    srcs = [
+        "testenv/testJsWriter.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/js",
+    ],
+)
+
+pxr_test_program(
+    name = "testJsDouble",
+    srcs = [
+        "testenv/testJsDouble.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/js",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testJsConverter": "testenv/testJsConverter",
+        "testJsIO": "testenv/testJsIO",
+        "testJsIO_Errors": "testenv/testJsIO_Errors",
+        "testJsWriter": "testenv/testJsWriter",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testJsIO",
+        ":tests/testJsConverter",
+        ":tests/testJsUtils",
+        ":tests/testJsWriter",
+        ":tests/testJsDouble",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testJsIO_Errors_BadCommaPlacement",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testJsIO bad-commaPlacement.json -",
+        "EXPECTED_RETURN_CODE": "2",
+        "STDERR_REDIRECT": "testJsIO_Errors-Run1-stderr.txt",
+        "DIFF_COMPARE": [
+            "testJsIO_Errors-Run1-stderr.txt",
+        ],
+        "TESTENV": "testenv/testJsIO_Errors",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testJsIO_Errors_MismatchedBraces",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testJsIO bad-mismatchedBraces.json -",
+        "EXPECTED_RETURN_CODE": "2",
+        "STDERR_REDIRECT": "testJsIO_Errors-Run2-stderr.txt",
+        "DIFF_COMPARE": [
+            "testJsIO_Errors-Run2-stderr.txt",
+        ],
+        "TESTENV": "testenv/testJsIO_Errors",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testJsConverter",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testJsConverter",
+        "TESTENV": "testenv/testJsConverter",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testJsWriter",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testJsWriter test.json compact",
+        "TESTENV": "testenv/testJsWriter",
+        "DIFF_COMPARE": [
+            "test.json",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testJsWriter_Pretty",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testJsWriter test-pretty.json pretty",
+        "TESTENV": "testenv/testJsWriter",
+        "DIFF_COMPARE": [
+            "test-pretty.json",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testJsIO_PlugInfo",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testJsIO plugInfo.json.in plugInfo.json",
+        "TESTENV": "testenv/testJsIO",
+        "DIFF_COMPARE": [
+            "plugInfo.json",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testJsIO_Values",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testJsIO values.json.in values.json",
+        "TESTENV": "testenv/testJsIO",
+        "DIFF_COMPARE": [
+            "values.json",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testJsUtils",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testJsUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testJsDouble",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testJsDouble",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

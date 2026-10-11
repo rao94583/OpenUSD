@@ -1,6 +1,7 @@
 # Generated from pxr/base/tf/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "tf",
@@ -244,5 +245,1195 @@ pxr_library(
         "noteOverview.dox",
         "overview.dox",
         "registryOverview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testTfPyFunction",
+    srcs = [
+        "testenv/testTfPyFunction.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTfPyInterpreter",
+    srcs = [
+        "testenv/testTfPyInterpreter.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTfPyInvoke",
+    srcs = [
+        "testenv/testTfPyInvoke.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTfPyLock",
+    srcs = [
+        "testenv/testTfPyLock.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTfPyResultConversions",
+    srcs = [
+        "testenv/testTfPyResultConversions.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTfSIGFPE",
+    srcs = [
+        "testenv/SIGFPE.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTfSIGSEGV",
+    srcs = [
+        "testenv/SIGSEGV.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_library(
+    name = "TestTfDl",
+    srcs = [
+        "testenv/TestTfDl.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_library(
+    name = "TestTfRegistryFunctionPlugin",
+    srcs = [
+        "testenv/TestTfRegistryFunctionPlugin.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTfCast",
+    srcs = [
+        "testenv/testTfCast.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTfSpan",
+    srcs = [
+        "testenv/testTfSpan.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTf",
+    srcs = [
+        "testenv/main.cpp",
+        "testenv/anyUniquePtr.cpp",
+        "testenv/atomicOfstreamWrapper.cpp",
+        "testenv/bits.cpp",
+        "testenv/bitUtils.cpp",
+        "testenv/buffer.cpp",
+        "testenv/compressedBits.cpp",
+        "testenv/debug.cpp",
+        "testenv/denseHashMap.cpp",
+        "testenv/denseHashSet.cpp",
+        "testenv/delegate.cpp",
+        "testenv/dl.cpp",
+        "testenv/enum.cpp",
+        "testenv/error.cpp",
+        "testenv/envSetting.cpp",
+        "testenv/eternalString.cpp",
+        "testenv/exception.cpp",
+        "testenv/fastCompression.cpp",
+        "testenv/fileUtils.cpp",
+        "testenv/functionRef.cpp",
+        "testenv/getenv.cpp",
+        "testenv/hash.cpp",
+        "testenv/iterator.cpp",
+        "testenv/mallocTag.cpp",
+        "testenv/meta.cpp",
+        "testenv/mutexes.cpp",
+        "testenv/notice.cpp",
+        "testenv/pathUtils.cpp",
+        "testenv/patternMatcher.cpp",
+        "testenv/pointerAndBits.cpp",
+        "testenv/preprocessorUtilsLite.cpp",
+        "testenv/probe.cpp",
+        "testenv/refPtr.cpp",
+        "testenv/registryManager.cpp",
+        "testenv/registryManagerMultithreaded.cpp",
+        "testenv/registryManagerUnload.cpp",
+        "testenv/rwMutexes.cpp",
+        "testenv/safeOutputFile.cpp",
+        "testenv/scoped.cpp",
+        "testenv/scopeDescription.cpp",
+        "testenv/setenv.cpp",
+        "testenv/smallVector.cpp",
+        "testenv/stacked.cpp",
+        "testenv/staticData.cpp",
+        "testenv/stl.cpp",
+        "testenv/stopwatch.cpp",
+        "testenv/stringUtils.cpp",
+        "testenv/staticTokens.cpp",
+        "testenv/token.cpp",
+        "testenv/tryInvoke.cpp",
+        "testenv/delegatedCountPtr.cpp",
+        "testenv/type.cpp",
+        "testenv/typeMultipleInheritance.cpp",
+        "testenv/typeInfoMap.cpp",
+        "testenv/unicodeUtils.cpp",
+        "testenv/weakPtr.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testTfAtomicRenameUtil": "testenv/testTfAtomicRenameUtil.py",
+        "testTfCrashHandler": "testenv/testTfCrashHandler.py",
+        "testTfDiagnosticTrap": "testenv/testTfDiagnosticTrap.py",
+        "testTfFileUtils": "testenv/testTfFileUtils.py",
+        "testTfMallocTagReport": "testenv/testTfMallocTagReport.py",
+        "testTfNamedTemporaryFile": "testenv/testTfNamedTemporaryFile.py",
+        "testTfPathUtils": "testenv/testTfPathUtils.py",
+        "testTfPyDllLink": "testenv/testTfPyDllLink.py",
+        "testTfPyNotice": "testenv/testTfPyNotice.py",
+        "testTfPyOptional": "testenv/testTfPyOptional.py",
+        "testTfPyScopeDescription": "testenv/testTfPyScopeDescription.py",
+        "testTfPyStaticTokens": "testenv/testTfPyStaticTokens.py",
+        "testTfPython": "testenv/testTfPython.py",
+        "testTfScriptModuleLoader": "testenv/testTfScriptModuleLoader.py",
+        "testTfStringUtils": "testenv/testTfStringUtils.py",
+        "testTfType": "testenv/testTfType.py",
+        "testTf_PyContainerConversions": "testenv/testTf_PyContainerConversions.py",
+    },
+    testenvs = {
+        "TfDelegate/baseline": "testenv/baseline/TfDelegate",
+        "TfEnum/baseline": "testenv/baseline/TfEnum",
+        "TfEnvSetting/baseline": "testenv/baseline/TfEnvSetting",
+        "TfNotice/baseline": "testenv/baseline/TfNotice",
+        "testTfScriptModuleLoader/baseline": "testenv/baseline/testTfScriptModuleLoader",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testTfPyFunction",
+        ":tests/testTfPyInterpreter",
+        ":tests/testTfPyInvoke",
+        ":tests/testTfPyLock",
+        ":tests/testTfPyResultConversions",
+        ":tests/testTfSIGFPE",
+        ":tests/testTfSIGSEGV",
+        ":_testlib_TestTfDl",
+        ":_testlib_TestTfRegistryFunctionPlugin",
+        ":tests/testTfCast",
+        ":tests/testTfSpan",
+        ":tests/testTf",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "TfDl",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDl",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfEnvSetting",
+    arguments = {
+        "ENV": [
+            "TF_TEST_BOOL_ENV_SETTING=1",
+            "TF_TEST_INT_ENV_SETTING=123",
+            "TF_TEST_STRING_ENV_SETTING=alpha",
+            "TF_ENV_SETTING_ALERTS_ENABLED=0",
+        ],
+        "COMMAND": "<prefix>/tests/testTf TfEnvSetting",
+        "STDERR_REDIRECT": "debugTfEnvSettingStderr.txt",
+        "DIFF_COMPARE": [
+            "debugTfEnvSettingStderr.txt",
+        ],
+        "TESTENV": "testenv/baseline/TfEnvSetting",
+        "TESTENV_DEST": "TfEnvSetting/baseline",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfException",
+    arguments = {
+        "ENV": [
+            "TF_FATAL_THROW=0",
+        ],
+        "COMMAND": "<prefix>/tests/testTf TfException",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfFileUtils",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfFileUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfPathUtils",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfPathUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfAtomicOfstreamWrapper",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfAtomicOfstreamWrapper",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfSafeOutputFile",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfSafeOutputFile",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfAnyUniquePtr",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfAnyUniquePtr",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfBits",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfBits",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfBitUtils",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfBitUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "Tf_Buffer",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf Tf_Buffer",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfCompressedBits",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfCompressedBits",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDebug",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDebug",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDebugFatal_1",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDebugFatal_1",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDebugFatal_2",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDebugFatal_2",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDebugFatal_3",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDebugFatal_3",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDebugTestEnvHelp",
+    arguments = {
+        "ENV": [
+            "TF_DEBUG=help",
+        ],
+        "COMMAND": "<prefix>/tests/testTf TfDebugTestEnvHelp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDenseHashMap",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDenseHashMap",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDenseHashSet",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDenseHashSet",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDelegate",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDelegateAddRemove",
+        "STDOUT_REDIRECT": "output.txt",
+        "DIFF_COMPARE": [
+            "output.txt",
+        ],
+        "TESTENV": "testenv/baseline/TfDelegate",
+        "TESTENV_DEST": "TfDelegate/baseline",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDiagnosticTransport",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDiagnosticTransport",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDiagnosticTrap",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDiagnosticTrap",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDiagnosticTrap_Python",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfDiagnosticTrap",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfError",
+    arguments = {
+        "ENV": [
+            "TF_FATAL_VERIFY=0",
+        ],
+        "COMMAND": "<prefix>/tests/testTf TfError",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfErrorAndDiagnosticTransportLogText",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfErrorAndDiagnosticTransportLogText",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfErrorThreadTransport",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfErrorThreadTransport",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfEternalString",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfEternalString",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfFileUtils_Python",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfFileUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfFunctionRef",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfFunctionRef",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfStringUtils_Python",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfStringUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfGetenv",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfGetenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfHash",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfHash",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfIterator",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfIterator",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfRefPtr",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfRefPtr",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfEnum",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfEnum",
+        "STDOUT_REDIRECT": "enum.out",
+        "DIFF_COMPARE": [
+            "enum.out",
+        ],
+        "TESTENV": "testenv/baseline/TfEnum",
+        "TESTENV_DEST": "TfEnum/baseline",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfMallocTagReport",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfMallocTagReport",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfNotice",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfNotice",
+        "STDOUT_REDIRECT": "notice.out",
+        "DIFF_COMPARE": [
+            "notice.out",
+        ],
+        "TESTENV": "testenv/baseline/TfNotice",
+        "TESTENV_DEST": "TfNotice/baseline",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfNamedTemporaryFile",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfNamedTemporaryFile",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfPathUtils_Python",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfPathUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfPatternMatcher",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfPatternMatcher",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfPointerAndBits",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfPointerAndBits",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfPreprocessorUtilsLite",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfPreprocessorUtilsLite",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfProbe",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfProbe",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfRWMutexes",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfRWMutexes",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfRegistryManager",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfRegistryManager",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfRegistryManagerUnload",
+    arguments = {
+        "REQUIRES_SHARED_LIBS": True,
+        "COMMAND": "<prefix>/tests/testTf TfRegistryManagerUnload",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfRegTest",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf",
+        "EXPECTED_RETURN_CODE": "2",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfRegTest_TfScoped",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfScoped no args expected",
+        "EXPECTED_RETURN_CODE": "2",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfRegTest_TfUndefinedTest",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfUndefinedTest",
+        "EXPECTED_RETURN_CODE": "3",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfScopeDescription",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfScopeDescription",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfScoped",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfScoped",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfScopedVar",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfScopedVar",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfSetenv",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfSetenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfSmallVector",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfSmallVector",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfSpinMutex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfSpinMutex",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfSpinRWMutex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfSpinRWMutex",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfStacked",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfStacked",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfStaticData",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfStaticData",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfStaticTokens",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfStaticTokens",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfStl",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfStl",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfStopwatch",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfStopwatch",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfStringUtils",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfStringUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfToken",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfToken",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfTryInvoke",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfTryInvoke",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfDelegatedCountPtr",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfDelegatedCountPtr",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfType",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfType",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfTypeInfoMap",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfTypeInfoMap",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfType_MultipleInheritance",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfType_MultipleInheritance",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfUnicodeUtils",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfUnicodeUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfWeakPtr",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfWeakPtr",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfWeakPtrConversion",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTf TfWeakPtrConversion",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfPython",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfPython",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfPyFunction",
+    arguments = {
+        "REQUIRES_PYTHON_MODULES": True,
+        "COMMAND": "<prefix>/tests/testTfPyFunction",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfPyNotice",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfPyNotice",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfPyInterpreter",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTfPyInterpreter",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfPyInvoke",
+    arguments = {
+        "REQUIRES_PYTHON_MODULES": True,
+        "COMMAND": "<prefix>/tests/testTfPyInvoke",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfPyLock",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTfPyLock",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfPyResultConversions",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTfPyResultConversions",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfPyScopeDescription",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfPyScopeDescription",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfScriptModuleLoader",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfScriptModuleLoader",
+        "STDOUT_REDIRECT": "scriptModuleLoader.out",
+        "DIFF_COMPARE": [
+            "scriptModuleLoader.out",
+        ],
+        "TESTENV": "testenv/baseline/testTfScriptModuleLoader",
+        "TESTENV_DEST": "testTfScriptModuleLoader/baseline",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfType",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfType",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfSIGSEGV",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfCrashHandler <prefix>/tests/testTfSIGSEGV SIGSEGV",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfSIGFPE",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfCrashHandler <prefix>/tests/testTfSIGFPE SIGFPE",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTf_PyContainerConversions",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTf_PyContainerConversions",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTf_PyOptional",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfPyOptional",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTf_PyStaticTokens",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTfPyStaticTokens",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfCxxCast",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTfCast",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTfSpan",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTfSpan",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "TfMallocTag",
+    arguments = {
+        "ENV": [
+            "GLIBCXX_FORCE_NEW=1",
+        ],
+        "COMMAND": "<prefix>/tests/testTf TfMallocTag",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
     ],
 )

@@ -1,6 +1,7 @@
 # Generated from pxr/usd/usdProfiles/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "usdProfiles",
@@ -40,5 +41,234 @@ pxr_library(
         "generatedSchema.usda",
         "plugInfo.json",
         "schema.usda:UsdProfiles/schema.usda",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdProfilesRegistry",
+    srcs = [
+        "testenv/testUsdProfilesRegistry.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/js",
+        "//pxr/base/vt",
+        "//pxr/usd/usdProfiles",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdProfilesProfiles",
+    srcs = [
+        "testenv/testUsdProfilesProfiles.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/js",
+        "//pxr/base/vt",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdProfiles",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdProfilesClaimsAPI",
+    srcs = [
+        "testenv/testUsdProfilesClaimsAPI.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdProfiles",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdProfilesSchemaImplication",
+    srcs = [
+        "testenv/testUsdProfilesSchemaImplication.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdProfiles",
+    ],
+)
+
+pxr_test_library(
+    name = "TestUsdProfilesPhonyFileFormat",
+    srcs = [
+        "testenv/TestUsdProfilesPhonyFileFormat.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/usd/usdProfiles",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdProfilesFileFormatImplication",
+    srcs = [
+        "testenv/testUsdProfilesFileFormatImplication.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdProfiles",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdProfilesClaimsAPIPy": "testenv/testUsdProfilesClaimsAPIPy.py",
+        "testUsdProfilesFileFormatImplicationPy": "testenv/testUsdProfilesFileFormatImplicationPy.py",
+        "testUsdProfilesProfilesPy": "testenv/testUsdProfilesProfilesPy.py",
+        "testUsdProfilesRegistryPy": "testenv/testUsdProfilesRegistryPy.py",
+        "testUsdProfilesSchemaImplicationPy": "testenv/testUsdProfilesSchemaImplicationPy.py",
+    },
+    testenvs = {
+        "testUsdProfilesFileFormatImplication": "testenv/testUsdProfilesFileFormatImplication",
+        "testUsdProfilesRegistry": "testenv/testUsdProfilesRegistry",
+    },
+    plug_infos = {
+        "UsdProfilesPlugins/lib/TestUsdProfilesPhonyFileFormat/Resources/plugInfo.json": "testenv/TestUsdProfilesPhonyFileFormat_plugInfo.json",
+    },
+    library_paths = {
+        "UsdProfilesPlugins/lib/TestUsdProfilesPhonyFileFormat/Resources/plugInfo.json": "../../../lib/libTestUsdProfilesPhonyFileFormat",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testUsdProfilesRegistry",
+        ":tests/testUsdProfilesProfiles",
+        ":tests/testUsdProfilesClaimsAPI",
+        ":tests/testUsdProfilesSchemaImplication",
+        ":_testlib_TestUsdProfilesPhonyFileFormat",
+        ":tests/testUsdProfilesFileFormatImplication",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesRegistry",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdProfilesRegistry",
+        "TESTENV": "testenv/testUsdProfilesRegistry",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesProfiles",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdProfilesProfiles",
+        "TESTENV": "testenv/testUsdProfilesRegistry",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesClaimsAPI",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdProfilesClaimsAPI",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesSchemaImplication",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdProfilesSchemaImplication",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesFileFormatImplication",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdProfilesFileFormatImplication",
+        "TESTENV": "testenv/testUsdProfilesFileFormatImplication",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesRegistryPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdProfilesRegistryPy",
+        "TESTENV": "testenv/testUsdProfilesRegistry",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesProfilesPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdProfilesProfilesPy",
+        "TESTENV": "testenv/testUsdProfilesRegistry",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesClaimsAPIPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdProfilesClaimsAPIPy",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesSchemaImplicationPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdProfilesSchemaImplicationPy",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdProfilesFileFormatImplicationPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdProfilesFileFormatImplicationPy",
+        "TESTENV": "testenv/testUsdProfilesFileFormatImplication",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

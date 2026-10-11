@@ -1,6 +1,7 @@
 # Generated from pxr/usd/sdr/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "sdr",
@@ -64,5 +65,170 @@ pxr_library(
         "docs/registry.md",
         "docs/shaderNode.md",
         "docs/shaderProperty.md",
+    ],
+)
+
+pxr_test_library(
+    name = "TestSdrRegistry",
+    srcs = [
+        "testenv/TestSdrRegistry_argsParserPlugin.cpp",
+        "testenv/TestSdrRegistry_discoveryPlugin.cpp",
+        "testenv/TestSdrRegistry_oslParserPlugin.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/sdr",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdrShaderMetadata",
+    srcs = [
+        "testenv/testSdrShaderMetadata.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/usd/sdf",
+        "//pxr/usd/sdr",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdrParseValue",
+    srcs = [
+        "testenv/testSdrParseValue.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/usd/sdf",
+        "//pxr/usd/sdr",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testSdrFilesystemDiscovery": "testenv/testSdrFilesystemDiscovery.py",
+        "testSdrRegistry": "testenv/testSdrRegistry.py",
+        "testSdrShaderNodeQuery": "testenv/testSdrShaderNodeQuery.py",
+        "testSdrShownIfConversion": "testenv/testSdrShownIfConversion.py",
+        "testSdrVersion": "testenv/testSdrVersion.py",
+    },
+    testenvs = {
+        "testSdrFilesystemDiscovery.testenv": "testenv/testSdrFilesystemDiscovery.testenv",
+        "testSdrShaderNodeQuery.testenv": "testenv/testSdrShaderNodeQuery.testenv",
+        "testSdrShownIfConversion.testenv": "testenv/testSdrShownIfConversion.testenv",
+    },
+    plug_infos = {
+        "SdrPlugins/lib/TestSdrRegistry/Resources/plugInfo.json": "testenv/TestSdrRegistry_plugInfo.json",
+    },
+    library_paths = {
+        "SdrPlugins/lib/TestSdrRegistry/Resources/plugInfo.json": "../../../lib/libTestSdrRegistry",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":_testlib_TestSdrRegistry",
+        ":tests/testSdrShaderMetadata",
+        ":tests/testSdrParseValue",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testSdrFilesystemDiscovery",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdrFilesystemDiscovery",
+        "TESTENV": "testenv/testSdrFilesystemDiscovery.testenv",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdrShaderNodeQuery",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdrShaderNodeQuery",
+        "TESTENV": "testenv/testSdrShaderNodeQuery.testenv",
+        "ENV": [
+            "PXR_SDR_SKIP_DISCOVERY_PLUGIN_DISCOVERY=1",
+            "PXR_SDR_SKIP_PARSER_PLUGIN_DISCOVERY=1",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdrShaderMetadata",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdrShaderMetadata",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdrParseValue",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdrParseValue",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdrRegistry",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdrRegistry",
+        "ENV": [
+            "PXR_SDR_SKIP_DISCOVERY_PLUGIN_DISCOVERY=1",
+            "PXR_SDR_SKIP_PARSER_PLUGIN_DISCOVERY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdrShownIfConversion",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdrShownIfConversion",
+        "TESTENV": "testenv/testSdrShownIfConversion.testenv",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdrVersion",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdrVersion",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

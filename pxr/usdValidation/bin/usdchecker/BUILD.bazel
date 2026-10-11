@@ -1,6 +1,7 @@
 # Generated from pxr/usdValidation/bin/usdchecker/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_cpp_bin")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
 
 pxr_cpp_bin(
     name = "usdchecker",
@@ -13,4 +14,397 @@ pxr_cpp_bin(
         "//pxr/usd/usdUtils",
         "//pxr/usdValidation/usdUtilsValidators",
     ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testUsdChecker": "testenv/testUsdChecker",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdCheckerListValidators",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker --includeKeywords UsdCoreValidators,UsdGeomValidators,UsdLuxValidators,UsdPhysicsValidators,UsdShadeValidators,UsdSkelValidators,UsdUtilsValidators -d",
+        "TESTENV": "testenv/testUsdChecker",
+        "STDOUT_REDIRECT": "baseRules_validationFramework.txt",
+        "DIFF_COMPARE": [
+            "baseRules_validationFramework.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker1",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker clean/clean.usd",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker2",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker clean/clean_flat.usdc",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker3",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker clean/clean.usdz",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker4",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker clean/clean_flat.usdz",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker5",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker --rootPackageOnly bad/sceneWithInvalidPackage.usda",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker6",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/sceneWithInvalidPackage.usda",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker7",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badUsdz.usdz",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker8",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker --dumpRules bad/badVariants.usdc",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker9",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants2.usda",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker10",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants2.usda --variants testSet:test2,testSet2:test2C",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker11",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants2.usda --variants testSet:test1,testSet2:test2A",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker12",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants2.usda --variants testSet:test1,testSet2:test2C",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker13",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants2.usda --variantSets testSet",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker14",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants3.usda",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker15",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants3.usda --variantSets set1",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker16",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants3.usda --variantSets set2",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker17",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants3.usda --variantSets set3",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker18",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants3.usda --variants set1:ref2,set2:A,set3:D",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker19",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badVariants3.usda --variants set1:ref2 --variantSets set3",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker20",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/brokenRef.usd",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker21",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badShaderUnsupportedTexture.usdc",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker22",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker clean/cleanNormalMapReader.usda",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker23",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker bad/badImageableConnectableMaterialDesc.usda",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
+)
+
+pxr_test(
+    name = "testUsdChecker24",
+    arguments = {
+        "COMMAND": "<prefix>/bin/usdchecker clean/clean_variable_expression.usda",
+        "TESTENV": "testenv/testUsdChecker",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+    },
 )

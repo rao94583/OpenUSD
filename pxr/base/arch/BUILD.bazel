@@ -1,6 +1,7 @@
 # Generated from pxr/base/arch/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_library", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "arch",
@@ -72,4 +73,370 @@ pxr_library(
             ],
         },
     },
+)
+
+pxr_test_library(
+    name = "testArchAbiPlugin",
+    srcs = [
+        "testenv/testArchAbiPlugin.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchAbi",
+    srcs = [
+        "testenv/testArchAbi.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchAttributes",
+    srcs = [
+        "testenv/testAttributes.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchDemangle",
+    srcs = [
+        "testenv/testDemangle.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchError",
+    srcs = [
+        "testenv/testArchUtil.cpp",
+        "testenv/testError.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchErrno",
+    srcs = [
+        "testenv/testErrno.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchFileSystem",
+    srcs = [
+        "testenv/testFileSystem.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchFunction",
+    srcs = [
+        "testenv/testFunction.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchMath",
+    srcs = [
+        "testenv/testMath.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchPRead",
+    srcs = [
+        "testenv/testArchPRead.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchPrefetch",
+    srcs = [
+        "testenv/testPrefetch.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchStackTrace",
+    srcs = [
+        "testenv/testArchUtil.cpp",
+        "testenv/testStackTrace.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchSymbols",
+    srcs = [
+        "testenv/testSymbols.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchSystemInfo",
+    srcs = [
+        "testenv/testSystemInfo.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchThreads",
+    srcs = [
+        "testenv/testThreads.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchTiming",
+    srcs = [
+        "testenv/testTiming.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchVirtualMemory",
+    srcs = [
+        "testenv/testVirtualMemory.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testArchVsnprintf",
+    srcs = [
+        "testenv/testVsnprintf.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":_testlib_testArchAbiPlugin",
+        ":tests/testArchAbi",
+        ":tests/testArchAttributes",
+        ":tests/testArchDemangle",
+        ":tests/testArchError",
+        ":tests/testArchErrno",
+        ":tests/testArchFileSystem",
+        ":tests/testArchFunction",
+        ":tests/testArchMath",
+        ":tests/testArchPRead",
+        ":tests/testArchPrefetch",
+        ":tests/testArchStackTrace",
+        ":tests/testArchSymbols",
+        ":tests/testArchSystemInfo",
+        ":tests/testArchThreads",
+        ":tests/testArchTiming",
+        ":tests/testArchVirtualMemory",
+        ":tests/testArchVsnprintf",
+    ],
+)
+
+pxr_test(
+    name = "testArchAbi",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchAbi",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchError",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchError",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchStackTrace",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchStackTrace",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchSymbols",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchSymbols",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchSystemInfo",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchSystemInfo",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchFileSystem",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchFileSystem",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchAttributes",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchAttributes",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchDemangle",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchDemangle",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchErrno",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchErrno",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchFunction",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchFunction",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchMath",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchMath",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchPrefetch",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchPrefetch",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchTiming",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchTiming",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchThreads",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchThreads",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchVirtualMemory",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchVirtualMemory",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArchVsnprintf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArchVsnprintf",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
 )

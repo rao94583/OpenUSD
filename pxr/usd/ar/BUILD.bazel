@@ -1,6 +1,7 @@
 # Generated from pxr/usd/ar/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "ar",
@@ -72,5 +73,397 @@ pxr_library(
     ],
     doxygen_files = [
         "overview.dox",
+    ],
+)
+
+pxr_test_library(
+    name = "TestArAdvancedAPI",
+    srcs = [
+        "testenv/TestArAdvancedAPI_plugin.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/ar",
+    ],
+)
+
+pxr_test_library(
+    name = "TestArPackageResolver",
+    srcs = [
+        "testenv/TestArPackageResolver_plugin.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/ar",
+    ],
+)
+
+pxr_test_library(
+    name = "TestArOptionalImplementation",
+    srcs = [
+        "testenv/TestArOptionalImplementation_plugin.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/ar",
+    ],
+)
+
+pxr_test_library(
+    name = "TestArURIResolver",
+    srcs = [
+        "testenv/TestArURIResolver_plugin.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/ar",
+    ],
+)
+
+pxr_test_program(
+    name = "testArURIResolver_CPP",
+    srcs = [
+        "testenv/testArURIResolver.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/usd/ar",
+    ],
+)
+
+pxr_test_program(
+    name = "testArDefaultResolver_CPP",
+    srcs = [
+        "testenv/testArDefaultResolver.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/usd/ar",
+    ],
+)
+
+pxr_test_program(
+    name = "testArNotice_CPP",
+    srcs = [
+        "testenv/testArNotice.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/usd/ar",
+    ],
+)
+
+pxr_test_program(
+    name = "testArResolverContext_CPP",
+    srcs = [
+        "testenv/testArResolverContext.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/usd/ar",
+    ],
+)
+
+pxr_test_program(
+    name = "testArThreadedAssetCreation",
+    srcs = [
+        "testenv/testArThreadedAssetCreation.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/usd/ar",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testArAdvancedAPI": "testenv/testArAdvancedAPI.py",
+        "testArAssetInfo": "testenv/testArAssetInfo.py",
+        "testArDefaultResolver": "testenv/testArDefaultResolver.py",
+        "testArOpenAsset": "testenv/testArOpenAsset.py",
+        "testArOptionalImplementation": "testenv/testArOptionalImplementation.py",
+        "testArPackageResolver": "testenv/testArPackageResolver.py",
+        "testArPackageUtils": "testenv/testArPackageUtils.py",
+        "testArResolvedPath": "testenv/testArResolvedPath.py",
+        "testArResolverContext": "testenv/testArResolverContext.py",
+        "testArTimestamp": "testenv/testArTimestamp.py",
+        "testArURIResolver": "testenv/testArURIResolver.py",
+    },
+    testenvs = {
+        "testArOptionalImplementation": "testenv/testArOptionalImplementation",
+    },
+    plug_infos = {
+        "ArPlugins/lib/TestArAdvancedAPI/Resources/plugInfo.json": "testenv/TestArAdvancedAPI_plugInfo.json",
+        "ArPlugins/lib/TestArPackageResolver/Resources/plugInfo.json": "testenv/TestArPackageResolver_plugInfo.json",
+        "ArPlugins/lib/TestArOptionalImplementation/Resources/plugInfo.json": "testenv/TestArOptionalImplementation_plugInfo.json",
+        "ArPlugins/lib/TestArURIResolver/Resources/plugInfo.json": "testenv/TestArURIResolver_plugInfo.json",
+    },
+    library_paths = {
+        "ArPlugins/lib/TestArAdvancedAPI/Resources/plugInfo.json": "../../../lib/libTestArAdvancedAPI",
+        "ArPlugins/lib/TestArPackageResolver/Resources/plugInfo.json": "../../../lib/libTestArPackageResolver",
+        "ArPlugins/lib/TestArOptionalImplementation/Resources/plugInfo.json": "../../../lib/libTestArOptionalImplementation",
+        "ArPlugins/lib/TestArURIResolver/Resources/plugInfo.json": "../../../lib/libTestArURIResolver",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":_testlib_TestArAdvancedAPI",
+        ":_testlib_TestArPackageResolver",
+        ":_testlib_TestArOptionalImplementation",
+        ":_testlib_TestArURIResolver",
+        ":tests/testArURIResolver_CPP",
+        ":tests/testArDefaultResolver_CPP",
+        ":tests/testArNotice_CPP",
+        ":tests/testArResolverContext_CPP",
+        ":tests/testArThreadedAssetCreation",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testArOptionalImplementation_1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArOptionalImplementation _TestResolver",
+        "TESTENV": "testenv/testArOptionalImplementation",
+        "STDOUT_REDIRECT": "base.txt",
+        "DIFF_COMPARE": [
+            "base.txt",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArOptionalImplementation_2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArOptionalImplementation _TestResolverWithContextMethods",
+        "TESTENV": "testenv/testArOptionalImplementation",
+        "STDOUT_REDIRECT": "resolver_with_context.txt",
+        "DIFF_COMPARE": [
+            "resolver_with_context.txt",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArOptionalImplementation_3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArOptionalImplementation _TestDerivedResolverWithContextMethods",
+        "TESTENV": "testenv/testArOptionalImplementation",
+        "STDOUT_REDIRECT": "derived_resolver_with_context.txt",
+        "DIFF_COMPARE": [
+            "derived_resolver_with_context.txt",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArOptionalImplementation_4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArOptionalImplementation _TestResolverWithCacheMethods",
+        "TESTENV": "testenv/testArOptionalImplementation",
+        "STDOUT_REDIRECT": "resolver_with_cache.txt",
+        "DIFF_COMPARE": [
+            "resolver_with_cache.txt",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArOptionalImplementation_5",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArOptionalImplementation _TestDerivedResolverWithCacheMethods",
+        "TESTENV": "testenv/testArOptionalImplementation",
+        "STDOUT_REDIRECT": "derived_resolver_with_cache.txt",
+        "DIFF_COMPARE": [
+            "derived_resolver_with_cache.txt",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArURIResolver",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArURIResolver",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArURIResolver_CPP",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArURIResolver_CPP",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArNotice_CPP",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArNotice_CPP",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArAssetInfo",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArAssetInfo",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArAdvancedAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArAdvancedAPI",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArDefaultResolver",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArDefaultResolver",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArDefaultResolver_CPP",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArDefaultResolver_CPP",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArOpenAsset",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArOpenAsset",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArPackageResolver",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArPackageResolver",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArPackageUtils",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArPackageUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArResolvedPath",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArResolvedPath",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArTimestamp",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArTimestamp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArResolverContext",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testArResolverContext",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArResolverContext_CPP",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArResolverContext_CPP",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testArThreadedAssetCreation",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testArThreadedAssetCreation",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

@@ -1,6 +1,7 @@
 # Generated from pxr/usdValidation/usdLuxValidators/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "usdLuxValidators",
@@ -25,5 +26,38 @@ pxr_library(
     ],
     resource_files = [
         "plugInfo.json",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdLuxValidators",
+    srcs = [
+        "testenv/testUsdLuxValidators.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/sdr",
+        "//pxr/usd/usd",
+        "//pxr/usdValidation/usdValidation",
+        "//pxr/usd/usdLux",
+        "//pxr/usdValidation/usdLuxValidators",
+    ],
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testUsdLuxValidators",
+    ],
+)
+
+pxr_test(
+    name = "testUsdLuxValidators",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdLuxValidators",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

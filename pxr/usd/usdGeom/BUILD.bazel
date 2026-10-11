@@ -1,6 +1,7 @@
 # Generated from pxr/usd/usdGeom/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "usdGeom",
@@ -123,5 +124,419 @@ pxr_library(
         "images/USDTetMeshRightHanded.svg",
         "images/USDTetMeshLeftHanded.svg",
         "examples_usdGeom.cpp",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdGeomXformCache",
+    srcs = [
+        "testenv/testUsdGeomXformCache.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdGeomCreateAttribute",
+    srcs = [
+        "testenv/testUsdGeomCreateAttribute.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdGeomIsA",
+    srcs = [
+        "testenv/testUsdGeomIsA.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdGeomHasAPI",
+    srcs = [
+        "testenv/testUsdGeomHasAPI.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdGeomBBoxCache": "testenv/testUsdGeomBBoxCache.py",
+        "testUsdGeomBackPlateAPI": "testenv/testUsdGeomBackPlateAPI.py",
+        "testUsdGeomBasisCurves": "testenv/testUsdGeomBasisCurves.py",
+        "testUsdGeomCamera": "testenv/testUsdGeomCamera.py",
+        "testUsdGeomComputeAtTime": "testenv/testUsdGeomComputeAtTime.py",
+        "testUsdGeomConstraintTarget": "testenv/testUsdGeomConstraintTarget.py",
+        "testUsdGeomConsts": "testenv/testUsdGeomConsts.py",
+        "testUsdGeomCurves": "testenv/testUsdGeomCurves.py",
+        "testUsdGeomExtentFromPlugins": "testenv/testUsdGeomExtentFromPlugins.py",
+        "testUsdGeomExtentTransform": "testenv/testUsdGeomExtentTransform.py",
+        "testUsdGeomHermiteCurves": "testenv/testUsdGeomHermiteCurves.py",
+        "testUsdGeomImageable": "testenv/testUsdGeomImageable.py",
+        "testUsdGeomMesh": "testenv/testUsdGeomMesh.py",
+        "testUsdGeomMetrics": "testenv/testUsdGeomMetrics.py",
+        "testUsdGeomMotionAPI": "testenv/testUsdGeomMotionAPI.py",
+        "testUsdGeomNoPlugLoad": "testenv/testUsdGeomNoPlugLoad.py",
+        "testUsdGeomPointInstancer": "testenv/testUsdGeomPointInstancer.py",
+        "testUsdGeomPrimvar": "testenv/testUsdGeomPrimvar.py",
+        "testUsdGeomPurposeVisibility": "testenv/testUsdGeomPurposeVisibility.py",
+        "testUsdGeomSchemata": "testenv/testUsdGeomSchemata.py",
+        "testUsdGeomSubset": "testenv/testUsdGeomSubset.py",
+        "testUsdGeomTetMesh": "testenv/testUsdGeomTetMesh.py",
+        "testUsdGeomXformCommonAPI": "testenv/testUsdGeomXformCommonAPI.py",
+        "testUsdGeomXformable": "testenv/testUsdGeomXformable.py",
+    },
+    testenvs = {
+        "testUsdGeomBBoxCache": "testenv/testUsdGeomBBoxCache",
+        "testUsdGeomBasisCurves": "testenv/testUsdGeomBasisCurves",
+        "testUsdGeomCamera": "testenv/testUsdGeomCamera",
+        "testUsdGeomComputeAtTime": "testenv/testUsdGeomComputeAtTime",
+        "testUsdGeomConsts": "testenv/testUsdGeomConsts",
+        "testUsdGeomExtentFromPlugins": "testenv/testUsdGeomExtentFromPlugins",
+        "testUsdGeomExtentTransform": "testenv/testUsdGeomExtentTransform",
+        "testUsdGeomImageable": "testenv/testUsdGeomImageable",
+        "testUsdGeomMesh": "testenv/testUsdGeomMesh",
+        "testUsdGeomPointInstancer": "testenv/testUsdGeomPointInstancer",
+        "testUsdGeomSubset": "testenv/testUsdGeomSubset",
+        "testUsdGeomTetMesh": "testenv/testUsdGeomTetMesh",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testUsdGeomXformCache",
+        ":tests/testUsdGeomCreateAttribute",
+        ":tests/testUsdGeomIsA",
+        ":tests/testUsdGeomHasAPI",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomBackPlateAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomBackPlateAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomBasisCurves",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomBasisCurves",
+        "TESTENV": "testenv/testUsdGeomBasisCurves",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomBBoxCache",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomBBoxCache",
+        "TESTENV": "testenv/testUsdGeomBBoxCache",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=USDGEOM_BBOX",
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomCamera",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomCamera",
+        "TESTENV": "testenv/testUsdGeomCamera",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomConstraintTarget",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomConstraintTarget",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomConsts",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomConsts",
+        "TESTENV": "testenv/testUsdGeomConsts",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomCreateAttribute",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdGeomCreateAttribute",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomCurves",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomCurves",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomMesh",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomMesh",
+        "TESTENV": "testenv/testUsdGeomMesh",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomTetMesh",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomTetMesh",
+        "TESTENV": "testenv/testUsdGeomTetMesh",
+        "DIFF_COMPARE": [
+            "tetMeshRH.usda",
+            "tetMeshLH.usda",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomMetrics",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomMetrics",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomSubset",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomSubset",
+        "TESTENV": "testenv/testUsdGeomSubset",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomIsA",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdGeomIsA",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomHasAPI",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdGeomHasAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomPrimvar",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomPrimvar",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomPointInstancer",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomPointInstancer",
+        "TESTENV": "testenv/testUsdGeomPointInstancer",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomPurposeVisibility",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomPurposeVisibility",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomSchemata",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomSchemata",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomXformable",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomXformable",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomXformCache",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdGeomXformCache",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomXformCommonAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomXformCommonAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomExtentFromPlugins",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomExtentFromPlugins",
+        "TESTENV": "testenv/testUsdGeomExtentFromPlugins",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomExtentTransform",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomExtentTransform",
+        "TESTENV": "testenv/testUsdGeomExtentTransform",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomComputeAtTime",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomComputeAtTime",
+        "TESTENV": "testenv/testUsdGeomComputeAtTime",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdGeomImageable",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdGeomImageable",
+        "TESTENV": "testenv/testUsdGeomImageable",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

@@ -1,6 +1,7 @@
 # Generated from pxr/base/plug/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "pxr_test_tree")
 
 pxr_library(
     name = "plug",
@@ -43,5 +44,149 @@ pxr_library(
     ],
     doxygen_files = [
         "overview.dox",
+    ],
+)
+
+pxr_test_library(
+    name = "TestPlugDso1",
+    srcs = [
+        "testenv/TestPlugDso1.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+    ],
+)
+
+pxr_test_library(
+    name = "TestPlugDso2",
+    srcs = [
+        "testenv/TestPlugDso2.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+    ],
+)
+
+pxr_test_library(
+    name = "TestPlugDso3",
+    srcs = [
+        "testenv/TestPlugDso3.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+    ],
+)
+
+pxr_test_library(
+    name = "TestPlugDsoEmpty",
+    srcs = [
+        "testenv/TestPlugDsoEmpty.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+    ],
+)
+
+pxr_test_library(
+    name = "TestPlugDsoIncomplete",
+    srcs = [
+        "testenv/TestPlugDsoIncomplete.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+    ],
+)
+
+pxr_test_library(
+    name = "TestPlugDsoUnloadable",
+    srcs = [
+        "testenv/TestPlugDsoUnloadable.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "PlugPlugins/lib/python/TestPlugModule1/__init__.py": "testenv/TestPlugModule1__init__.py",
+        "PlugPlugins/lib/python/TestPlugModule1/plugInfo.json": "testenv/TestPlugModule1_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModule2/__init__.py": "testenv/TestPlugModule2__init__.py",
+        "PlugPlugins/lib/python/TestPlugModule2/plugInfo.json": "testenv/TestPlugModule2_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModule3/__init__.py": "testenv/TestPlugModule3__init__.py",
+        "PlugPlugins/lib/python/TestPlugModule3/plugInfo.json": "testenv/TestPlugModule3_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleDepBadBase/__init__.py": "testenv/TestPlugModuleDepBadBase__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleDepBadBase/plugInfo.json": "testenv/TestPlugModuleDepBadBase_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleDepBadDep/__init__.py": "testenv/TestPlugModuleDepBadDep__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleDepBadDep/plugInfo.json": "testenv/TestPlugModuleDepBadDep_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleDepBadDep2/__init__.py": "testenv/TestPlugModuleDepBadDep2__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleDepBadDep2/plugInfo.json": "testenv/TestPlugModuleDepBadDep2_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleDepBadLoad/__init__.py": "testenv/TestPlugModuleDepBadLoad__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleDepBadLoad/plugInfo.json": "testenv/TestPlugModuleDepBadLoad_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleDepCycle/__init__.py": "testenv/TestPlugModuleDepCycle__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleDepCycle/plugInfo.json": "testenv/TestPlugModuleDepCycle_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleEmpty/__init__.py": "testenv/TestPlugModuleEmpty__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleEmpty/plugInfo.json": "testenv/TestPlugModuleEmpty_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleIncomplete/__init__.py": "testenv/TestPlugModuleIncomplete__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleLoaded/__init__.py": "testenv/TestPlugModuleLoaded__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleLoaded/plugInfo.json": "testenv/TestPlugModuleLoaded_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleLoadedBadBase/__init__.py": "testenv/TestPlugModuleLoadedBadBase__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleLoadedBadBase/plugInfo.json": "testenv/TestPlugModuleLoadedBadBase_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleUnicode/__init__.py": "testenv/TestPlugModuleUnicode__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleUnicode/plugInfo.json": "testenv/TestPlugModuleUnicode_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleUnloadable/__init__.py": "testenv/TestPlugModuleUnloadable__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleUnloadable/plugInfo.json": "testenv/TestPlugModuleUnloadable_plugInfo.json",
+        "PlugPlugins/lib/python/TestPlugModuleUnloadable2/__init__.py": "testenv/TestPlugModuleUnloadable2__init__.py",
+        "PlugPlugins/lib/python/TestPlugModuleUnloadable2/plugInfo.json": "testenv/TestPlugModuleUnloadable2_plugInfo.json",
+        "testPlug": "testPlug.py",
+    },
+    testenvs = {
+        "testPlug": "testenv/testPlug",
+    },
+    plug_infos = {
+        "PlugPlugins/lib/TestPlugDso1/Resources/plugInfo.json": "testenv/TestPlugDso1_plugInfo.json",
+        "PlugPlugins/lib/TestPlugDso2/Resources/plugInfo.json": "testenv/TestPlugDso2_plugInfo.json",
+        "PlugPlugins/lib/TestPlugDso3/Resources/plugInfo.json": "testenv/TestPlugDso3_plugInfo.json",
+        "PlugPlugins/lib/TestPlugDsoEmpty/Resources/plugInfo.json": "testenv/TestPlugDsoEmpty_plugInfo.json",
+        "PlugPlugins/lib/TestPlugDsoUnloadable/Resources/plugInfo.json": "testenv/TestPlugDsoUnloadable_plugInfo.json",
+    },
+    library_paths = {
+        "PlugPlugins/lib/TestPlugDso1/Resources/plugInfo.json": "../../../lib/libTestPlugDso1",
+        "PlugPlugins/lib/TestPlugDso2/Resources/plugInfo.json": "../../../lib/libTestPlugDso2",
+        "PlugPlugins/lib/TestPlugDso3/Resources/plugInfo.json": "../../../lib/libTestPlugDso3",
+        "PlugPlugins/lib/TestPlugDsoEmpty/Resources/plugInfo.json": "../../../lib/libTestPlugDsoEmpty",
+        "PlugPlugins/lib/TestPlugDsoUnloadable/Resources/plugInfo.json": "../../../lib/libTestPlugDsoUnloadable",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":_testlib_TestPlugDso1",
+        ":_testlib_TestPlugDso2",
+        ":_testlib_TestPlugDso3",
+        ":_testlib_TestPlugDsoEmpty",
+        ":_testlib_TestPlugDsoIncomplete",
+        ":_testlib_TestPlugDsoUnloadable",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testPlug",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testPlug",
+        "TESTENV": "testenv/testPlug",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

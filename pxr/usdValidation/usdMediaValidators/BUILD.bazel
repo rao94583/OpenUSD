@@ -1,6 +1,7 @@
 # Generated from pxr/usdValidation/usdMediaValidators/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "usdMediaValidators",
@@ -22,5 +23,38 @@ pxr_library(
     ],
     resource_files = [
         "plugInfo.json",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdMediaValidators",
+    srcs = [
+        "testenv/testUsdMediaValidators.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdMedia",
+        "//pxr/usdValidation/usdValidation",
+        "//pxr/usdValidation/usdMediaValidators",
+    ],
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testUsdMediaValidators",
+    ],
+)
+
+pxr_test(
+    name = "testUsdMediaValidators",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdMediaValidators",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

@@ -1,6 +1,7 @@
 # Generated from pxr/usd/usdPhysics/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
 
 pxr_library(
     name = "usdPhysics",
@@ -85,5 +86,74 @@ pxr_library(
         "examples/usdPhysicsNestedArticulation.usda",
         "examples/usdPhysicsPairFiltering.usda",
         "examples/usdPhysicsSpheresWithMaterial.usda",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdPhysicsCollisionGroupAPI": "testenv/testUsdPhysicsCollisionGroupAPI.py",
+        "testUsdPhysicsMetrics": "testenv/testUsdPhysicsMetrics.py",
+        "testUsdPhysicsParsing": "testenv/testUsdPhysicsParsing.py",
+        "testUsdPhysicsRigidBodyAPI": "testenv/testUsdPhysicsRigidBodyAPI.py",
+    },
+    testenvs = {
+        "testUsdPhysicsParsing": "testenv/testUsdPhysicsParsing",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdPhysicsMetrics",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdPhysicsMetrics",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdPhysicsRigidBodyAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdPhysicsRigidBodyAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdPhysicsCollisionGroupAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdPhysicsCollisionGroupAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdPhysicsParsing",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdPhysicsParsing",
+        "TESTENV": "testenv/testUsdPhysicsParsing",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

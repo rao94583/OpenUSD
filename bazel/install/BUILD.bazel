@@ -10,9 +10,21 @@ load("//bazel:pxr_python.bzl", "PXR_PY_SHARED_LINKOPTS", "pxr_python_package")
 
 package(default_visibility = ["//visibility:public"])
 
+# oneTBB as its own shared library, as in CMake builds. It must not be part
+# of usd_ms: static initializers in pxr libraries (e.g. work's thread limits)
+# use tbb, and only a separate image is guaranteed to be initialized first.
+cc_shared_library(
+    name = "tbb",
+    shared_lib_name = select({
+        "@platforms//os:macos": "lib/libtbb.dylib",
+        "//conditions:default": "lib/libtbb.so",
+    }),
+    deps = ["//vendor/onetbb:tbb"],
+)
+
 # The monolithic library (CMake's PXR_BUILD_MONOLITHIC usd_ms): every pxr
-# library plus the vendored dependencies they use, so that Python extensions
-# and programs share one copy of each registry.
+# library, so that Python extensions and programs share one copy of each
+# registry.
 cc_shared_library(
     name = "usd_ms",
     shared_lib_name = select({
@@ -20,10 +32,8 @@ cc_shared_library(
         "//conditions:default": "lib/libusd_ms.so",
     }),
     deps = PXR_LIBRARIES,
-    exports_filter = [
-        "//pxr:__subpackages__",
-        "//vendor:__subpackages__",
-    ],
+    dynamic_deps = [":tbb"],
+    exports_filter = ["//pxr:__subpackages__"],
     user_link_flags = PXR_PY_SHARED_LINKOPTS,
 )
 
@@ -36,6 +46,9 @@ pxr_python_package(
     name = "python",
     prefix = "lib/python",
     modules = PXR_PYTHON_MODULES,
-    monolithic = ":usd_ms",
+    dynamic_deps = [
+        ":usd_ms",
+        ":tbb",
+    ],
     runtime = [":resources"],
 )

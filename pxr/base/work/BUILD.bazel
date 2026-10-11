@@ -1,6 +1,7 @@
 # Generated from pxr/base/work/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_configure_file", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_program", "pxr_test_tree")
 
 pxr_configure_file(
     name = "impl_h",
@@ -59,5 +60,236 @@ pxr_library(
     ],
     generated_headers = [
         ":impl_h",
+    ],
+)
+
+pxr_test_program(
+    name = "testWorkDispatcher",
+    srcs = [
+        "testenv/testWorkDispatcher.cpp",
+    ],
+    libraries = [
+        "//pxr/base/work",
+    ],
+)
+
+pxr_test_program(
+    name = "testWorkLoops",
+    srcs = [
+        "testenv/testWorkLoops.cpp",
+    ],
+    libraries = [
+        "//pxr/base/work",
+    ],
+)
+
+pxr_test_program(
+    name = "testWorkReduce",
+    srcs = [
+        "testenv/testWorkReduce.cpp",
+    ],
+    libraries = [
+        "//pxr/base/work",
+    ],
+)
+
+pxr_test_program(
+    name = "testWorkSort",
+    srcs = [
+        "testenv/testWorkSort.cpp",
+    ],
+    libraries = [
+        "//pxr/base/work",
+    ],
+)
+
+pxr_test_program(
+    name = "testWorkThreadLimits",
+    srcs = [
+        "testenv/testWorkThreadLimits.cpp",
+    ],
+    libraries = [
+        "//pxr/base/work",
+    ],
+)
+
+pxr_test_program(
+    name = "testWorkThreadLimitsTBB",
+    srcs = [
+        "workTBB/testenv/testWorkThreadLimitsTBB.cpp",
+    ],
+    libraries = [
+        "//pxr/base/work",
+    ],
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testWorkDispatcher",
+        ":tests/testWorkLoops",
+        ":tests/testWorkReduce",
+        ":tests/testWorkSort",
+        ":tests/testWorkThreadLimits",
+        ":tests/testWorkThreadLimitsTBB",
+    ],
+)
+
+pxr_test(
+    name = "testWorkDispatcher",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testWorkDispatcher",
+        "LABELS": "$<IF:$<PLATFORM_ID:Windows>,flaky,>",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tags = [
+        "$<IF:$<PLATFORM_ID:Windows>,flaky,>",
+    ],
+)
+
+pxr_test(
+    name = "testWorkLoops",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testWorkLoops",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testWorkReduce",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testWorkReduce",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testWorkSort",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testWorkSort",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testWorkThreadLimitsDefault",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testWorkThreadLimits",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testWorkThreadLimits1",
+    arguments = {
+        "ENV": [
+            "PXR_WORK_THREAD_LIMIT=1",
+        ],
+        "COMMAND": "<prefix>/tests/testWorkThreadLimits",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testWorkThreadLimits3",
+    arguments = {
+        "ENV": [
+            "PXR_WORK_THREAD_LIMIT=3",
+        ],
+        "COMMAND": "<prefix>/tests/testWorkThreadLimits",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testWorkThreadLimitsTBBDefault",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testWorkThreadLimitsTBB",
+        "LABELS": "flaky",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tags = [
+        "flaky",
+    ],
+)
+
+pxr_test(
+    name = "testWorkThreadLimitsTBB1",
+    arguments = {
+        "ENV": [
+            "PXR_WORK_THREAD_LIMIT=1",
+        ],
+        "COMMAND": "<prefix>/tests/testWorkThreadLimitsTBB",
+        "LABELS": "flaky",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tags = [
+        "flaky",
+    ],
+)
+
+pxr_test(
+    name = "testWorkThreadLimitsTBB3",
+    arguments = {
+        "ENV": [
+            "PXR_WORK_THREAD_LIMIT=3",
+        ],
+        "COMMAND": "<prefix>/tests/testWorkThreadLimitsTBB",
+        "LABELS": "flaky",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tags = [
+        "flaky",
+    ],
+)
+
+pxr_test(
+    name = "testWorkThreadLimitsRawTBBMax",
+    arguments = {
+        "RUN_SERIAL": True,
+        "COMMAND": "<prefix>/tests/testWorkThreadLimitsTBB --rawtbb",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tags = [
+        "exclusive",
+    ],
+)
+
+pxr_test(
+    name = "testWorkThreadLimitsRawTBB2",
+    arguments = {
+        "RUN_SERIAL": True,
+        "ENV": [
+            "PXR_WORK_THREAD_LIMIT=2",
+        ],
+        "COMMAND": "<prefix>/tests/testWorkThreadLimitsTBB --rawtbb",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tags = [
+        "exclusive",
     ],
 )

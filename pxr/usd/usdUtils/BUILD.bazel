@@ -1,6 +1,7 @@
 # Generated from pxr/usd/usdUtils/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "usdUtils",
@@ -70,5 +71,1005 @@ pxr_library(
     ],
     doxygen_files = [
         "overview.dox",
+    ],
+)
+
+pxr_test_library(
+    name = "TestUsdUtilsCustomFilesystemResolver",
+    srcs = [
+        "testenv/TestUsdUtilsCustomFilesystemResolver_plugin.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/usd/usdUtils",
+    ],
+)
+
+pxr_test_library(
+    name = "TestUsdUtilsDependenciesCustomResolver",
+    srcs = [
+        "testenv/TestUsdUtilsDependenciesCustomResolver_plugin.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/usd/usdUtils",
+    ],
+)
+
+pxr_test_library(
+    name = "TestUsdUtilsLocalizeExternalAssetDependencies",
+    srcs = [
+        "testenv/TestUsdUtilsLocalizeExternalAssetDependencies_plugin.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdUtils",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdUtilsCoalescingDiagnosticDelegateCpp",
+    srcs = [
+        "testenv/testUsdUtilsCoalescingDiagnosticDelegate.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdUtils",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdUtilsStitchCpp",
+    srcs = [
+        "testenv/testUsdUtilsStitch.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdUtils",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdUtilsTimeCodeRangeCpp",
+    srcs = [
+        "testenv/testUsdUtilsTimeCodeRange.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdUtils",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdUtilsAssetLocalization": "testenv/testUsdUtilsAssetLocalization.py",
+        "testUsdUtilsAuthoring": "testenv/testUsdUtilsAuthoring.py",
+        "testUsdUtilsCoalescingDiagnosticDelegate": "testenv/testUsdUtilsCoalescingDiagnosticDelegate.py",
+        "testUsdUtilsConditionalAbortDiagnosticDelegate": "testenv/testUsdUtilsConditionalAbortDiagnosticDelegate.py",
+        "testUsdUtilsConstantsGroup": "testenv/testUsdUtilsConstantsGroup.py",
+        "testUsdUtilsCreateNewUsdzPackage": "testenv/testUsdUtilsCreateNewUsdzPackage.py",
+        "testUsdUtilsDependencies": "testenv/testUsdUtilsDependencies.py",
+        "testUsdUtilsDependenciesCustomResolver": "testenv/testUsdUtilsDependenciesCustomResolver.py",
+        "testUsdUtilsDependencyExtractor": "testenv/testUsdUtilsDependencyExtractor.py",
+        "testUsdUtilsFlattenLayerStack": "testenv/testUsdUtilsFlattenLayerStack.py",
+        "testUsdUtilsIntrospection": "testenv/testUsdUtilsIntrospection.py",
+        "testUsdUtilsLocalizeAsset": "testenv/testUsdUtilsLocalizeAsset.py",
+        "testUsdUtilsModifyAssetPaths": "testenv/testUsdUtilsModifyAssetPaths.py",
+        "testUsdUtilsPipeline": "testenv/testUsdUtilsPipeline.py",
+        "testUsdUtilsSparseValueWriter": "testenv/testUsdUtilsSparseValueWriter.py",
+        "testUsdUtilsStageCache": "testenv/testUsdUtilsStageCache.py",
+        "testUsdUtilsStitch": "testenv/testUsdUtilsStitch.py",
+        "testUsdUtilsStitchClips": "testenv/testUsdUtilsStitchClips.py",
+        "testUsdUtilsTimeCodeRange": "testenv/testUsdUtilsTimeCodeRange.py",
+        "testUsdUtilsUpdateSchemaWithSdrNode": "testenv/testUsdUtilsUpdateSchemaWithSdrNode.py",
+        "testUsdUtilsUsdzUtils": "testenv/testUsdUtilsUsdzUtils.py",
+        "testUsdUtilsUserProcessingFunc": "testenv/testUsdUtilsUserProcessingFunc.py",
+        "testUsdUtilsVarSelsSessionLayer": "testenv/testUsdUtilsVarSelsSessionLayer.py",
+    },
+    testenvs = {
+        "testUsdUtilsAssetLocalization": "testenv/testUsdUtilsAssetLocalization",
+        "testUsdUtilsAuthoring": "testenv/testUsdUtilsAuthoring",
+        "testUsdUtilsCreateNewUsdzPackage": "testenv/testUsdUtilsCreateNewUsdzPackage",
+        "testUsdUtilsDependencies": "testenv/testUsdUtilsDependencies",
+        "testUsdUtilsDependenciesCustomResolver": "testenv/testUsdUtilsDependenciesCustomResolver",
+        "testUsdUtilsDependencyExtractor": "testenv/testUsdUtilsDependencyExtractor",
+        "testUsdUtilsFlattenLayerStack": "testenv/testUsdUtilsFlattenLayerStack",
+        "testUsdUtilsIntrospection": "testenv/testUsdUtilsIntrospection",
+        "testUsdUtilsLocalizeAsset": "testenv/testUsdUtilsLocalizeAsset",
+        "testUsdUtilsModifyAssetPaths": "testenv/testUsdUtilsModifyAssetPaths",
+        "testUsdUtilsPipeline": "testenv/testUsdUtilsPipeline",
+        "testUsdUtilsStitch.testenv": "testenv/testUsdUtilsStitch.testenv",
+        "testUsdUtilsStitchClips.testenv": "testenv/testUsdUtilsStitchClips.testenv",
+        "testUsdUtilsUpdateSchemaWithSdrNode": "testenv/testUsdUtilsUpdateSchemaWithSdrNode",
+        "testUsdUtilsUsdzUtils": "testenv/testUsdUtilsUsdzUtils",
+        "testUsdUtilsUserProcessingFunc": "testenv/testUsdUtilsUserProcessingFunc",
+    },
+    plug_infos = {
+        "UsdUtilsPlugins/lib/TestUsdUtilsCustomFilesystemResolver/Resources/plugInfo.json": "testenv/TestUsdUtilsCustomFilesystemResolver_plugInfo.json",
+        "UsdUtilsPlugins/lib/TestUsdUtilsDependenciesCustomResolver/Resources/plugInfo.json": "testenv/TestUsdUtilsDependenciesCustomResolver_plugInfo.json",
+        "UsdUtilsPlugins/lib/TestUsdUtilsLocalizeExternalAssetDependencies/Resources/plugInfo.json": "testenv/TestUsdUtilsLocalizeExternalAssetDependencies_plugInfo.json",
+    },
+    library_paths = {
+        "UsdUtilsPlugins/lib/TestUsdUtilsCustomFilesystemResolver/Resources/plugInfo.json": "../../../lib/libTestUsdUtilsCustomFilesystemResolver",
+        "UsdUtilsPlugins/lib/TestUsdUtilsDependenciesCustomResolver/Resources/plugInfo.json": "../../../lib/libTestUsdUtilsDependenciesCustomResolver",
+        "UsdUtilsPlugins/lib/TestUsdUtilsLocalizeExternalAssetDependencies/Resources/plugInfo.json": "../../../lib/libTestUsdUtilsLocalizeExternalAssetDependencies",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":_testlib_TestUsdUtilsCustomFilesystemResolver",
+        ":_testlib_TestUsdUtilsDependenciesCustomResolver",
+        ":_testlib_TestUsdUtilsLocalizeExternalAssetDependencies",
+        ":tests/testUsdUtilsCoalescingDiagnosticDelegateCpp",
+        ":tests/testUsdUtilsStitchCpp",
+        ":tests/testUsdUtilsTimeCodeRangeCpp",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConstantsGroup",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConstantsGroup",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsAssetLocalization",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsAssetLocalization",
+        "TESTENV": "testenv/testUsdUtilsAssetLocalization",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsAuthoring",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsAuthoring",
+        "TESTENV": "testenv/testUsdUtilsAuthoring",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCoalescingDiagnosticDelegate",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsCoalescingDiagnosticDelegate",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case1",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case2",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case3",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case4",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase5",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case5",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase5a",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case5a",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase6",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case6",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase6a",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case6a",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase7",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case7",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase8",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case8",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase9",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case9",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase10",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case10",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase10a",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case10a",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase11",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case11",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase11a",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case11a",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase12",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case12",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase12a",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case12a",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase13",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case13",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase13a",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case13a",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase14",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case14",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase14a",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case14a",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase15",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case15",
+        "EXPECTED_RETURN_CODE": "134",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsConditionalAbortDiagnosticDelegateCase16",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsConditionalAbortDiagnosticDelegate case16",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCoalescingDiagnosticDelegateCpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdUtilsCoalescingDiagnosticDelegateCpp",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCreateNewARKitUsdzPackage",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsCreateNewUsdzPackage --arkit -l contents_arkit.txt package.usdz root.usd",
+        "TESTENV": "testenv/testUsdUtilsCreateNewUsdzPackage",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCreateNewARKitUsdzPackageInPlace",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsCreateNewUsdzPackage --editLayersInPlace --expectedDirtyLayers flat.usda --arkit package_flat.usdz flat.usda -l contents_arkit_flat_in_place.txt",
+        "TESTENV": "testenv/testUsdUtilsCreateNewUsdzPackage",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCreateNewUsdzPackage",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsCreateNewUsdzPackage -l contents.txt package.usdz root.usd",
+        "TESTENV": "testenv/testUsdUtilsCreateNewUsdzPackage",
+        "DIFF_COMPARE": [
+            "contents.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCreateNewUsdzPackageContextDep",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsCreateNewUsdzPackage -l contents_usdz_context_dep_assets.txt usdzContextDepAssets.usdz usdzContextDepAssets/usdzContextDepAssets.usda",
+        "TESTENV": "testenv/testUsdUtilsCreateNewUsdzPackage",
+        "DIFF_COMPARE": [
+            "contents_usdz_context_dep_assets.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCreateNewUsdzPackageFilterMetadataKeys",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsCreateNewUsdzPackage -l contents_filter_metadata_keys.txt filter_metadata_keys.usdz filterMetadataKeys/filter_metadata_keys.usda",
+        "TESTENV": "testenv/testUsdUtilsCreateNewUsdzPackage",
+        "DIFF_COMPARE": [
+            "contents_filter_metadata_keys.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCreateNewUsdzPackageUdim",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsCreateNewUsdzPackage -l contents_udim.txt udim.usdz udim/root.usda",
+        "TESTENV": "testenv/testUsdUtilsCreateNewUsdzPackage",
+        "DIFF_COMPARE": [
+            "contents_udim.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCreateNewUsdzPackageRemapClipsDir",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsCreateNewUsdzPackage remapClipsDir.usdz remapClipsDir/root.usda -l contents_remap_clips_dir.txt",
+        "TESTENV": "testenv/testUsdUtilsCreateNewUsdzPackage",
+        "DIFF_COMPARE": [
+            "contents_remap_clips_dir.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsCreateNewUsdzPackageEditInPlace",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsCreateNewUsdzPackage --editLayersInPlace --expectedDirtyLayers nestedUsdz/combined.usda combined.usdz nestedUsdz/combined.usda -l contents_nested_in_place.txt",
+        "TESTENV": "testenv/testUsdUtilsCreateNewUsdzPackage",
+        "DIFF_COMPARE": [
+            "contents_nested_in_place.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsDependencies",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsDependencies",
+        "TESTENV": "testenv/testUsdUtilsDependencies",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsDependenciesCustomResolver",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsDependenciesCustomResolver",
+        "TESTENV": "testenv/testUsdUtilsDependenciesCustomResolver",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsDependencyExtractor1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsDependencyExtractor ascii.usda ascii-usda.txt",
+        "TESTENV": "testenv/testUsdUtilsDependencyExtractor",
+        "DIFF_COMPARE": [
+            "ascii-usda.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsDependencyExtractor2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsDependencyExtractor ascii.usd ascii-usd.txt",
+        "TESTENV": "testenv/testUsdUtilsDependencyExtractor",
+        "DIFF_COMPARE": [
+            "ascii-usd.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsDependencyExtractor3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsDependencyExtractor crate.usdc crate-usdc.txt",
+        "TESTENV": "testenv/testUsdUtilsDependencyExtractor",
+        "DIFF_COMPARE": [
+            "crate-usdc.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsDependencyExtractor4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsDependencyExtractor crate.usd crate-usd.txt",
+        "TESTENV": "testenv/testUsdUtilsDependencyExtractor",
+        "DIFF_COMPARE": [
+            "crate-usd.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsDependencyExtractor5",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsDependencyExtractor --open-as-anon anon.usda anon.txt",
+        "TESTENV": "testenv/testUsdUtilsDependencyExtractor",
+        "DIFF_COMPARE": [
+            "anon.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsDependencyExtractor6",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsDependencyExtractor udims/root.usda udims.txt",
+        "TESTENV": "testenv/testUsdUtilsDependencyExtractor",
+        "DIFF_COMPARE": [
+            "udims.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsDependencyExtractor7",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsDependencyExtractor --resolve-udim-paths udims/root.usda udims-resolved.txt",
+        "TESTENV": "testenv/testUsdUtilsDependencyExtractor",
+        "DIFF_COMPARE": [
+            "udims-resolved.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsFlattenLayerStack",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsFlattenLayerStack",
+        "TESTENV": "testenv/testUsdUtilsFlattenLayerStack",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsIntrospection",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsIntrospection",
+        "TESTENV": "testenv/testUsdUtilsIntrospection",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsLocalizeAsset",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsLocalizeAsset default/root.usda default_localized -l contents_default.txt",
+        "TESTENV": "testenv/testUsdUtilsLocalizeAsset",
+        "DIFF_COMPARE": [
+            "contents_default.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsLocalizeAssetUdims",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsLocalizeAsset udim/root.usda udim_localized -l contents_udim.txt",
+        "TESTENV": "testenv/testUsdUtilsLocalizeAsset",
+        "DIFF_COMPARE": [
+            "contents_udim.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsModifyAssetPaths",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsModifyAssetPaths layer.usda modified.usda",
+        "TESTENV": "testenv/testUsdUtilsModifyAssetPaths",
+        "DIFF_COMPARE": [
+            "modified.usda",
+            "duplicates.usda",
+            "removal.usda",
+            "removal_preserve_length.usda",
+            "ref_layer_mod.usda",
+            "ref_unmodified.usda",
+            "preserve_metadata.usda",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsPipeline",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsPipeline",
+        "TESTENV": "testenv/testUsdUtilsPipeline",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsSparseValueWriter",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsSparseValueWriter",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsStageCache",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsStageCache",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsStitch",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsStitch",
+        "TESTENV": "testenv/testUsdUtilsStitch.testenv",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsStitchClips",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsStitchClips",
+        "TESTENV": "testenv/testUsdUtilsStitchClips.testenv",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsUpdateSchemaWithSdrNode",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsUpdateSchemaWithSdrNode",
+        "TESTENV": "testenv/testUsdUtilsUpdateSchemaWithSdrNode",
+        "DIFF_COMPARE": [
+            "resultAPISchema.usda",
+            "resultAPIIdentifierMissing.usda",
+            "result_override.usda",
+            "resultUsdShadeConnectableAPIMetadata.usda",
+            "resultUsdShadeConnectableAPIMetadata2.usda",
+            "duplicateProp.usda",
+            "duplicatePropTypeMisMatch.usda",
+            "schemaConcrete.usda",
+            "resultInfoId.usda",
+            "resultInfoIdOverride.usda",
+            "testSdrNodeNonShaderNamespacePrefixResult.usda",
+            "testSdrNodeShaderNamespacePrefixResult.usda",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsUpdateSchemaWithSdrNodeError",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsUpdateSchemaWithSdrNode TestUsdUpdateSchemaWithSdrNode True",
+        "TESTENV": "testenv/testUsdUtilsUpdateSchemaWithSdrNode",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsStitchCpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdUtilsStitchCpp",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsTimeCodeRange",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsTimeCodeRange",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsTimeCodeRangeCpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdUtilsTimeCodeRangeCpp",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsUserProcessingFunc",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsUserProcessingFunc",
+        "TESTENV": "testenv/testUsdUtilsUserProcessingFunc",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsVarSelsSessionLayer",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsVarSelsSessionLayer",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdUtilsUsdzUtils",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdUtilsUsdzUtils",
+        "TESTENV": "testenv/testUsdUtilsUsdzUtils",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

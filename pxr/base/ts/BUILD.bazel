@@ -1,6 +1,7 @@
 # Generated from pxr/base/ts/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "ts",
@@ -85,5 +86,391 @@ pxr_library(
     ],
     pymodule_local_defines = [
         "TS_BUILD_TEST_FRAMEWORK",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsThreadedCOW",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsThreadedCOW.cpp",
+    ],
+    libraries = [
+        "//pxr/base/ts",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsRegressionPreventerCpp",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsRegressionPreventerCpp.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/base/ts",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsSegmentIterator",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsSegmentIterator.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/base/ts",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsSplineAPI",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsSplineAPI.cpp",
+    ],
+    libraries = [
+        "//pxr/base/ts",
+        "//pxr/base/vt",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsSplineBaking",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsSplineBaking.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/ts",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsSplineDiff",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsSplineDiff.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/base/ts",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsSplineEval",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsSplineEval.cpp",
+    ],
+    libraries = [
+        "//pxr/base/ts",
+        "//pxr/base/vt",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsSplineSampling",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsSplineSampling.cpp",
+    ],
+    libraries = [
+        "//pxr/base/ts",
+        "//pxr/base/vt",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsSplineTransforms",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsSplineTransforms.cpp",
+    ],
+    libraries = [
+        "//pxr/base/ts",
+        "//pxr/base/vt",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testTsTangentConversion",
+    srcs = [
+        "tsTest_Museum.cpp",
+        "tsTest_SampleBezier.cpp",
+        "tsTest_SampleTimes.cpp",
+        "tsTest_TsEvaluator.cpp",
+        "testenv/testTsTangentConversion.cpp",
+    ],
+    libraries = [
+        "//pxr/base/ts",
+        "//pxr/base/vt",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testTsBugs": "testenv/testTsBugs.py",
+        "testTsDerivatives": "testenv/testTsDerivatives.py",
+        "testTsRegressionPreventer": "testenv/testTsRegressionPreventer.py",
+        "testTsSplineAPIPy": "testenv/testTsSplineAPIPy.py",
+        "testTsSplineBreakdown": "testenv/testTsSplineBreakdown.py",
+        "testTsSplineValueBlock": "testenv/testTsSplineValueBlock.py",
+        "testTsTangentAlgorithms": "testenv/testTsTangentAlgorithms.py",
+        "tsTest_TsFramework": "testenv/tsTest_TsFramework.py",
+        "tsTest_TsVsBezier": "testenv/tsTest_TsVsBezier.py",
+    },
+    testenvs = {
+        "testTsRegressionPreventer.testenv": "testenv/testTsRegressionPreventer.testenv",
+        "tsTest_TsFramework.testenv": "testenv/tsTest_TsFramework.testenv",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testTsThreadedCOW",
+        ":tests/testTsRegressionPreventerCpp",
+        ":tests/testTsSegmentIterator",
+        ":tests/testTsSplineAPI",
+        ":tests/testTsSplineBaking",
+        ":tests/testTsSplineDiff",
+        ":tests/testTsSplineEval",
+        ":tests/testTsSplineSampling",
+        ":tests/testTsSplineTransforms",
+        ":tests/testTsTangentConversion",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testTsSplineSampling",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTsSplineSampling",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsDerivatives",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTsDerivatives",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsBugs",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTsBugs",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsRegressionPreventer",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTsRegressionPreventer",
+        "TESTENV": "testenv/testTsRegressionPreventer.testenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsSplineAPIPy",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTsSplineAPIPy",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsSplineBreakdown",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTsSplineBreakdown",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsSplineValueBlock",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTsSplineValueBlock",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsTangentAlgorithms",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testTsTangentAlgorithms",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsThreadedCOW",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTsThreadedCOW",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsRegressionPreventerCpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTsRegressionPreventerCpp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsSegmentIterator",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTsSegmentIterator",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsSplineAPI",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTsSplineAPI",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsSplineBaking",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTsSplineBaking",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsSplineEval",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTsSplineEval",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsSplineTransforms",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTsSplineTransforms",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testTsTangentConversion",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testTsTangentConversion",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "tsTest_TsFramework",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/tsTest_TsFramework",
+        "TESTENV": "testenv/tsTest_TsFramework.testenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "tsTest_TsVsBezier",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/tsTest_TsVsBezier",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

@@ -1,0 +1,2 @@
+# Runs one pxr_register_test (see //bazel:pxr_test.bzl).
+exports_files(["pxr_test_runner.py"])

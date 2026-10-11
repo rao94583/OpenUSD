@@ -1,6 +1,7 @@
 # Generated from pxr/usd/sdf/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "sdf",
@@ -196,5 +197,1181 @@ pxr_library(
         "doxygen/booleanExpressions.md",
         "doxygen/fileFormatPlugin.dox",
         "doxygen/variableExpressions.dox",
+    ],
+)
+
+pxr_test_library(
+    name = "TestSdfFileFormatCapabilities",
+    srcs = [
+        "testenv/TestSdfFileFormatCapabilities.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_library(
+    name = "TestSdfLayerExceptionHandling",
+    srcs = [
+        "testenv/TestSdfLayerExceptionHandling.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_library(
+    name = "TestSdfNoAssetFileFormat",
+    srcs = [
+        "testenv/TestSdfNoAssetFileFormat.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_library(
+    name = "TestSdfStreamingFileFormat",
+    srcs = [
+        "testenv/TestSdfStreamingFileFormat.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_library(
+    name = "TestSdfTargetFileFormat",
+    srcs = [
+        "testenv/TestSdfTargetFileFormat.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_library(
+    name = "TestSdfResolver",
+    srcs = [
+        "testenv/TestSdfResolver.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfAbstractData_Cpp",
+    srcs = [
+        "testenv/testSdfAbstractData.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfAttributeBlocking_Cpp",
+    srcs = [
+        "testenv/testSdfAttributeBlocking.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfBooleanExpression",
+    srcs = [
+        "testenv/testSdfBooleanExpression.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfDictionaryAuthoring",
+    srcs = [
+        "testenv/testSdfDictionaryAuthoring.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfGlobPattern",
+    srcs = [
+        "testenv/testSdfGlobPattern.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfHardToReach",
+    srcs = [
+        "testenv/testSdfHardToReach.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfIntegerCoding",
+    srcs = [
+        "testenv/testSdfIntegerCoding.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfLayerHints",
+    srcs = [
+        "testenv/testSdfLayerHints.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfMetaDataPlugInfo",
+    srcs = [
+        "testenv/testSdfMetaDataPlugInfo.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfPathExpression_Cpp",
+    srcs = [
+        "testenv/testSdfPathExpression.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfPathParser",
+    srcs = [
+        "testenv/testSdfPathParser.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfPathTable",
+    srcs = [
+        "testenv/testSdfPathTable.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfPathThreading",
+    srcs = [
+        "testenv/testSdfPathThreading.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfPredicateExpression_Cpp",
+    srcs = [
+        "testenv/testSdfPredicateExpression.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfTextFile",
+    srcs = [
+        "testenv/testSdfTextFile.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfUsdaFileFormatParsing",
+    srcs = [
+        "testenv/testSdfUsdaFileFormatParsing.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfUsdaFileFormatValueParsing",
+    srcs = [
+        "testenv/testSdfUsdaFileFormatValueParsing.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfUsdzResolver",
+    srcs = [
+        "testenv/testSdfUsdzResolver.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfVariableExpression_Cpp",
+    srcs = [
+        "testenv/testSdfVariableExpression.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfVariableExpressionAST_Cpp",
+    srcs = [
+        "testenv/testSdfVariableExpressionAST.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfFileVersion_Cpp",
+    srcs = [
+        "testenv/testSdfFileVersion.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfZipFile_CPP",
+    srcs = [
+        "testenv/testSdfZipFile.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfUsdcInvalidPrimChildren",
+    srcs = [
+        "testenv/testSdfUsdcInvalidPrimChildren.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfUsdcMalformed",
+    srcs = [
+        "testenv/testSdfUsdcMalformed.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testSdfUsdcVersioning",
+    srcs = [
+        "testenv/testSdfUsdcVersioning.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testSdfAssetPath": "testenv/testSdfAssetPath.py",
+        "testSdfAttribute": "testenv/testSdfAttribute.py",
+        "testSdfAttributeBlocking": "testenv/testSdfAttributeBlocking.py",
+        "testSdfBatchNamespaceEdit": "testenv/testSdfBatchNamespaceEdit.py",
+        "testSdfCopyUtils": "testenv/testSdfCopyUtils.py",
+        "testSdfCustomLayerData": "testenv/testSdfCustomLayerData.py",
+        "testSdfDetachedLayer": "testenv/testSdfDetachedLayer.py",
+        "testSdfFileFormat": "testenv/testSdfFileFormat.py",
+        "testSdfFileFormatCapabilities": "testenv/testSdfFileFormatCapabilities.py",
+        "testSdfLayer": "testenv/testSdfLayer.py",
+        "testSdfLayerMuting": "testenv/testSdfLayerMuting.py",
+        "testSdfLayerOffset": "testenv/testSdfLayerOffset.py",
+        "testSdfLegacyFileFormat": "testenv/testSdfLegacyFileFormat.py",
+        "testSdfListOp": "testenv/testSdfListOp.py",
+        "testSdfParsing": "testenv/testSdfParsing.py",
+        "testSdfPath": "testenv/testSdfPath.py",
+        "testSdfPath2": "testenv/testSdfPath2.py",
+        "testSdfPath2Construct": "testenv/testSdfPath2Construct.py",
+        "testSdfPathExpression": "testenv/testSdfPathExpression.py",
+        "testSdfPathExpressionArray": "testenv/testSdfPathExpressionArray.py",
+        "testSdfPayload": "testenv/testSdfPayload.py",
+        "testSdfPrim": "testenv/testSdfPrim.py",
+        "testSdfReference": "testenv/testSdfReference.py",
+        "testSdfRelocates": "testenv/testSdfRelocates.py",
+        "testSdfSpecHash": "testenv/testSdfSpecHash.py",
+        "testSdfSplineVersioning": "testenv/testSdfSplineVersioning.py",
+        "testSdfTargetFileFormat": "testenv/testSdfTargetFileFormat.py",
+        "testSdfTypes": "testenv/testSdfTypes.py",
+        "testSdfVariableExpression": "testenv/testSdfVariableExpression.py",
+        "testSdfVariableExpressionAST": "testenv/testSdfVariableExpressionAST.py",
+        "testSdfVariants": "testenv/testSdfVariants.py",
+        "testSdfZipFile": "testenv/testSdfZipFile.py",
+        "testSdfZipFileLimits": "testenv/testSdfZipFileLimits.py",
+    },
+    testenvs = {
+        "testSdfBatchNamespaceEdit/testSdfBatchNamespaceEdit.testenv": "testenv/testSdfBatchNamespaceEdit.testenv",
+        "testSdfCustomLayerData/testSdfCustomLayerData.testenv": "testenv/testSdfCustomLayerData.testenv",
+        "testSdfLayerHints/testSdfLayerHints.testenv": "testenv/testSdfLayerHints.testenv",
+        "testSdfLayerMuting/testSdfLayerMuting.testenv": "testenv/testSdfLayerMuting.testenv",
+        "testSdfMetaDataPlugInfo/testSdfMetaDataPlugInfo.testenv": "testenv/testSdfMetaDataPlugInfo.testenv",
+        "testSdfParsing/testSdfParsing.testenv": "testenv/testSdfParsing.testenv",
+        "testSdfTargetFileFormat.testenv": "testenv/testSdfTargetFileFormat.testenv",
+        "testSdfUsdcInvalidPrimChildren.testenv": "testenv/testSdfUsdcInvalidPrimChildren.testenv",
+        "testSdfUsdcMalformed": "testenv/testSdfUsdcMalformed",
+        "testSdfUsdcVersioning": "testenv/testSdfUsdcVersioning",
+        "testSdfUsdzResolver": "testenv/testSdfUsdzResolver",
+        "testSdfZipFile.testenv": "testenv/testSdfZipFile.testenv",
+    },
+    plug_infos = {
+        "SdfPlugins/lib/TestSdfFileFormatCapabilities/Resources/plugInfo.json": "testenv/TestSdfFileFormatCapabilities_plugInfo.json",
+        "SdfPlugins/lib/TestSdfLayerExceptionHandling/Resources/plugInfo.json": "testenv/TestSdfLayerExceptionHandling_plugInfo.json",
+        "SdfPlugins/lib/TestSdfNoAssetFileFormat/Resources/plugInfo.json": "testenv/TestSdfNoAssetFileFormat_plugInfo.json",
+        "SdfPlugins/lib/TestSdfStreamingFileFormat/Resources/plugInfo.json": "testenv/TestSdfStreamingFileFormat_plugInfo.json",
+        "SdfPlugins/lib/TestSdfTargetFileFormat/Resources/plugInfo.json": "testenv/TestSdfTargetFileFormat_plugInfo.json",
+        "SdfPlugins/lib/TestSdfResolver/Resources/plugInfo.json": "testenv/TestSdfResolver_plugInfo.json",
+    },
+    library_paths = {
+        "SdfPlugins/lib/TestSdfFileFormatCapabilities/Resources/plugInfo.json": "../../../lib/libTestSdfFileFormatCapabilities",
+        "SdfPlugins/lib/TestSdfLayerExceptionHandling/Resources/plugInfo.json": "../../../lib/libTestSdfLayerExceptionHandling",
+        "SdfPlugins/lib/TestSdfNoAssetFileFormat/Resources/plugInfo.json": "../../../lib/libTestSdfNoAssetFileFormat",
+        "SdfPlugins/lib/TestSdfStreamingFileFormat/Resources/plugInfo.json": "../../../lib/libTestSdfStreamingFileFormat",
+        "SdfPlugins/lib/TestSdfTargetFileFormat/Resources/plugInfo.json": "../../../lib/libTestSdfTargetFileFormat",
+        "SdfPlugins/lib/TestSdfResolver/Resources/plugInfo.json": "../../../lib/libTestSdfResolver",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":_testlib_TestSdfFileFormatCapabilities",
+        ":_testlib_TestSdfLayerExceptionHandling",
+        ":_testlib_TestSdfNoAssetFileFormat",
+        ":_testlib_TestSdfStreamingFileFormat",
+        ":_testlib_TestSdfTargetFileFormat",
+        ":_testlib_TestSdfResolver",
+        ":tests/testSdfAbstractData_Cpp",
+        ":tests/testSdfAttributeBlocking_Cpp",
+        ":tests/testSdfBooleanExpression",
+        ":tests/testSdfDictionaryAuthoring",
+        ":tests/testSdfGlobPattern",
+        ":tests/testSdfHardToReach",
+        ":tests/testSdfIntegerCoding",
+        ":tests/testSdfLayerHints",
+        ":tests/testSdfMetaDataPlugInfo",
+        ":tests/testSdfPathExpression_Cpp",
+        ":tests/testSdfPathParser",
+        ":tests/testSdfPathTable",
+        ":tests/testSdfPathThreading",
+        ":tests/testSdfPredicateExpression_Cpp",
+        ":tests/testSdfTextFile",
+        ":tests/testSdfUsdaFileFormatParsing",
+        ":tests/testSdfUsdaFileFormatValueParsing",
+        ":tests/testSdfUsdzResolver",
+        ":tests/testSdfVariableExpression_Cpp",
+        ":tests/testSdfVariableExpressionAST_Cpp",
+        ":tests/testSdfFileVersion_Cpp",
+        ":tests/testSdfZipFile_CPP",
+        ":tests/testSdfUsdcInvalidPrimChildren",
+        ":tests/testSdfUsdcMalformed",
+        ":tests/testSdfUsdcVersioning",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testSdfAbstractData_Cpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfAbstractData_Cpp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfAssetPath",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfAssetPath",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfAttribute",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfAttribute",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfAttributeBlocking",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfAttributeBlocking",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfAttributeBlocking_Cpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfAttributeBlocking_Cpp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfBatchNamespaceEdit",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfBatchNamespaceEdit",
+        "TESTENV": "testenv/testSdfBatchNamespaceEdit.testenv",
+        "TESTENV_DEST": "testSdfBatchNamespaceEdit/testSdfBatchNamespaceEdit.testenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfBooleanExpression",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfBooleanExpression",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfCopyUtils",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfCopyUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfCustomLayerData",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfCustomLayerData",
+        "TESTENV": "testenv/testSdfCustomLayerData.testenv",
+        "TESTENV_DEST": "testSdfCustomLayerData/testSdfCustomLayerData.testenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfDetachedLayer",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfDetachedLayer",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfDetachedLayerEnvVar1",
+    arguments = {
+        "PYTHON": True,
+        "ENV": [
+            "SDF_LAYER_INCLUDE_IN_MEMORY=*",
+            "SDF_LAYER_EXCLUDE_IN_MEMORY=foo,bar",
+        ],
+        "COMMAND": "<prefix>/tests/testSdfDetachedLayer",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfDetachedLayerEnvVar2",
+    arguments = {
+        "PYTHON": True,
+        "ENV": [
+            "SDF_LAYER_INCLUDE_IN_MEMORY=foo,bar",
+            "SDF_LAYER_EXCLUDE_IN_MEMORY=baz,garply",
+        ],
+        "COMMAND": "<prefix>/tests/testSdfDetachedLayer",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfDictionaryAuthoring",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfDictionaryAuthoring",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfGlobPattern",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfGlobPattern",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfHardToReach",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfHardToReach",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfFileFormat",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfFileFormat",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfFileFormatCapabilities",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfFileFormatCapabilities",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfIntegerCoding",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfIntegerCoding",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfLayer",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfLayer",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfLayerHints",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfLayerHints",
+        "TESTENV": "testenv/testSdfLayerHints.testenv",
+        "TESTENV_DEST": "testSdfLayerHints/testSdfLayerHints.testenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfLayerMuting",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfLayerMuting",
+        "TESTENV": "testenv/testSdfLayerMuting.testenv",
+        "TESTENV_DEST": "testSdfLayerMuting/testSdfLayerMuting.testenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfLayerOffset",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfLayerOffset",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfLegacyFileFormat",
+    arguments = {
+        "PYTHON": True,
+        "ENV": [
+            "SDF_FILE_FORMAT_LEGACY_IMPORT=allow",
+        ],
+        "COMMAND": "<prefix>/tests/testSdfLegacyFileFormat",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfLegacyFileFormat_Error",
+    arguments = {
+        "PYTHON": True,
+        "ENV": [
+            "SDF_FILE_FORMAT_LEGACY_IMPORT=error",
+        ],
+        "COMMAND": "<prefix>/tests/testSdfLegacyFileFormat",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfListOp",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfListOp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfMetaDataPlugInfo",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfMetaDataPlugInfo",
+        "TESTENV": "testenv/testSdfMetaDataPlugInfo.testenv",
+        "TESTENV_DEST": "testSdfMetaDataPlugInfo/testSdfMetaDataPlugInfo.testenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPathExpression",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfPathExpression",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPathExpression_Cpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfPathExpression_Cpp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPathExpressionArray",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfPathExpressionArray",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfParsing",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfParsing",
+        "TESTENV": "testenv/testSdfParsing.testenv",
+        "TESTENV_DEST": "testSdfParsing/testSdfParsing.testenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPath",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfPath",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPath2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfPath2",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPath2Construct",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfPath2Construct",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPathParser",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfPathParser",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPathTable",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfPathTable",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPathThreading",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfPathThreading",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPredicateExpression_Cpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfPredicateExpression_Cpp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfUsdaFileFormatParsing",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfUsdaFileFormatParsing",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfUsdaFileFormatValueParsing",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfUsdaFileFormatValueParsing",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPayload",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfPayload",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfPrim",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfPrim",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfReference",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfReference",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfRelocates",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfRelocates",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfSpecHash",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfSpecHash",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfSplineVersioning",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfSplineVersioning",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfTargetFileFormat",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfTargetFileFormat",
+        "TESTENV": "testenv/testSdfTargetFileFormat.testenv",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfTextFile",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfTextFile",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfTextFile_1_1",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfTextFile",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "USD_WRITE_NEW_USDA_FILES_AS_VERSION=1.1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfTypes",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfTypes",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfZipFile",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfZipFile",
+        "TESTENV": "testenv/testSdfZipFile.testenv",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfZipFileLimits",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfZipFileLimits",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "SDF_MAX_ZIPFILE_SIZE=195",
+            "SDF_MAX_ZIPFILE_ENTRY_SIZE=64",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfZipFile_CPP",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfZipFile_CPP",
+        "TESTENV": "testenv/testSdfZipFile.testenv",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfUsdzResolver",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfUsdzResolver",
+        "TESTENV": "testenv/testSdfUsdzResolver",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfVariableExpression",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfVariableExpression",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfVariableExpression_Cpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfVariableExpression_Cpp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfVariableExpressionAST",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfVariableExpressionAST",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfVariableExpressionAST_Cpp",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfVariableExpressionAST_Cpp",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfVariants",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testSdfVariants",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfUsdcInvalidPrimChildren",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfUsdcInvalidPrimChildren",
+        "TESTENV": "testenv/testSdfUsdcInvalidPrimChildren.testenv",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfUsdcMalformed",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfUsdcMalformed",
+        "TESTENV": "testenv/testSdfUsdcMalformed",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfUsdcMalformed_PREAD",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfUsdcMalformed",
+        "TESTENV": "testenv/testSdfUsdcMalformed",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "USDC_USE_PREAD=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfUsdcMalformed_ASSET",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfUsdcMalformed",
+        "TESTENV": "testenv/testSdfUsdcMalformed",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "USDC_USE_ASSET=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testSdfUsdcVersioning",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testSdfUsdcVersioning",
+        "TESTENV": "testenv/testSdfUsdcVersioning",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "PXR_USDC_EMIT_DEPRECATION_WARNINGS=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

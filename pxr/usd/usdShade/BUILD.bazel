@@ -1,6 +1,7 @@
 # Generated from pxr/usd/usdShade/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "usdShade",
@@ -63,5 +64,295 @@ pxr_library(
     ],
     doxygen_files = [
         "overview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdShadeHasConnectableAPI",
+    srcs = [
+        "testenv/testUsdShadeHasConnectableAPI.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/usdShade",
+        "//pxr/usd/usdGeom",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdShadeBinding": "testenv/testUsdShadeBinding.py",
+        "testUsdShadeConnectability": "testenv/testUsdShadeConnectability.py",
+        "testUsdShadeConnectableAPIBehavior": "testenv/testUsdShadeConnectableAPIBehavior.py",
+        "testUsdShadeCoordSysAPI": "testenv/testUsdShadeCoordSysAPI.py",
+        "testUsdShadeCoordSysAPIDeprecated": "testenv/testUsdShadeCoordSysAPIDeprecated.py",
+        "testUsdShadeGetValueProducingAttribute": "testenv/testUsdShadeGetValueProducingAttribute.py",
+        "testUsdShadeInterfaceInputConsumers": "testenv/testUsdShadeInterfaceInputConsumers.py",
+        "testUsdShadeMaterialAuthoring": "testenv/testUsdShadeMaterialAuthoring.py",
+        "testUsdShadeMaterialBaseMaterial": "testenv/testUsdShadeMaterialBaseMaterial.py",
+        "testUsdShadeMaterialBindFaceSubset": "testenv/testUsdShadeMaterialBindFaceSubset.py",
+        "testUsdShadeMaterialBinding": "testenv/testUsdShadeMaterialBinding.py",
+        "testUsdShadeMaterialOutputs": "testenv/testUsdShadeMaterialOutputs.py",
+        "testUsdShadeMaterialSpecializesBaseComposition": "testenv/testUsdShadeMaterialSpecializesBaseComposition.py",
+        "testUsdShadeNodeGraphs": "testenv/testUsdShadeNodeGraphs.py",
+        "testUsdShadeShaderDef": "testenv/testUsdShadeShaderDef.py",
+        "testUsdShadeShaders": "testenv/testUsdShadeShaders.py",
+        "testUsdShadeUdimUtils": "testenv/testUsdShadeUdimUtils.py",
+    },
+    testenvs = {
+        "testUsdShadeConnectableAPIBehavior": "testenv/testUsdShadeConnectableAPIBehavior",
+        "testUsdShadeCoordSysAPI": "testenv/testUsdShadeCoordSysAPI",
+        "testUsdShadeGetValueProducingAttribute": "testenv/testUsdShadeGetValueProducingAttribute",
+        "testUsdShadeMaterialAuthoring": "testenv/testUsdShadeMaterialAuthoring",
+        "testUsdShadeMaterialBaseMaterial": "testenv/testUsdShadeMaterialBaseMaterial",
+        "testUsdShadeMaterialBindFaceSubset": "testenv/testUsdShadeMaterialBindFaceSubset",
+        "testUsdShadeMaterialBinding": "testenv/testUsdShadeMaterialBinding",
+        "testUsdShadeMaterialSpecializesBaseComposition": "testenv/testUsdShadeMaterialSpecializesBaseComposition",
+        "testUsdShadeShaderDef": "testenv/testUsdShadeShaderDef",
+        "testUsdShadeUdimUtils": "testenv/testUsdShadeUdimUtils",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testUsdShadeHasConnectableAPI",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeBinding",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeBinding",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeConnectableAPIBehavior",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeConnectableAPIBehavior",
+        "TESTENV": "testenv/testUsdShadeConnectableAPIBehavior",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeCoordSysAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeCoordSysAPI",
+        "TESTENV": "testenv/testUsdShadeCoordSysAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeGetValueProducingAttribute",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeGetValueProducingAttribute",
+        "TESTENV": "testenv/testUsdShadeGetValueProducingAttribute",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeMaterialAuthoring",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeMaterialAuthoring",
+        "TESTENV": "testenv/testUsdShadeMaterialAuthoring",
+        "DIFF_COMPARE": [
+            "char_shading.usda",
+            "char_shading_compact.usda",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeMaterialBinding",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeMaterialBinding",
+        "TESTENV": "testenv/testUsdShadeMaterialBinding",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeMaterialOutputs",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeMaterialOutputs",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeMaterialBindFaceSubset",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeMaterialBindFaceSubset",
+        "TESTENV": "testenv/testUsdShadeMaterialBindFaceSubset",
+        "DIFF_COMPARE": [
+            "SphereWithMaterialBind.usda",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeShaders",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeShaders",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeShaderDef",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeShaderDef",
+        "TESTENV": "testenv/testUsdShadeShaderDef",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeNodeGraphs",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeNodeGraphs",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeMaterialBaseMaterial",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeMaterialBaseMaterial",
+        "TESTENV": "testenv/testUsdShadeMaterialBaseMaterial",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "test_base_material_specializes.usda",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeMaterialSpecializesBaseComposition",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeMaterialSpecializesBaseComposition",
+        "TESTENV": "testenv/testUsdShadeMaterialSpecializesBaseComposition",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeInterfaceInputConsumers",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeInterfaceInputConsumers",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeConnectability",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeConnectability",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeHasConnectableAPI",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdShadeHasConnectableAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeConnectability_OldEncoding",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeConnectability",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdShadeUdimUtils",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdShadeUdimUtils",
+        "TESTENV": "testenv/testUsdShadeUdimUtils",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

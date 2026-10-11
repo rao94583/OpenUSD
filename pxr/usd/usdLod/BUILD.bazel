@@ -1,6 +1,7 @@
 # Generated from pxr/usd/usdLod/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "usdLod",
@@ -48,5 +49,83 @@ pxr_library(
     ],
     doxygen_files = [
         "overview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdLodGetLod",
+    srcs = [
+        "testenv/testUsdLodGetLod.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usdLod",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdLodDistanceHeuristic": "testenv/testUsdLodDistanceHeuristic.py",
+        "testUsdLodRootAPI": "testenv/testUsdLodRootAPI.py",
+        "testUsdLodScreenSizeHeuristic": "testenv/testUsdLodScreenSizeHeuristic.py",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testUsdLodGetLod",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdLodRootAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdLodRootAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdLodDistanceHeuristic",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdLodDistanceHeuristic",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdLodScreenSizeHeuristic",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdLodScreenSizeHeuristic",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdLodGetLod",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdLodGetLod",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

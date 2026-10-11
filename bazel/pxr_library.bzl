@@ -19,12 +19,20 @@ load("@rules_python//python:py_binary.bzl", "py_binary")
 load("//bazel:pxr_install.bzl", "pxr_resources")
 load("//bazel:pxr_python.bzl", "pxr_module_deps_cpp")
 
-# What programs need at runtime: the monolithic library and its resources.
-_MONOLITHIC = "//bazel/install:usd_ms"
+# Shared libraries everything else links against: the monolithic library and
+# oneTBB, which pxr headers use directly.
+PXR_DYNAMIC_DEPS = [
+    "//bazel/install:usd_ms",
+    "//bazel/install:tbb",
+]
 _RESOURCES = "//bazel/install:resources"
 
 # Flags from cmake/defaults/gccclangshareddefaults.cmake and clangdefaults.cmake.
 PXR_COPTS = [
+    # CMake puts its include directory on the -I path, so <pxr/...> includes
+    # work as well as "pxr/..."; Bazel only adds -iquote for these roots.
+    "-I.",
+    "-I$(BINDIR)",
     "-Wall",
     "-Wformat-security",
     "-Wmismatched-tags",
@@ -333,7 +341,7 @@ def pxr_cpp_bin(name, libraries = []):
         deps = ["//pxr"] + libraries + [
             "@rules_python//python/cc:current_py_cc_libs",
         ],
-        dynamic_deps = [_MONOLITHIC],
+        dynamic_deps = PXR_DYNAMIC_DEPS,
         data = [_RESOURCES],
         visibility = ["//visibility:public"],
     )
@@ -343,7 +351,9 @@ def pxr_python_bin(name, python_file):
 
     Programs run with the Python packages CMake looks for (Jinja2, for the
     schema generators) importable, as they are in CMake's interpreter.
+    Tests install the source itself as <prefix>/bin/<name>, as CMake does.
     """
+    native.exports_files([python_file])
     py_binary(
         name = name,
         srcs = [python_file],

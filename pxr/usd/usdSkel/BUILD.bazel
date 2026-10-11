@@ -1,6 +1,7 @@
 # Generated from pxr/usd/usdSkel/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
 
 pxr_library(
     name = "usdSkel",
@@ -86,5 +87,168 @@ pxr_library(
         "images/blendshapesWithInbetweens.svg",
         "images/influencesPrimvarLayout.svg",
         "images/unboundedInterpolationExample.svg",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdSkelAnimMapper": "testenv/testUsdSkelAnimMapper.py",
+        "testUsdSkelAnimQuery": "testenv/testUsdSkelAnimQuery.py",
+        "testUsdSkelBakeSkinning": "testenv/testUsdSkelBakeSkinning.py",
+        "testUsdSkelBindingAPI": "testenv/testUsdSkelBindingAPI.py",
+        "testUsdSkelBlendShape": "testenv/testUsdSkelBlendShape.py",
+        "testUsdSkelCache": "testenv/testUsdSkelCache.py",
+        "testUsdSkelRoot": "testenv/testUsdSkelRoot.py",
+        "testUsdSkelSkeletonQuery": "testenv/testUsdSkelSkeletonQuery.py",
+        "testUsdSkelSkinningQuery": "testenv/testUsdSkelSkinningQuery.py",
+        "testUsdSkelTopology": "testenv/testUsdSkelTopology.py",
+        "testUsdSkelUtils": "testenv/testUsdSkelUtils.py",
+    },
+    testenvs = {
+        "testUsdSkelBakeSkinning": "testenv/testUsdSkelBakeSkinning",
+        "testUsdSkelCache": "testenv/testUsdSkelCache",
+        "testUsdSkelRoot": "testenv/testUsdSkelRoot",
+        "testUsdSkelSkinningQuery": "testenv/testUsdSkelSkinningQuery",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelAnimMapper",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelAnimMapper",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelAnimQuery",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelAnimQuery",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelBakeSkinning",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelBakeSkinning",
+        "TESTENV": "testenv/testUsdSkelBakeSkinning",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "blendshapes.baked.usda",
+            "blendshapesWithNormals.baked.usda",
+            "lbs.baked.usda",
+            "lbs.bakedInterval.usda",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelBindingAPI",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelBindingAPI",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelCache",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelCache",
+        "TESTENV": "testenv/testUsdSkelCache",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelRoot",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelRoot",
+        "TESTENV": "testenv/testUsdSkelRoot",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "root.computedExtents.usda",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelSkeletonQuery",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelSkeletonQuery",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelSkinningQuery",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelSkinningQuery",
+        "TESTENV": "testenv/testUsdSkelSkinningQuery",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelTopology",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelTopology",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelUtils",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdSkelUtils",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

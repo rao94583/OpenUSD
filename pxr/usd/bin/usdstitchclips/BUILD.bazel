@@ -1,8 +1,270 @@
 # Generated from pxr/usd/bin/usdstitchclips/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_python_bin")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
 
 pxr_python_bin(
     name = "usdstitchclips",
     python_file = "usdstitchclips.py",
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testFileCleanup": "testenv/testFileCleanup",
+        "testInvalidClipPaths": "testenv/testInvalidClipPaths",
+        "testStitchClips": "testenv/testStitchClips",
+        "testStitchClipsTemplate": "testenv/testStitchClipsTemplate",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdStitchClipsInvalidClipPaths1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips a.usd b.usd --clipPath /World/fx/Particles_Splash --out test1.usd",
+        "TESTENV": "testenv/testInvalidClipPaths",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsInvalidClipPaths2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips a.usd b.usd --clipPath /World/f_x --out test2.usd",
+        "TESTENV": "testenv/testInvalidClipPaths",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsFileCleanup1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --clipPath /Wrong/Clip/Path --out result.usd a.usd b.usd",
+        "TESTENV": "testenv/testFileCleanup",
+        "EXPECTED_RETURN_CODE": "1",
+        "FILES_DONT_EXIST": "result.usd",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsFileCleanup2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --clipPath /Wrong/Clip/Path --out preexisting.usd a.usd b.usd",
+        "TESTENV": "testenv/testFileCleanup",
+        "EXPECTED_RETURN_CODE": "1",
+        "FILES_EXIST": "preexisting.topology.usd",
+        "FILES_DONT_EXIST": "preexisting.usd",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsFileCleanup3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --clipPath /Wrong/Clip/Path --out nonexistant.usd a.usd b.usd",
+        "TESTENV": "testenv/testFileCleanup",
+        "EXPECTED_RETURN_CODE": "1",
+        "FILES_DONT_EXIST": "nonexistant.usd",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClips",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --noComment --clipPath\n    /World/fx/Particles_Splash --out result.usda Particles_Splash.101.usd Particles_Splash.102.usd Particles_Splash.103.usd Particles_Splash.104.usd Particles_Splash.105.usd Particles_Splash.106.usd Particles_Splash.107.usd Particles_Splash.108.usd Particles_Splash.109.usd ",
+        "TESTENV": "testenv/testStitchClips",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "result.usda",
+            "result.topology.usda",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsTemplate1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --noComment --templateMetadata --startTimeCode 101 --endTimeCode 104 --activeOffset 0.3 --stride 1 --templatePath p.#.usd --clipPath /World/fx/Particles_Splash/points --out result.usda p.101.usda p.102.usda p.103.usda p.104.usda",
+        "TESTENV": "testenv/testStitchClipsTemplate",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "result.usda",
+            "result.topology.usda",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsTemplate2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --noComment --templateMetadata --endTimeCode 104 --stride 1 --templatePath p.#.usd --clipPath /World/fx/Particles_Splash p.*.usda",
+        "TESTENV": "testenv/testStitchClipsTemplate",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsTemplate3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --noComment --templateMetadata --startTimeCode 101 --stride 1 --templatePath p.#.usd --clipPath /World/fx/Particles_Splash p.*.usda",
+        "TESTENV": "testenv/testStitchClipsTemplate",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsTemplate4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --noComment --templateMetadata --startTimeCode 101 --endTimeCode 104 --templatePath p.#.usd --clipPath /World/fx/Particles_Splash p.*.usda",
+        "TESTENV": "testenv/testStitchClipsTemplate",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsTemplate5",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --noComment --templateMetadata --startTimeCode 101 --endTimeCode 104 --stride 1 --clipPath /World/fx/Particles_Splash p.*.usda",
+        "TESTENV": "testenv/testStitchClipsTemplate",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsTemplate6",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --noComment --templateMetadata --startTimeCode 101 --endTimeCode 104 --stride 1 --templatePath p.#.usd p.*.usda",
+        "TESTENV": "testenv/testStitchClipsTemplate",
+        "EXPECTED_RETURN_CODE": "1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsCustomSetName",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --noComment --clipSet bob --clipPath /World/fx/Particles_Splash --out result_customSetName.usda Particles_Splash.101.usd Particles_Splash.102.usd Particles_Splash.103.usd Particles_Splash.104.usd Particles_Splash.105.usd Particles_Splash.106.usd Particles_Splash.107.usd Particles_Splash.108.usd Particles_Splash.109.usd ",
+        "TESTENV": "testenv/testStitchClips",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "result_customSetName.usda",
+            "result_customSetName.topology.usda",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
+)
+
+pxr_test(
+    name = "testUsdStitchClipsTemplateCustomSetName",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdstitchclips --noComment --clipSet bob --templateMetadata --startTimeCode 101 --endTimeCode 104 --stride 1 --templatePath p.#.usd --clipPath /World/fx/Particles_Splash/points --out result_customSetName.usda p.101.usda p.102.usda p.103.usda p.104.usda",
+        "TESTENV": "testenv/testStitchClipsTemplate",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "result_customSetName.usda",
+            "result_customSetName.topology.usda",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    },
 )

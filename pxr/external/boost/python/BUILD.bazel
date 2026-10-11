@@ -1,6 +1,7 @@
 # Generated from pxr/external/boost/python/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "pxr_test_program", "pxr_test_tree")
 
 pxr_library(
     name = "python",
@@ -271,5 +272,1849 @@ pxr_library(
     ],
     local_defines = [
         "PXR_BOOST_PYTHON_SOURCE",
+    ],
+)
+
+pxr_test_library(
+    name = "injected_ext",
+    srcs = [
+        "test/injected.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "properties_ext",
+    srcs = [
+        "test/properties.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "return_arg_ext",
+    srcs = [
+        "test/return_arg.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "staticmethod_ext",
+    srcs = [
+        "test/staticmethod.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "shared_ptr_ext",
+    srcs = [
+        "test/shared_ptr.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "enable_shared_from_this_ext",
+    srcs = [
+        "test/enable_shared_from_this.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "andreas_beyer_ext",
+    srcs = [
+        "test/andreas_beyer.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "wrapper_held_type_ext",
+    srcs = [
+        "test/wrapper_held_type.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "polymorphism_ext",
+    srcs = [
+        "test/polymorphism.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "polymorphism2_ext",
+    srcs = [
+        "test/polymorphism2.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "minimal_ext",
+    srcs = [
+        "test/minimal.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "args_ext",
+    srcs = [
+        "test/args.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "raw_ctor_ext",
+    srcs = [
+        "test/raw_ctor.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "enum_ext",
+    srcs = [
+        "test/enum_ext.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "exception_translator_ext",
+    srcs = [
+        "test/exception_translator.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "module_nogil_ext",
+    srcs = [
+        "test/module_nogil.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "cltree",
+    srcs = [
+        "test/cltree.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "m1",
+    srcs = [
+        "test/m1.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "m2",
+    srcs = [
+        "test/m2.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "const_argument_ext",
+    srcs = [
+        "test/const_argument.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "keywords",
+    srcs = [
+        "test/keywords.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "builtin_converters_ext",
+    srcs = [
+        "test/builtin_converters.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "test_pointer_adoption_ext",
+    srcs = [
+        "test/test_pointer_adoption.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "operators_ext",
+    srcs = [
+        "test/operators.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "operators_wrapper_ext",
+    srcs = [
+        "test/operators_wrapper.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "callbacks_ext",
+    srcs = [
+        "test/callbacks.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "defaults_ext",
+    srcs = [
+        "test/defaults.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "object_ext",
+    srcs = [
+        "test/object.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "class_ext",
+    srcs = [
+        "test/class.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "aligned_class_ext",
+    srcs = [
+        "test/aligned_class.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "list_ext",
+    srcs = [
+        "test/list.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "long_ext",
+    srcs = [
+        "test/long.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "dict_ext",
+    srcs = [
+        "test/dict.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "tuple_ext",
+    srcs = [
+        "test/tuple.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "str_ext",
+    srcs = [
+        "test/str.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "slice_ext",
+    srcs = [
+        "test/slice.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "virtual_functions_ext",
+    srcs = [
+        "test/virtual_functions.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "back_reference_ext",
+    srcs = [
+        "test/back_reference.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "implicit_ext",
+    srcs = [
+        "test/implicit.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "data_members_ext",
+    srcs = [
+        "test/data_members.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "ben_scott1_ext",
+    srcs = [
+        "test/ben_scott1.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "bienstman1_ext",
+    srcs = [
+        "test/bienstman1.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "bienstman2_ext",
+    srcs = [
+        "test/bienstman2.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "bienstman3_ext",
+    srcs = [
+        "test/bienstman3.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "multi_arg_constructor_ext",
+    srcs = [
+        "test/multi_arg_constructor.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "iterator_ext",
+    srcs = [
+        "test/iterator.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "input_iterator",
+    srcs = [
+        "test/input_iterator.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "stl_iterator_ext",
+    srcs = [
+        "test/stl_iterator.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "extract_ext",
+    srcs = [
+        "test/extract.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "crossmod_opaque_a",
+    srcs = [
+        "test/crossmod_opaque_a.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "crossmod_opaque_b",
+    srcs = [
+        "test/crossmod_opaque_b.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "opaque_ext",
+    srcs = [
+        "test/opaque.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "voidptr_ext",
+    srcs = [
+        "test/voidptr.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "pickle1_ext",
+    srcs = [
+        "test/pickle1.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "pickle2_ext",
+    srcs = [
+        "test/pickle2.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "pickle3_ext",
+    srcs = [
+        "test/pickle3.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "pickle4_ext",
+    srcs = [
+        "test/pickle4.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "nested_ext",
+    srcs = [
+        "test/nested.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "docstring_ext",
+    srcs = [
+        "test/docstring.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "pytype_function_ext",
+    srcs = [
+        "test/pytype_function.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "vector_indexing_suite_ext",
+    srcs = [
+        "test/vector_indexing_suite.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "pointer_vector_ext",
+    srcs = [
+        "test/pointer_vector.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_library(
+    name = "map_indexing_suite_ext",
+    srcs = [
+        "test/map_indexing_suite.cpp",
+        "test/int_map_indexing_suite.cpp",
+        "test/a_map_indexing_suite.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+    prefix = "",
+    suffix = ".so",
+)
+
+pxr_test_program(
+    name = "exec_",
+    srcs = [
+        "test/exec_.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_program(
+    name = "import_",
+    srcs = [
+        "test/import_.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_library(
+    name = "indirect_traits_test",
+    srcs = [
+        "test/indirect_traits_test.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_program(
+    name = "destroy_test",
+    srcs = [
+        "test/destroy_test.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_program(
+    name = "pointer_type_id_test",
+    srcs = [
+        "test/pointer_type_id_test.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_program(
+    name = "bases",
+    srcs = [
+        "test/bases.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_program(
+    name = "if_else",
+    srcs = [
+        "test/if_else.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_program(
+    name = "pointee",
+    srcs = [
+        "test/pointee.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_program(
+    name = "result",
+    srcs = [
+        "test/result.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_library(
+    name = "string_literal",
+    srcs = [
+        "test/string_literal.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_library(
+    name = "borrowed",
+    srcs = [
+        "test/borrowed.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_library(
+    name = "object_manager",
+    srcs = [
+        "test/object_manager.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_library(
+    name = "copy_ctor_mutates_rhs",
+    srcs = [
+        "test/copy_ctor_mutates_rhs.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_program(
+    name = "upcast",
+    srcs = [
+        "test/upcast.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_library(
+    name = "select_holder",
+    srcs = [
+        "test/select_holder.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_program(
+    name = "select_from_python_test",
+    srcs = [
+        "test/select_from_python_test.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_library(
+    name = "select_arg_to_python_test",
+    srcs = [
+        "test/select_arg_to_python_test.cpp",
+    ],
+    libraries = [
+        "//pxr/external/boost/python",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "aligned_class": "test/aligned_class.py",
+        "andreas_beyer": "test/andreas_beyer.py",
+        "args": "test/args.py",
+        "back_reference": "test/back_reference.py",
+        "ben_scott1": "test/ben_scott1.py",
+        "bienstman1": "test/bienstman1.py",
+        "bienstman2": "test/bienstman2.py",
+        "bienstman3": "test/bienstman3.py",
+        "callbacks": "test/callbacks.py",
+        "class": "test/class.py",
+        "const_argument": "test/const_argument.py",
+        "crossmod_opaque": "test/crossmod_opaque.py",
+        "data_members": "test/data_members.py",
+        "defaults": "test/defaults.py",
+        "dict": "test/dict.py",
+        "docstring": "test/docstring.py",
+        "enable_shared_from_this": "test/enable_shared_from_this.py",
+        "exception_translator": "test/exception_translator.py",
+        "exec_.py": "test/exec_.py",
+        "extract": "test/extract.py",
+        "implicit": "test/implicit.py",
+        "import_.py": "test/import_.py",
+        "injected": "test/injected.py",
+        "iterator": "test/iterator.py",
+        "keywords_test": "test/keywords_test.py",
+        "list": "test/list.py",
+        "long": "test/long.py",
+        "map_indexing_suite": "test/map_indexing_suite.py",
+        "minimal": "test/minimal.py",
+        "module_nogil": "test/module_nogil.py",
+        "multi_arg_constructor": "test/multi_arg_constructor.py",
+        "nested": "test/nested.py",
+        "newtest": "test/newtest.py",
+        "object": "test/object.py",
+        "opaque": "test/opaque.py",
+        "operators": "test/operators.py",
+        "operators_wrapper": "test/operators_wrapper.py",
+        "pickle1": "test/pickle1.py",
+        "pickle2": "test/pickle2.py",
+        "pickle3": "test/pickle3.py",
+        "pickle4": "test/pickle4.py",
+        "pointer_vector": "test/pointer_vector.py",
+        "polymorphism": "test/polymorphism.py",
+        "polymorphism2": "test/polymorphism2.py",
+        "properties": "test/properties.py",
+        "pyrun": "test/pyrun.py",
+        "pytype_function": "test/pytype_function.py",
+        "raw_ctor": "test/raw_ctor.py",
+        "return_arg": "test/return_arg.py",
+        "shared_ptr": "test/shared_ptr.py",
+        "slice": "test/slice.py",
+        "staticmethod": "test/staticmethod.py",
+        "stl_iterator": "test/stl_iterator.py",
+        "str": "test/str.py",
+        "test_builtin_converters": "test/test_builtin_converters.py",
+        "test_cltree": "test/test_cltree.py",
+        "test_enum": "test/test_enum.py",
+        "test_pointer_adoption": "test/test_pointer_adoption.py",
+        "tuple": "test/tuple.py",
+        "vector_indexing_suite": "test/vector_indexing_suite.py",
+        "virtual_functions": "test/virtual_functions.py",
+        "voidptr": "test/voidptr.py",
+        "wrapper_held_type": "test/wrapper_held_type.py",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":_testlib_injected_ext",
+        ":_testlib_properties_ext",
+        ":_testlib_return_arg_ext",
+        ":_testlib_staticmethod_ext",
+        ":_testlib_shared_ptr_ext",
+        ":_testlib_enable_shared_from_this_ext",
+        ":_testlib_andreas_beyer_ext",
+        ":_testlib_wrapper_held_type_ext",
+        ":_testlib_polymorphism_ext",
+        ":_testlib_polymorphism2_ext",
+        ":_testlib_minimal_ext",
+        ":_testlib_args_ext",
+        ":_testlib_raw_ctor_ext",
+        ":_testlib_enum_ext",
+        ":_testlib_exception_translator_ext",
+        ":_testlib_module_nogil_ext",
+        ":_testlib_cltree",
+        ":_testlib_m1",
+        ":_testlib_m2",
+        ":_testlib_const_argument_ext",
+        ":_testlib_keywords",
+        ":_testlib_builtin_converters_ext",
+        ":_testlib_test_pointer_adoption_ext",
+        ":_testlib_operators_ext",
+        ":_testlib_operators_wrapper_ext",
+        ":_testlib_callbacks_ext",
+        ":_testlib_defaults_ext",
+        ":_testlib_object_ext",
+        ":_testlib_class_ext",
+        ":_testlib_aligned_class_ext",
+        ":_testlib_list_ext",
+        ":_testlib_long_ext",
+        ":_testlib_dict_ext",
+        ":_testlib_tuple_ext",
+        ":_testlib_str_ext",
+        ":_testlib_slice_ext",
+        ":_testlib_virtual_functions_ext",
+        ":_testlib_back_reference_ext",
+        ":_testlib_implicit_ext",
+        ":_testlib_data_members_ext",
+        ":_testlib_ben_scott1_ext",
+        ":_testlib_bienstman1_ext",
+        ":_testlib_bienstman2_ext",
+        ":_testlib_bienstman3_ext",
+        ":_testlib_multi_arg_constructor_ext",
+        ":_testlib_iterator_ext",
+        ":_testlib_input_iterator",
+        ":_testlib_stl_iterator_ext",
+        ":_testlib_extract_ext",
+        ":_testlib_crossmod_opaque_a",
+        ":_testlib_crossmod_opaque_b",
+        ":_testlib_opaque_ext",
+        ":_testlib_voidptr_ext",
+        ":_testlib_pickle1_ext",
+        ":_testlib_pickle2_ext",
+        ":_testlib_pickle3_ext",
+        ":_testlib_pickle4_ext",
+        ":_testlib_nested_ext",
+        ":_testlib_docstring_ext",
+        ":_testlib_pytype_function_ext",
+        ":_testlib_vector_indexing_suite_ext",
+        ":_testlib_pointer_vector_ext",
+        ":_testlib_map_indexing_suite_ext",
+        ":tests/exec_",
+        ":tests/import_",
+        ":_testlib_indirect_traits_test",
+        ":tests/destroy_test",
+        ":tests/pointer_type_id_test",
+        ":tests/bases",
+        ":tests/if_else",
+        ":tests/pointee",
+        ":tests/result",
+        ":_testlib_string_literal",
+        ":_testlib_borrowed",
+        ":_testlib_object_manager",
+        ":_testlib_copy_ctor_mutates_rhs",
+        ":tests/upcast",
+        ":_testlib_select_holder",
+        ":tests/select_from_python_test",
+        ":_testlib_select_arg_to_python_test",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "python_injected",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun injected",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_properties",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun properties",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_return_arg",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun return_arg",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_staticmethod",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun staticmethod",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_shared_ptr",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun shared_ptr",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_enable_shared_from_this",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun enable_shared_from_this",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_andreas_beyer",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun andreas_beyer",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_wrapper_held_type",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun wrapper_held_type",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_polymorphism",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun polymorphism",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_polymorphism2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun polymorphism2",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_minimal",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun minimal",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_args",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun args",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_raw_ctor",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun raw_ctor",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_enum",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun test_enum",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_exception_translator",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun exception_translator",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_module_nogil",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun module_nogil",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_pearu1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun test_cltree",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_try",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun newtest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_const_argument",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun const_argument",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_keywords",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun keywords_test",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_builtin_converters",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun test_builtin_converters",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_test_pointer_adoption",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun test_pointer_adoption",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_operators",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun operators",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_operators_wrapper",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun operators_wrapper",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_callbacks",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun callbacks",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_defaults",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun defaults",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_object",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun object",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_class",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun class",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_aligned_class",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun aligned_class",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_list",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun list",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_long",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun long",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_dict",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun dict",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_tuple",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun tuple",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_str",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun str",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_slice",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun slice",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_virtual_functions",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun virtual_functions",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_back_reference",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun back_reference",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_implicit",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun implicit",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_data_members",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun data_members",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_ben_scott1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun ben_scott1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_bienstman1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun bienstman1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_bienstman2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun bienstman2",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_bienstman3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun bienstman3",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_multi_arg_constructor",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun multi_arg_constructor",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_iterator",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun iterator",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_stl_iterator",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun stl_iterator",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_extract",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun extract",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_crossmod_opaque",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun crossmod_opaque",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_opaque",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun opaque",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_voidptr",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun voidptr",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_pickle1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun pickle1",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_pickle2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun pickle2",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_pickle3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun pickle3",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_pickle4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun pickle4",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_nested",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun nested",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_docstring",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun docstring",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_pytype_function",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun pytype_function",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_vector_indexing_suite",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun vector_indexing_suite",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_pointer_vector",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun pointer_vector",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_map_indexing_suite",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/pyrun map_indexing_suite",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_exec_",
+    arguments = {
+        "COMMAND": "<prefix>/tests/exec_ <prefix>/tests/exec_.py",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_import_",
+    arguments = {
+        "COMMAND": "<prefix>/tests/import_ <prefix>/tests/import_.py",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_destroy_test",
+    arguments = {
+        "COMMAND": "<prefix>/tests/destroy_test ",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_pointer_type_id_test",
+    arguments = {
+        "COMMAND": "<prefix>/tests/pointer_type_id_test ",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_bases",
+    arguments = {
+        "COMMAND": "<prefix>/tests/bases ",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_if_else",
+    arguments = {
+        "COMMAND": "<prefix>/tests/if_else ",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_pointee",
+    arguments = {
+        "COMMAND": "<prefix>/tests/pointee ",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_result",
+    arguments = {
+        "COMMAND": "<prefix>/tests/result ",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_upcast",
+    arguments = {
+        "COMMAND": "<prefix>/tests/upcast ",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "python_select_from_python_test",
+    arguments = {
+        "COMMAND": "<prefix>/tests/select_from_python_test ",
+    },
+    test_trees = [
+        ":test_tree",
     ],
 )

@@ -24,6 +24,7 @@ import difflib
 import json
 import os
 import re
+import shlex
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(
@@ -46,6 +47,9 @@ OSES = ["macos", "linux"]
 # Variables CMake or cmake/defaults/*.cmake define before pxr is processed.
 _COMMON_VARS = {
     "UNIX": "1",
+    # Every library is linked into //bazel/install:usd_ms, like CMake's
+    # monolithic build (usd_m target).
+    "PXR_BUILD_MONOLITHIC": "ON",
     "M_LIB": "m",  # Packages.cmake
     # Packages.cmake; mapped to a label in EXTERNAL_LABELS.
     "PYTHON_LIBRARIES": "Python3::Python",
@@ -54,6 +58,9 @@ _COMMON_VARS = {
     "JINJA2_FOUND": "TRUE",
     "PROJECT_SOURCE_DIR": "<source>",
     "PROJECT_BINARY_DIR": "<build>",
+    # Placeholders in test commands, resolved by bazel/tools/pxr_test_runner.py.
+    "CMAKE_INSTALL_PREFIX": "<prefix>",
+    "PYTHON_EXECUTABLE": "<python>",
 }
 PLATFORM_VARS = {
     "macos": dict(_COMMON_VARS, APPLE="1", CMAKE_SYSTEM_NAME="Darwin",
@@ -71,7 +78,7 @@ EXTERNAL_LABELS = {
     "Python3::Python": "@rules_python//python/cc:current_py_cc_headers",
 }
 # Other targets that if(TARGET ...) should consider defined.
-OTHER_TARGETS = {"python_modules", "shared_libs"}
+OTHER_TARGETS = {"python_modules", "shared_libs", "usd_m"}
 
 # Generator expressions dropped on purpose, with the reason.
 DROPPED_GENEX = {
@@ -84,17 +91,24 @@ DROPPED_GENEX = {
 IGNORED_PXR_COMMANDS = {
     "pxr_core_prologue",
     "pxr_core_epilogue",
-    # Tests: Phase 3.
-    "pxr_build_test",
-    "pxr_build_test_plugin",
-    "pxr_build_test_shared_lib",
-    "pxr_create_test_module",
-    "pxr_install_test_dir",
-    "pxr_register_test",
-    "pxr_test_scripts",
-    # Rpaths of boost::python's test libraries.
+    # Rpaths of boost::python's test libraries; Bazel computes rpaths.
     "pxr_set_rpaths_for_target",
 }
+
+# pxr_register_test() arguments (cmake/macros/Public.cmake).
+TEST_OPTIONS = ["RUN_SERIAL", "PYTHON", "REQUIRES_SHARED_LIBS",
+                "REQUIRES_PYTHON_MODULES", "PERCEPTUAL"]
+TEST_ONE_VALUE = [
+    "CUSTOM_PYTHON", "COMMAND", "STDOUT_REDIRECT", "STDERR_REDIRECT",
+    "POST_COMMAND", "POST_COMMAND_STDOUT_REDIRECT",
+    "POST_COMMAND_STDERR_REDIRECT", "PRE_COMMAND",
+    "PRE_COMMAND_STDOUT_REDIRECT", "PRE_COMMAND_STDERR_REDIRECT",
+    "FILES_EXIST", "FILES_DONT_EXIST", "CLEAN_OUTPUT", "EXPECTED_RETURN_CODE",
+    "TESTENV", "TESTENV_DEST", "WARN", "WARN_PERCENT", "HARD_WARN", "FAIL",
+    "FAIL_PERCENT", "HARD_FAIL", "LABELS",
+]
+TEST_MULTI_VALUE = ["DIFF_COMPARE", "IMAGE_DIFF_COMPARE", "ENV", "PRE_PATH",
+                    "POST_PATH"]
 
 # pxr_library() keywords that take lists, in output order.
 LIST_KEYWORDS = [
@@ -207,9 +221,18 @@ def tokenize(text):
                                              _BRACKET_OPEN.match(text, i))
                     args.append((value.lstrip("\n"), BRACKET))
                 else:
+                    # An unquoted argument; quoted parts inside it keep
+                    # their spaces and quotes (CMake's legacy syntax,
+                    # e.g. ENV VAR="a b").
                     j = i
                     while j < n and not text[j].isspace() and \
                             text[j] not in "()":
+                        if text[j] == '"':
+                            end = text.find('"', j + 1)
+                            if end < 0:
+                                raise CMakeError("line %d: unterminated "
+                                                 "quote" % line)
+                            j = end
                         j += 1
                     args.append((text[i:j], UNQUOTED))
                     i = j
@@ -316,6 +339,23 @@ class Directory:
         self.definitions = []  # add_definitions()
         self.cpp_bins = []  # (name, [library])
         self.python_bins = []  # (name, python file)
+        self.tests = Tests()
+
+
+class Tests:
+    """Test artifacts of one directory, laid out as CMake installs them
+    under <prefix>/tests."""
+
+    def __init__(self):
+        # name -> {"kind": "executable" | "shared", "srcs": [...],
+        #          "libraries": [...], "prefix": str | None,
+        #          "suffix": str | None, "dest": "tests" | "tests/lib" | None,
+        #          "plug_info": (src, install prefix) | None}
+        self.targets = {}
+        self.files = {}  # dest under tests/ -> src
+        self.testenvs = {}  # dest under tests/ctest -> src dir
+        self.registered = []  # (name, {keyword: value}, line)
+        self.package = None  # PXR_PACKAGE
 
 
 class Return(Exception):
@@ -325,7 +365,7 @@ class Return(Exception):
 class Interpreter:
     def __init__(self, os_name, warn):
         self.os, self.warn = os_name, warn
-        self.functions = set()
+        self.functions = {}  # name -> (kind, params, body)
         self.targets = set(EXTERNAL_LABELS) | OTHER_TARGETS
         self.libraries = {}  # name -> (directory, Library)
         self.directories = []
@@ -487,14 +527,87 @@ class Interpreter:
                     vars[var] = item
                     self.run(node[2], vars, directory)
             elif kind in ("function", "macro"):
-                self.functions.add(self.args(node[1], vars)[0].lower())
+                signature = self.args(node[1], vars)
+                self.functions[signature[0].lower()] = (
+                    kind, signature[1:], node[2])
             elif kind == "while":
                 raise CMakeError("line %d: while() unsupported" % node[3])
             else:
                 self.command(node[1], node[2], node[3], vars, directory)
 
+    def call(self, name, raw, vars, directory):
+        """Calls a function or macro defined with function()/macro()."""
+        kind, params, body = self.functions[name]
+        args = self.args(raw, vars)
+        scope = dict(vars) if kind == "function" else vars
+        saved = {k: vars.get(k) for k in params} if kind == "macro" else {}
+        for i, param in enumerate(params):
+            scope[param] = args[i] if i < len(args) else ""
+        scope["ARGC"] = str(len(args))
+        scope["ARGV"] = ";".join(args)
+        scope["ARGN"] = ";".join(args[len(params):])
+        for i, arg in enumerate(args):
+            scope["ARGV%d" % i] = arg
+        try:
+            self.run(body, scope, directory)
+        except Return:
+            if kind == "macro":
+                raise  # return() in a macro returns from the caller.
+        finally:
+            # Macro parameters are textual substitutions in CMake; do not
+            # leave them behind in the caller's scope.
+            for k, v in saved.items():
+                if v is None:
+                    vars.pop(k, None)
+                else:
+                    vars[k] = v
+
+    def parse_arguments(self, raw, line, vars):
+        """cmake_parse_arguments(<prefix> <options> <one> <multi> <args>...)."""
+        args = self.args(raw, vars, keep_kind=True)
+        if args and args[0][0] == "PARSE_ARGV":
+            raise CMakeError("line %d: cmake_parse_arguments(PARSE_ARGV) "
+                             "unsupported" % line)
+        prefix = args[0][0]
+        # The keyword lists are usually quoted list variables.
+        options, one, multi = ([v for v in a[0].split(";") if v]
+                               for a in args[1:4])
+        values, current = {}, None
+        unparsed = []
+        for value, _ in args[4:]:
+            for item in [v for v in value.split(";") if v]:
+                if item in options:
+                    values[item], current = "TRUE", None
+                elif item in one or item in multi:
+                    values.setdefault(item, [])
+                    current = item
+                elif current in one and not values[current]:
+                    values[current] = [item]
+                    current = None
+                elif current in multi:
+                    values[current].append(item)
+                else:
+                    unparsed.append(item)
+        for keyword in options + one + multi:
+            var = prefix + "_" + keyword
+            value = values.get(keyword)
+            if keyword in options:
+                vars[var] = "TRUE" if value else "FALSE"
+            elif value:
+                vars[var] = ";".join(value)
+            else:
+                vars.pop(var, None)
+        if unparsed:
+            vars[prefix + "_UNPARSED_ARGUMENTS"] = ";".join(unparsed)
+        else:
+            vars.pop(prefix + "_UNPARSED_ARGUMENTS", None)
+
     def command(self, name, raw, line, vars, directory):
-        if name == "set":
+        if name in self.functions:
+            self.call(name, raw, vars, directory)
+        elif name == "cmake_parse_arguments":
+            self.parse_arguments(raw, line, vars)
+        elif name == "set":
             args = self.args(raw, vars)
             var, values = args[0], args[1:]
             if "PARENT_SCOPE" in values:
@@ -534,6 +647,44 @@ class Interpreter:
             var = self.args(raw, vars)[0]
             if var not in vars:
                 vars[var] = var + "-NOTFOUND"
+        elif name == "get_filename_component":
+            args = self.args(raw, vars)
+            var, path, mode = args[0], args[1], args[2]
+            base = os.path.basename(path)
+            if mode in ("DIRECTORY", "PATH"):
+                value = os.path.dirname(path)
+            elif mode == "NAME":
+                value = base
+            elif mode == "NAME_WE":
+                value = base.split(".", 1)[0]
+            elif mode == "EXT":
+                value = "." + base.split(".", 1)[1] if "." in base else ""
+            else:
+                raise CMakeError("line %d: get_filename_component(%s) "
+                                 "unsupported" % (line, mode))
+            vars[var] = value
+        elif name == "string":
+            args = self.args(raw, vars, keep_kind=True)
+            op = args[0][0]
+            values = [v for v, _ in args]
+            if op == "REPLACE":
+                vars[values[3]] = "".join(values[4:]).replace(values[1],
+                                                              values[2])
+            elif op == "CONCAT":
+                vars[values[1]] = "".join(values[2:])
+            else:
+                raise CMakeError("line %d: string(%s) unsupported"
+                                 % (line, op))
+        elif name == "get_target_property":
+            # Only used for imported targets' locations (pxrConfig.cmake).
+            args = self.args(raw, vars)
+            vars[args[0]] = args[0] + "-NOTFOUND"
+        elif name in ("file", "math", "execute_process", "get_property",
+                      "get_directory_property", "cmake_path",
+                      "separate_arguments"):
+            # These set variables; ignoring them would silently change
+            # results. Implement them when they appear.
+            raise CMakeError("line %d: %s() unsupported" % (line, name))
         elif name == "return":
             raise Return()
         elif name == "message":
@@ -563,6 +714,10 @@ class Interpreter:
                     raise CMakeError("line %d: add_definitions(%s) is not a "
                                      "definition" % (line, arg))
                 directory.definitions.append(arg[2:])
+        elif name in TEST_HANDLERS:
+            # Test programs may include their package's private headers.
+            directory.tests.package = vars.get("PXR_PACKAGE")
+            TEST_HANDLERS[name](self, self.args(raw, vars), line, directory)
         elif name.startswith("pxr_") and name not in IGNORED_PXR_COMMANDS:
             raise CMakeError("line %d: unsupported command %s()"
                              % (line, name))
@@ -694,6 +849,204 @@ def schema_classes(path):
             elif line and current:
                 result[current].append(line)
     return result
+
+
+# --- Tests -------------------------------------------------------------------
+#
+# Handlers for the test macros of cmake/macros/Public.cmake and for the plain
+# CMake target commands boost::python's tests use. They record what CMake
+# would install under <prefix>/tests.
+
+
+def _parse(args, options, one, multi):
+    result, current = {}, None
+    for arg in args:
+        if arg in options:
+            result[arg], current = True, None
+        elif arg in one or arg in multi:
+            result.setdefault(arg, [])
+            current = arg
+        elif current is not None:
+            result[current].append(arg)
+    return {k: (v[0] if k in one and v else v) for k, v in result.items()}
+
+
+def _name_we(path):
+    return os.path.basename(path).split(".", 1)[0]
+
+
+def _add_file(tests, dest, src, where):
+    dest = os.path.normpath(dest)
+    if tests.files.get(dest, src) != src:
+        raise CMakeError("%s: %s installed from both %s and %s"
+                         % (where, dest, tests.files[dest], src))
+    tests.files[dest] = src
+
+
+def _test_target(interp, directory, name, line, **fields):
+    tests = directory.tests
+    if name in tests.targets:
+        raise CMakeError("line %d: test target %s defined twice"
+                         % (line, name))
+    target = {"kind": "executable", "srcs": [], "libraries": [],
+              "prefix": None, "suffix": None, "dest": None,
+              "plug_info": None}
+    target.update(fields)
+    tests.targets[name] = target
+    interp.targets.add(name)
+    return target
+
+
+def _build_test(interp, args, line, directory):
+    a = _parse(args[1:], [], [], ["LIBRARIES", "CPPFILES"])
+    _test_target(interp, directory, args[0], line, kind="executable",
+                 srcs=a.get("CPPFILES", []),
+                 libraries=a.get("LIBRARIES", []), dest="tests")
+
+
+def _build_test_plugin(interp, args, line, directory):
+    a = _parse(args[1:], [], ["INSTALL_PREFIX", "SOURCE_DIR"],
+               ["LIBRARIES", "CPPFILES"])
+    name = args[0]
+    plug_info = "%s/%s_plugInfo.json" % (a.get("SOURCE_DIR", "testenv"), name)
+    exists = os.path.exists(os.path.join(REPO, directory.path, plug_info))
+    _test_target(interp, directory, name, line, kind="shared", prefix="lib",
+                 srcs=a.get("CPPFILES", []),
+                 libraries=a.get("LIBRARIES", []), dest="tests/lib",
+                 plug_info=((plug_info, a.get("INSTALL_PREFIX", ""))
+                            if exists else None))
+
+
+def _test_scripts(interp, args, line, directory):
+    for arg in args:
+        parts = arg.split(":")
+        if len(parts) > 2:
+            raise CMakeError("line %d: cannot parse test file path %s"
+                             % (line, arg))
+        src = parts[0]
+        dest = parts[1] if len(parts) == 2 else _name_we(src)
+        _add_file(directory.tests, dest, src,
+                  "%s:%d" % (directory.path, line))
+
+
+def _create_test_module(interp, args, line, directory):
+    a = _parse(args[1:], [], ["INSTALL_PREFIX", "SOURCE_DIR", "DEST_DIR"], [])
+    name = args[0]
+    source_dir = a.get("SOURCE_DIR", "testenv")
+    dest = "%s/lib/python/%s" % (a.get("INSTALL_PREFIX", ""),
+                                 a.get("DEST_DIR", name))
+    for suffix, installed in (("__init__.py", "__init__.py"),
+                              ("_plugInfo.json", "plugInfo.json")):
+        src = "%s/%s%s" % (source_dir, name, suffix)
+        if os.path.exists(os.path.join(REPO, directory.path, src)):
+            _add_file(directory.tests, dest + "/" + installed, src,
+                      "%s:%d" % (directory.path, line))
+
+
+def _register_test(interp, args, line, directory):
+    a = _parse(args[1:], TEST_OPTIONS, TEST_ONE_VALUE, TEST_MULTI_VALUE)
+    tests = directory.tests
+    if "TESTENV" in a:
+        dest = a.get("TESTENV_DEST") or os.path.basename(a["TESTENV"])
+        if tests.testenvs.get(dest, a["TESTENV"]) != a["TESTENV"]:
+            raise CMakeError("line %d: testenv %s installed from both %s and "
+                             "%s" % (line, dest, tests.testenvs[dest],
+                                     a["TESTENV"]))
+        tests.testenvs[dest] = a["TESTENV"]
+    tests.registered.append((args[0], a, line))
+
+
+def _add_executable(interp, args, line, directory):
+    _test_target(interp, directory, args[0], line, kind="executable",
+                 srcs=args[1:])
+
+
+def _add_library(interp, args, line, directory):
+    if args[1:2] != ["SHARED"]:
+        raise CMakeError("line %d: add_library(%s) is not SHARED"
+                         % (line, " ".join(args)))
+    _test_target(interp, directory, args[0], line, kind="shared",
+                 srcs=args[2:])
+
+
+def _raw_target(directory, name, line):
+    target = directory.tests.targets.get(name)
+    if target is None:
+        raise CMakeError("line %d: %s is not a target defined with "
+                         "add_executable/add_library" % (line, name))
+    return target
+
+
+def _target_sources(interp, args, line, directory):
+    target = _raw_target(directory, args[0], line)
+    target["srcs"] += [a for a in args[1:]
+                       if a not in ("PRIVATE", "PUBLIC", "INTERFACE")]
+
+
+def _target_link_libraries(interp, args, line, directory):
+    if args[0] in interp.libraries:
+        raise CMakeError("line %d: target_link_libraries(%s) on a library"
+                         % (line, args[0]))
+    target = _raw_target(directory, args[0], line)
+    target["libraries"] += [a for a in args[1:]
+                            if a not in ("PRIVATE", "PUBLIC", "INTERFACE")]
+
+
+def _set_target_properties(interp, args, line, directory):
+    i = args.index("PROPERTIES")
+    names, props = args[:i], args[i + 1:]
+    for name in names:
+        target = directory.tests.targets.get(name)
+        if target is None:
+            continue  # e.g. WINDOWS_EXPORT_ALL_SYMBOLS on a library.
+        for key, value in zip(props[::2], props[1::2]):
+            if key in ("PREFIX", "SUFFIX"):
+                target[key.lower()] = value
+
+
+def _install(interp, args, line, directory):
+    # Only installs into tests/ matter here: install(TARGETS <test targets>
+    # DESTINATION <dir>) and install(FILES ... DESTINATION tests[/...]).
+    # Library resources and headers are placed by pxr_library().
+    if args[:1] == ["FILES"] and "DESTINATION" in args:
+        a = _parse(args[1:], [], ["DESTINATION", "RENAME"], ["FILES"])
+        srcs = args[1:args.index("DESTINATION")]
+        dest = a["DESTINATION"]
+        if dest != "tests" and not dest.startswith("tests/"):
+            return
+        if "RENAME" in a and len(srcs) != 1:
+            raise CMakeError("line %d: install(FILES RENAME) of several "
+                             "files" % line)
+        for src in srcs:
+            name = a.get("RENAME") or os.path.basename(src)
+            _add_file(directory.tests, (dest + "/" + name)[len("tests/"):],
+                      src, "%s:%d" % (directory.path, line))
+        return
+    if args[:1] != ["TARGETS"]:
+        return
+    names = [a for a in args[1:] if a in directory.tests.targets]
+    if not names:
+        return
+    if len(args) != len(names) + 3 or args[-2] != "DESTINATION":
+        raise CMakeError("line %d: unsupported install(%s)"
+                         % (line, " ".join(args)))
+    for name in names:
+        directory.tests.targets[name]["dest"] = args[-1]
+
+
+TEST_HANDLERS = {
+    "pxr_build_test": _build_test,
+    "pxr_build_test_plugin": _build_test_plugin,
+    "pxr_test_scripts": _test_scripts,
+    "pxr_create_test_module": _create_test_module,
+    "pxr_register_test": _register_test,
+    "add_executable": _add_executable,
+    "add_library": _add_library,
+    "target_sources": _target_sources,
+    "target_link_libraries": _target_link_libraries,
+    "set_target_properties": _set_target_properties,
+    "install": _install,
+}
 
 
 def load_options(interp, vars):
@@ -860,6 +1213,209 @@ def starlark_python_bin(name, python_file):
     ])
 
 
+def _starlark_value(value, indent):
+    """Formats str, bool, list and dict values as Starlark."""
+    pad = " " * indent
+    if isinstance(value, bool):
+        return "True" if value else "False"
+    if isinstance(value, str):
+        return json.dumps(value)
+    if isinstance(value, list):
+        if not value:
+            return "[]"
+        return "[\n" + "".join("%s    %s,\n" % (pad, _starlark_value(v,
+                                                                   indent + 4))
+                               for v in value) + pad + "]"
+    if isinstance(value, dict):
+        if not value:
+            return "{}"
+        return "{\n" + "".join(
+            "%s    %s: %s,\n" % (pad, json.dumps(k),
+                                 _starlark_value(v, indent + 4))
+            for k, v in value.items()) + pad + "}"
+    raise TypeError(value)
+
+
+def starlark_call(function, name, attrs):
+    lines = ["%s(" % function, "    name = %s," % json.dumps(name)]
+    for key, value in attrs.items():
+        if value is None or value == [] or value == {}:
+            continue
+        lines.append("    %s = %s," % (key, _starlark_value(value, 4)))
+    lines.append(")")
+    return "\n".join(lines)
+
+
+# Link flags tests may drop: PXR_LINKOPTS already adds them where needed.
+_DEFAULT_LINKOPTS = {("-ldl",), ("-lm",)}
+
+
+def _test_libraries(directory, target, interp, where):
+    names = list(target["libraries"])
+    package = directory.tests.package
+    if package in interp.libraries and package not in names:
+        names.append(package)
+    # usd_m is the monolithic library, which every test links dynamically.
+    labels, linkopts = resolve_libraries(
+        [n for n in names if n not in directory.tests.targets and
+         n != "usd_m"], interp, where)
+    extra = [g for g in linkopts if g not in _DEFAULT_LINKOPTS]
+    if extra:
+        raise CMakeError("%s: unsupported link flags %s" % (where, extra))
+    return _flatten(labels)
+
+
+class TestIndex:
+    """Where test programs/scripts and tools live, across directories."""
+
+    def __init__(self, interp):
+        self.providers = {}  # name under <prefix>/tests -> directory path
+        self.tools = {}  # name -> (label, "cpp" | "python")
+        for d in interp.directories:
+            names = [n for n, t in d.tests.targets.items()
+                     if t["dest"] == "tests"]
+            names += [f.split("/")[0] for f in d.tests.files]
+            for name in names:
+                if self.providers.get(name, d.path) != d.path:
+                    raise CMakeError("%s is installed under tests/ by both "
+                                     "%s and %s"
+                                     % (name, self.providers[name], d.path))
+                self.providers[name] = d.path
+            for name, _ in d.cpp_bins:
+                self.tools[name] = ("//" + d.path + ":" + name, "cpp")
+            for name, python_file in d.python_bins:
+                self.tools[name] = ("//%s:%s" % (d.path, python_file),
+                                    "python")
+
+
+def _test_references(directory, name, args, index):
+    """test_trees, tools and python_tools a registered test needs."""
+    trees = {":test_tree": None}
+    tools, python_tools = {}, {}
+
+    def add_tool(tool):
+        label, kind = index.tools[tool]
+        (tools if kind == "cpp" else python_tools)[label] = tool
+
+    for key in ("COMMAND", "PRE_COMMAND", "POST_COMMAND"):
+        for token in shlex.split(args.get(key, "")):
+            if token.startswith("<prefix>/tests/"):
+                entry = token[len("<prefix>/tests/"):].split("/")[0]
+                path = index.providers.get(entry)
+                if path is None:
+                    raise CMakeError("%s: test %s runs %s, which nothing "
+                                     "installs" % (directory.path, name,
+                                                   token))
+                trees[":test_tree" if path == directory.path
+                      else "//%s:test_tree" % path] = None
+            elif token.startswith("<prefix>/bin/"):
+                tool = token[len("<prefix>/bin/"):]
+                if tool not in index.tools:
+                    raise CMakeError("%s: test %s runs unknown tool %s"
+                                     % (directory.path, name, tool))
+                add_tool(tool)
+    # Tests that put <prefix>/bin on PATH may run any tool.
+    if "<prefix>/bin" in args.get("PRE_PATH", []) + args.get("POST_PATH", []):
+        for tool in sorted(index.tools):
+            add_tool(tool)
+    return list(trees), tools, python_tools
+
+
+def starlark_tests(directory, interp, index):
+    """Test blocks of one directory, or [] if it has no tests."""
+    tests = directory.tests
+    if not (tests.targets or tests.files or tests.registered):
+        return []
+    blocks, tree = [], []
+    for name, target in tests.targets.items():
+        where = "%s: test target %s" % (directory.path, name)
+        if target["dest"] not in ("tests", "tests/lib"):
+            raise CMakeError("%s: not installed under tests/" % where)
+        libraries = _test_libraries(directory, target, interp, where)
+        if target["kind"] == "executable":
+            if target["dest"] != "tests":
+                raise CMakeError("%s: program not installed in tests/"
+                                 % where)
+            blocks.append(starlark_call("pxr_test_program", name, {
+                "srcs": target["srcs"], "libraries": libraries}))
+            tree.append(":tests/" + name)
+        else:
+            if target["dest"] != "tests/lib":
+                raise CMakeError("%s: library not installed in tests/lib"
+                                 % where)
+            attrs = {"srcs": target["srcs"], "libraries": libraries}
+            if target["prefix"] not in (None, "lib"):
+                attrs["prefix"] = target["prefix"]
+            attrs["suffix"] = target["suffix"]
+            blocks.append(starlark_call("pxr_test_library", name, attrs))
+            tree.append(":_testlib_" + name)
+
+    plug_infos, library_paths = {}, {}
+    for name, target in tests.targets.items():
+        if target["plug_info"]:
+            src, install_prefix = target["plug_info"]
+            plugin_dir = os.path.normpath(
+                "%s/lib/%s" % (install_prefix, name))
+            dest = plugin_dir + "/Resources/plugInfo.json"
+            plug_infos[dest] = src
+            library_paths[dest] = os.path.relpath("lib/lib" + name,
+                                                  plugin_dir)
+    if tests.files or tests.testenvs or plug_infos:
+        blocks.append(starlark_call("pxr_test_files", "test_files", {
+            "files": dict(sorted(tests.files.items())),
+            "testenvs": dict(sorted(tests.testenvs.items())),
+            "plug_infos": plug_infos,
+            "library_paths": library_paths,
+        }))
+        tree.append(":test_files")
+    blocks.append(starlark_call("pxr_test_tree", "test_tree", {"srcs": tree}))
+
+    for name, args, _ in tests.registered:
+        trees, tools, python_tools = _test_references(
+            directory, name, args, index)
+        attrs = {"arguments": args, "test_trees": trees, "tools": tools,
+                 "python_tools": python_tools}
+        tags = []
+        if args.get("RUN_SERIAL"):
+            tags.append("exclusive")
+        if args.get("LABELS"):
+            tags += args["LABELS"].split(";")
+        attrs["tags"] = tags
+        blocks.append(starlark_call("pxr_test", name, attrs))
+    return blocks
+
+
+def merge_test_blocks(path, per_os):
+    """Combines per-OS test blocks; tests missing on some OSes are marked
+    incompatible there (e.g. Linux-only tests)."""
+    # Blocks start with "<function>(\n    name = ...": key on both lines.
+    keyed = {os: {tuple(b.split("\n", 2)[:2]): b for b in blocks}
+             for os, blocks in per_os.items()}
+    for os, blocks in per_os.items():
+        if len(keyed[os]) != len(blocks):
+            raise CMakeError("%s: duplicate test blocks" % path)
+    order = []
+    for os in OSES:
+        order += [k for k in keyed[os] if k not in order]
+    merged = []
+    for key in order:
+        texts = {os: keyed[os].get(key) for os in OSES}
+        present = [os for os in OSES if texts[os] is not None]
+        text = texts[present[0]]
+        if any(texts[os] != text for os in present):
+            raise CMakeError("%s: %s differs between OSes"
+                             % (path, " ".join(key)))
+        if len(present) < len(OSES):
+            if not text.startswith("pxr_test("):
+                raise CMakeError("%s: %s exists on %s only"
+                                 % (path, " ".join(key), ", ".join(present)))
+            text = text[:-2] + "\n    target_compatible_with = %s,\n)" % (
+                _starlark_value(["@platforms//os:" + os for os in present],
+                                4))
+        merged.append(text)
+    return merged
+
+
 def generate(warn):
     """Returns {path: contents} for every generated file."""
     interps = {os: evaluate(os, warn) for os in OSES}
@@ -871,6 +1427,7 @@ def generate(warn):
 
     files = {}
     all_libraries, python_modules, resources = [], [], []
+    test_indexes = {os: TestIndex(interps[os]) for os in OSES}
     for index, directory in enumerate(first.directories):
         dirs = {os: interps[os].directories[index] for os in OSES}
         names = [lib.name for lib in directory.libraries]
@@ -887,7 +1444,8 @@ def generate(warn):
                     [b[0] for b in directory.cpp_bins]:
                 raise CMakeError("%s: pxr_cpp_bin()s differ between OSes"
                                  % directory.path)
-        if not (names or directory.cpp_bins or directory.python_bins):
+        if not (names or directory.cpp_bins or directory.python_bins or
+                directory.tests.registered or directory.tests.targets):
             continue
         if directory.configured and len(names) != 1:
             raise CMakeError("%s: configure_file() with several libraries"
@@ -928,6 +1486,10 @@ def generate(warn):
             blocks.append(starlark_cpp_bin(name, libs[OSES[0]]))
         for name, python_file in directory.python_bins:
             blocks.append(starlark_python_bin(name, python_file))
+        test_blocks = merge_test_blocks(directory.path, {
+            os: starlark_tests(dirs[os], interps[os], test_indexes[os])
+            for os in OSES})
+        blocks += test_blocks
 
         symbols = (
             (["pxr_configure_file"] if directory.configured else []) +
@@ -935,11 +1497,17 @@ def generate(warn):
             (["pxr_library"] if names else []) +
             (["pxr_python_bin"] if directory.python_bins else [])
         )
-        load = "load(%s)" % ", ".join(
-            json.dumps(s) for s in ["//bazel:pxr_library.bzl"] + symbols)
+        loads = []
+        if symbols:
+            loads.append("load(%s)" % ", ".join(
+                json.dumps(s) for s in ["//bazel:pxr_library.bzl"] + symbols))
+        if test_blocks:
+            used = sorted({b.split("(", 1)[0] for b in test_blocks})
+            loads.append("load(%s)" % ", ".join(
+                json.dumps(s) for s in ["//bazel:pxr_test.bzl"] + used))
         files[directory.path + "/BUILD.bazel"] = (
             HEADER.format(source=directory.path + "/CMakeLists.txt") +
-            load + "\n\n" + "\n\n".join(blocks) + "\n")
+            "\n".join(loads) + "\n\n" + "\n\n".join(blocks) + "\n")
 
     lines = [HEADER.format(source="pxr/**/CMakeLists.txt").rstrip("\n"),
              '"""pxr libraries, Python modules and resources in CMake build order."""',

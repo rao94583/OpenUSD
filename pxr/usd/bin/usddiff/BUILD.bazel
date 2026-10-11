@@ -1,8 +1,749 @@
 # Generated from pxr/usd/bin/usddiff/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
 load("//bazel:pxr_library.bzl", "pxr_python_bin")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
 
 pxr_python_bin(
     name = "usddiff",
     python_file = "usddiff.py",
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testDiffToolComposedResults": "testenv/testDiffToolComposedResults",
+        "testDiffToolIterateUsdz": "testenv/testDiffToolIterateUsdz",
+        "testDiffToolSelectionDefault": "testenv/testDiffToolSelectionDefault",
+        "testDiffToolVariousUsdFormats": "testenv/testDiffToolVariousUsdFormats",
+        "testDiffWithDirectories": "testenv/testDiffWithDirectories",
+        "testExitCodesForDiff": "testenv/testExitCodesForDiff",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdDiffExitCodesForDiff1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a.usda a.usda --noeffect",
+        "TESTENV": "testenv/testExitCodesForDiff",
+        "EXPECTED_RETURN_CODE": "0",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffExitCodesForDiff2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a.usda b.usda --noeffect",
+        "TESTENV": "testenv/testExitCodesForDiff",
+        "EXPECTED_RETURN_CODE": "1",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffToolSelectionDefault",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a.usda b.usda --noeffect",
+        "TESTENV": "testenv/testDiffToolSelectionDefault",
+        "STDOUT_REDIRECT": "out.txt",
+        "DIFF_COMPARE": [
+            "out.txt",
+        ],
+        "EXPECTED_RETURN_CODE": "1",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffToolVariousFormats1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a.usda a.usd --noeffect",
+        "TESTENV": "testenv/testDiffToolVariousUsdFormats",
+        "EXPECTED_RETURN_CODE": "0",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffToolVariousFormats2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a.usdc a.usd --noeffect",
+        "TESTENV": "testenv/testDiffToolVariousUsdFormats",
+        "EXPECTED_RETURN_CODE": "0",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffComposedResults1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a.usd b.usd --noeffect",
+        "TESTENV": "testenv/testDiffToolComposedResults",
+        "EXPECTED_RETURN_CODE": "1",
+        "STDOUT_REDIRECT": "layer_diff.txt",
+        "DIFF_COMPARE": [
+            "layer_diff.txt",
+        ],
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffComposedResults2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a.usd b.usd --noeffect --flatten",
+        "TESTENV": "testenv/testDiffToolComposedResults",
+        "EXPECTED_RETURN_CODE": "1",
+        "STDOUT_REDIRECT": "composed_diff.txt",
+        "DIFF_COMPARE": [
+            "composed_diff.txt",
+        ],
+        "CLEAN_OUTPUT": "(?:[A-Za-z]:)?\\/.*\\/",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffWithDirectories1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff --noeffect a/ a/",
+        "TESTENV": "testenv/testDiffWithDirectories",
+        "EXPECTED_RETURN_CODE": "0",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffWithDirectories2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff --noeffect a/ b/",
+        "TESTENV": "testenv/testDiffWithDirectories",
+        "EXPECTED_RETURN_CODE": "1",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffWithDirectories3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff --noeffect . a/",
+        "TESTENV": "testenv/testDiffWithDirectories",
+        "EXPECTED_RETURN_CODE": "0",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffWithDirectories4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff --noeffect a.usda a/",
+        "TESTENV": "testenv/testDiffWithDirectories",
+        "EXPECTED_RETURN_CODE": "0",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffWithDirectories5",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff --noeffect a.usda b/",
+        "TESTENV": "testenv/testDiffWithDirectories",
+        "EXPECTED_RETURN_CODE": "1",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffWithDirectories6",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff --noeffect b/ a.usda",
+        "TESTENV": "testenv/testDiffWithDirectories",
+        "EXPECTED_RETURN_CODE": "1",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffWithDirectories7",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff --noeffect a.usda b.usda b/",
+        "TESTENV": "testenv/testDiffWithDirectories",
+        "EXPECTED_RETURN_CODE": "1",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testUsdDiffWithDirectories8",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff --noeffect b/ a.usda b.usda",
+        "TESTENV": "testenv/testDiffWithDirectories",
+        "EXPECTED_RETURN_CODE": "1",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testDiffToolIterateUsdz1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a.usdz a.usdz",
+        "TESTENV": "testenv/testDiffToolIterateUsdz",
+        "EXPECTED_RETURN_CODE": "0",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testDiffToolIterateUsdz2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a.usdz b.usdz",
+        "TESTENV": "testenv/testDiffToolIterateUsdz",
+        "EXPECTED_RETURN_CODE": "1",
+        "STDOUT_REDIRECT": "iterate_usd.txt",
+        "DIFF_COMPARE": [
+            "iterate_usd.txt",
+        ],
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testDiffToolIterateUsdz3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff imagea.usdz imagea.usdz",
+        "TESTENV": "testenv/testDiffToolIterateUsdz",
+        "EXPECTED_RETURN_CODE": "0",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testDiffToolIterateUsdz4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff imagea.usdz imageb.usdz",
+        "TESTENV": "testenv/testDiffToolIterateUsdz",
+        "EXPECTED_RETURN_CODE": "1",
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
+)
+
+pxr_test(
+    name = "testDiffToolIterateUsdz5",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usddiff a_crate.usdz b_crate.usdz",
+        "TESTENV": "testenv/testDiffToolIterateUsdz",
+        "EXPECTED_RETURN_CODE": "1",
+        "STDOUT_REDIRECT": "iterate_usd_crate.txt",
+        "DIFF_COMPARE": [
+            "iterate_usd_crate.txt",
+        ],
+        "PRE_PATH": [
+            "<prefix>/bin",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    tools = {
+        "//pxr/usd/bin/sdfdump:sdfdump": "sdfdump",
+        "//pxr/usd/bin/sdffilter:sdffilter": "sdffilter",
+        "//pxr/usd/bin/usdcat:usdcat": "usdcat",
+        "//pxr/usdValidation/bin/usdchecker:usdchecker": "usdchecker",
+        "//pxr/usd/bin/usdtree:usdtree": "usdtree",
+    },
+    python_tools = {
+        "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+        "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+        "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+        "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+        "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+        "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+        "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+        "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+        "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    },
 )
