@@ -1,0 +1,13 @@
+# MarkupSafe, a dependency of Jinja2. See README.md.
+
+load("@rules_python//python:py_library.bzl", "py_library")
+
+py_library(
+    name = "markupsafe",
+    # The optional C speedups module is not built; markupsafe falls back to
+    # its pure-Python implementation (_native.py).
+    srcs = glob(["src/markupsafe/*.py"]),
+    data = ["src/markupsafe/py.typed"],
+    imports = ["src"],
+    visibility = ["//visibility:public"],
+)

@@ -1,6 +1,6 @@
 # Generated from pxr/usd/usd/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
-load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_library.bzl", "pxr_library", "pxr_python_bin")
 
 pxr_library(
     name = "usd",
@@ -187,4 +187,14 @@ pxr_library(
         "docs/images/instancing/Uninstanced_vs_Instanced.png",
         "examples_usd.cpp",
     ],
+)
+
+pxr_python_bin(
+    name = "usdGenSchema",
+    python_file = "usdGenSchema.py",
+)
+
+pxr_python_bin(
+    name = "usdInitSchema",
+    python_file = "usdInitSchema.py",
 )

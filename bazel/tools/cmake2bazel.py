@@ -50,6 +50,8 @@ _COMMON_VARS = {
     # Packages.cmake; mapped to a label in EXTERNAL_LABELS.
     "PYTHON_LIBRARIES": "Python3::Python",
     "PYTHON_INCLUDE_DIRS": "",
+    # FindJinja2.cmake; Jinja2 is vendored (//vendor/jinja2).
+    "JINJA2_FOUND": "TRUE",
     "PROJECT_SOURCE_DIR": "<source>",
     "PROJECT_BINARY_DIR": "<build>",
 }

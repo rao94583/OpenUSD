@@ -44,3 +44,18 @@ py_test(
     args = ["$(rootpath //pxr/usdValidation/bin/usdchecker)"],
     data = ["//pxr/usdValidation/bin/usdchecker"],
 )
+
+py_test(
+    name = "schemaToolsSmoke",
+    srcs = ["schemaToolsSmoke.py"],
+    args = [
+        "$(rootpath //pxr/usd/usd:usdGenSchema)",
+        "$(rootpath //pxr/usd/usd:usdInitSchema)",
+        "$(rootpath //pxr/usd/bin/usdgenschemafromsdr)",
+    ],
+    data = [
+        "//pxr/usd/bin/usdgenschemafromsdr",
+        "//pxr/usd/usd:usdGenSchema",
+        "//pxr/usd/usd:usdInitSchema",
+    ],
+)

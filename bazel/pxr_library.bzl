@@ -339,11 +339,18 @@ def pxr_cpp_bin(name, libraries = []):
     )
 
 def pxr_python_bin(name, python_file):
-    """A Python program, like pxr_python_bin() in Public.cmake."""
+    """A Python program, like pxr_python_bin() in Public.cmake.
+
+    Programs run with the Python packages CMake looks for (Jinja2, for the
+    schema generators) importable, as they are in CMake's interpreter.
+    """
     py_binary(
         name = name,
         srcs = [python_file],
         main = python_file,
-        deps = ["//bazel/install:python"],
+        deps = [
+            "//bazel/install:python",
+            "//vendor/jinja2",
+        ],
         visibility = ["//visibility:public"],
     )

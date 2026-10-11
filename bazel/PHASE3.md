@@ -16,9 +16,10 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
 - **CMake stays** as the reference build. BUILD.bazel files under `pxr/` are
   generated from CMakeLists.txt by `bazel/tools/cmake2bazel.py`; never
   hand-edit them, fix the generator instead.
-- **Vendoring:** C++ deps as source under `vendor/<dep>/` with our own
-  BUILD.bazel and a README (version, URL, SHA-256, local changes). Bazel rule
-  sets and the hermetic Python come from BCR.
+- **Vendoring:** C++ and Python deps as source under `vendor/<dep>/` with
+  our own BUILD.bazel and a README (version, URL, SHA-256, local changes);
+  nothing is fetched from PyPI. Bazel rule sets and the hermetic Python come
+  from BCR.
 - **Linking model:** each module is a static `cc_library` with
   `alwayslink = True` (TfType/TF_REGISTRY_FUNCTION need static initializers).
   All of them, core plugins included, are linked into one monolithic shared
@@ -49,6 +50,9 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
 - `.bazelrc`: `-std=c++17`, macOS min 13.0 via `--enable_platform_specific_config`.
 - `vendor/onetbb`: oneTBB 2021.12.0 → `//vendor/onetbb:tbb` (`alwayslink`,
   so usd_ms carries all of tbb for the objects linked against it).
+- `vendor/jinja2` (3.1.6) and `vendor/markupsafe` (3.0.3, pure Python, C
+  speedups omitted): `py_library` targets from the PyPI sdists, for the
+  schema code generators.
 - `pxr/BUILD.bazel` (hand-written): `//pxr` = generated `pxr.h` +
   project-wide defines (matches `CXXDefaults.cmake` for core; the
   `PXR_*_SUPPORT_ENABLED` defines in `Packages.cmake` are imaging-only and
@@ -89,7 +93,8 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
   `target_compile_definitions`, `configure_file`. Other `pxr_*` commands are
   errors unless listed in `IGNORED_PXR_COMMANDS` (the test macros, for
   now); non-pxr commands are ignored. Option defaults come from evaluating
-  `cmake/defaults/Options.cmake`; platform variables are in `PLATFORM_VARS`.
+  `cmake/defaults/Options.cmake`; platform variables and find-module
+  results (`JINJA2_FOUND`, `M_LIB`, ...) are in `PLATFORM_VARS`.
   Runs once per OS (macos, linux) and puts differences under `per_os`.
   `INCLUDE_SCHEMA_FILES` reads `generatedSchema.classes.txt` like
   `_pxr_parse_generated_schema_classes`. Writes `pxr/**/BUILD.bazel` and
@@ -109,20 +114,26 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
     `dynamic_deps = [usd_ms]`, links `current_py_cc_libs`, resources as
     data.
   - `pxr_python_bin(name, python_file)` → `py_binary` depending on
-    `//bazel/install:python`.
+    `//bazel/install:python` and `//vendor/jinja2` (the Python packages
+    CMake's interpreter provides; deliberately not a dependency of the pxr
+    package itself, so a wheel would not require Jinja2).
   - `pxr_configure_file(name, src, out, substitutions)`.
 - Generated BUILD files: boost, all of `pxr/base`, 22 `pxr/usd` libraries,
   the `usdShaders` core plugin, 8 `usdValidation` libraries, and tools
   (`sdfdump`, `sdffilter`, `usdcat`, `usddiff`, `usddumpcrate`, `usdedit`,
   `usdresolve`, `usdstitch`, `usdstitchclips`, `usdtree`, `usdupdatecrate`,
-  `usdchecker`).
+  `usdchecker`, and the Jinja2-based `usdGenSchema`, `usdInitSchema`,
+  `usdgenschemafromsdr`).
 - `bazel/smoke/`: `archSmoke`, `tfSmoke` (C++, static), `pythonSmoke`
   (pxr/base modules), `usdSmoke` (stages, file formats, schema fallbacks,
-  usdShaders/Sdr, schema libraries), `usdcatSmoke`, `usdcheckerSmoke`.
+  usdShaders/Sdr, schema libraries), `usdcatSmoke`, `usdcheckerSmoke`,
+  `schemaToolsSmoke` (usdInitSchema + usdGenSchema on a small schema,
+  including `--validate`).
 
 Verified at the end of Phase 2 on macOS arm64: `bazel build //...`,
-`bazel test //...` (6 tests), `cmake2bazel.py --check` (56 files), and
-`--help` of all 12 tools.
+`bazel test //...` (7 tests), `cmake2bazel.py --check` (57 files), and
+`--help` of all 15 tools. `usdGenSchema` regenerates `pxr/usd/usdGeom`
+byte-identically, and `--validate` passes for usdGeom and usdLux.
 
 ## Gotchas already learned
 
@@ -158,11 +169,9 @@ Verified at the end of Phase 2 on macOS arm64: `bazel build //...`,
   under `//pxr`.
 - `pxr_python_package` assumes every module in `PXR_PYTHON_MODULES` has
   `pymodule_files` (true so far).
-- **Not built (open decision):** `usdGenSchema`, `usdInitSchema`,
-  `usdgenschemafromsdr` need Jinja2 (`JINJA2_FOUND`), which the generator
-  leaves undefined. Building them needs a Python dependency
-  (rules_python `pip.parse` with a lock file, or vendored wheels); ask the
-  user before adding one.
+- `usdGenSchema` finds its templates in the install tree
+  (`lib/usd/usd/resources/codegenTemplates`), so it must run with the
+  resources as runfiles (it does, via `//bazel/install:python`).
 - Shell is zsh: unquoted `$VAR` does not word-split; use `${=VAR}`.
 - Use the session scratchpad for downloads; vendored sources must come from
   official release tarballs with recorded SHA-256.
