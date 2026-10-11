@@ -1,0 +1,44 @@
+# Generated from pxr/usd/usdProfiles/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdProfiles",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+        "//pxr/base/vt",
+        "//pxr/base/js",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+    ],
+    public_classes = [
+        "claimsAPI",
+        "profileRegistry",
+        "profilesDocUtils",
+        "tokens",
+        "claimsAPI",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "wrapClaimsAPI.cpp",
+        "wrapProfileRegistry.cpp",
+        "wrapProfilesDocUtils.cpp",
+        "wrapTokens.cpp",
+        "module.cpp",
+        "wrapClaimsAPI.cpp",
+        "wrapTokens.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "generatedSchema.usda",
+        "plugInfo.json",
+        "schema.usda:UsdProfiles/schema.usda",
+    ],
+)

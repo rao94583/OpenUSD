@@ -1,6 +1,6 @@
 # Generated from pxr/base/work/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
 # Regenerate with: python3 bazel/tools/cmake2bazel.py --write
-load("//bazel:pxr_library.bzl", "pxr_library", "pxr_configure_file")
+load("//bazel:pxr_library.bzl", "pxr_configure_file", "pxr_library")
 
 pxr_configure_file(
     name = "impl_h",

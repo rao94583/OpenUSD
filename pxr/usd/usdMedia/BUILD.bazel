@@ -1,0 +1,41 @@
+# Generated from pxr/usd/usdMedia/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdMedia",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+    ],
+    public_classes = [
+        "assetPreviewsAPI",
+        "authorshipAPI",
+        "spatialAudio",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapAssetPreviewsAPI.cpp",
+        "wrapAuthorshipAPI.cpp",
+        "wrapSpatialAudio.cpp",
+        "wrapTokens.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "generatedSchema.usda",
+        "plugInfo.json",
+        "schema.usda:usdMedia/schema.usda",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

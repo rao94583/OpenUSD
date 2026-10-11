@@ -1,0 +1,50 @@
+# Generated from pxr/usd/usdUI/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdUI",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+    ],
+    public_classes = [
+        "attributeHints",
+        "objectHints",
+        "primHints",
+        "propertyHints",
+        "accessibilityAPI",
+        "backdrop",
+        "nodeGraphNodeAPI",
+        "sceneGraphPrimAPI",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "wrapAttributeHints.cpp",
+        "wrapObjectHints.cpp",
+        "wrapPrimHints.cpp",
+        "wrapPropertyHints.cpp",
+        "module.cpp",
+        "wrapAccessibilityAPI.cpp",
+        "wrapBackdrop.cpp",
+        "wrapNodeGraphNodeAPI.cpp",
+        "wrapSceneGraphPrimAPI.cpp",
+        "wrapTokens.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "generatedSchema.usda",
+        "plugInfo.json",
+        "schema.usda:usdUI/schema.usda",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

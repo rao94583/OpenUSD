@@ -1,4 +1,4 @@
-# Phase 0 smoke tests, until the CMake tests are ported (Phase 3).
+# Smoke tests, until the CMake tests are ported (Phase 3).
 
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_python//python:py_test.bzl", "py_test")
@@ -22,5 +22,25 @@ cc_test(
 py_test(
     name = "pythonSmoke",
     srcs = ["pythonSmoke.py"],
-    deps = ["//bazel/python:pxr"],
+    deps = ["//bazel/install:python"],
+)
+
+py_test(
+    name = "usdSmoke",
+    srcs = ["usdSmoke.py"],
+    deps = ["//bazel/install:python"],
+)
+
+py_test(
+    name = "usdcatSmoke",
+    srcs = ["usdcatSmoke.py"],
+    args = ["$(rootpath //pxr/usd/bin/usdcat)"],
+    data = ["//pxr/usd/bin/usdcat"],
+)
+
+py_test(
+    name = "usdcheckerSmoke",
+    srcs = ["usdcheckerSmoke.py"],
+    args = ["$(rootpath //pxr/usdValidation/bin/usdchecker)"],
+    data = ["//pxr/usdValidation/bin/usdchecker"],
 )

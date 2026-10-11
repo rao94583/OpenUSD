@@ -1,0 +1,37 @@
+# Generated from pxr/usd/usdSemantics/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdSemantics",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/usd/usd",
+    ],
+    public_classes = [
+        "labelsQuery",
+        "labelsAPI",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "wrapLabelsQuery.cpp",
+        "module.cpp",
+        "wrapLabelsAPI.cpp",
+        "wrapTokens.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "generatedSchema.usda",
+        "plugInfo.json",
+        "schema.usda:usdSemantics/schema.usda",
+    ],
+    doxygen_files = [
+        "overview.md",
+    ],
+)

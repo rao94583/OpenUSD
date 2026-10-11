@@ -1,0 +1,41 @@
+# The CMake install tree as Bazel outputs (see //bazel:pxr_install.bzl):
+# lib/libusd_ms.dylib, its resources under lib/usd and plugin/usd, and the
+# pxr Python package under lib/python. Plug finds resources relative to the
+# monolithic library, so they must stay together.
+
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+load("//bazel:pxr_install.bzl", "pxr_install_resources")
+load("//bazel:pxr_libraries.bzl", "PXR_LIBRARIES", "PXR_PYTHON_MODULES", "PXR_RESOURCES")
+load("//bazel:pxr_python.bzl", "PXR_PY_SHARED_LINKOPTS", "pxr_python_package")
+
+package(default_visibility = ["//visibility:public"])
+
+# The monolithic library (CMake's PXR_BUILD_MONOLITHIC usd_ms): every pxr
+# library plus the vendored dependencies they use, so that Python extensions
+# and programs share one copy of each registry.
+cc_shared_library(
+    name = "usd_ms",
+    shared_lib_name = select({
+        "@platforms//os:macos": "lib/libusd_ms.dylib",
+        "//conditions:default": "lib/libusd_ms.so",
+    }),
+    deps = PXR_LIBRARIES,
+    exports_filter = [
+        "//pxr:__subpackages__",
+        "//vendor:__subpackages__",
+    ],
+    user_link_flags = PXR_PY_SHARED_LINKOPTS,
+)
+
+pxr_install_resources(
+    name = "resources",
+    resources = PXR_RESOURCES,
+)
+
+pxr_python_package(
+    name = "python",
+    prefix = "lib/python",
+    modules = PXR_PYTHON_MODULES,
+    monolithic = ":usd_ms",
+    runtime = [":resources"],
+)

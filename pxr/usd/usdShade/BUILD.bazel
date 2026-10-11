@@ -1,0 +1,67 @@
+# Generated from pxr/usd/usdShade/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdShade",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/base/js",
+        "//pxr/usd/sdf",
+        "//pxr/usd/sdr",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+        "//vendor/onetbb:tbb",
+    ],
+    public_classes = [
+        "connectableAPIBehavior",
+        "input",
+        "output",
+        "shaderDefParser",
+        "shaderDefUtils",
+        "udimUtils",
+        "utils",
+        "connectableAPI",
+        "coordSysAPI",
+        "material",
+        "materialBindingAPI",
+        "nodeDefAPI",
+        "nodeGraph",
+        "shader",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+        "types.h",
+    ],
+    pymodule_cppfiles = [
+        "wrapInput.cpp",
+        "wrapOutput.cpp",
+        "wrapShaderDefParser.cpp",
+        "wrapShaderDefUtils.cpp",
+        "wrapTypes.cpp",
+        "wrapUdimUtils.cpp",
+        "wrapUtils.cpp",
+        "module.cpp",
+        "wrapConnectableAPI.cpp",
+        "wrapCoordSysAPI.cpp",
+        "wrapMaterial.cpp",
+        "wrapMaterialBindingAPI.cpp",
+        "wrapNodeDefAPI.cpp",
+        "wrapNodeGraph.cpp",
+        "wrapShader.cpp",
+        "wrapTokens.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "generatedSchema.usda",
+        "plugInfo.json",
+        "schema.usda:usdShade/schema.usda",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

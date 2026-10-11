@@ -1,0 +1,76 @@
+# Generated from pxr/usd/ar/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "ar",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/js",
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+        "//pxr/base/vt",
+        "//vendor/onetbb:tbb",
+    ],
+    public_classes = [
+        "asset",
+        "assetInfo",
+        "defaultResolver",
+        "defaultResolverContext",
+        "definePackageResolver",
+        "defineResolver",
+        "filesystemAsset",
+        "filesystemWritableAsset",
+        "inMemoryAsset",
+        "notice",
+        "packageResolver",
+        "packageUtils",
+        "resolvedPath",
+        "resolver",
+        "resolverContext",
+        "resolverContextBinder",
+        "resolverScopedCache",
+        "timestamp",
+        "writableAsset",
+    ],
+    python_public_classes = [
+        "pyResolverContext",
+    ],
+    public_headers = [
+        "api.h",
+        "ar.h",
+        "defineResolverContext.h",
+        "threadLocalScopedCache.h",
+    ],
+    private_headers = [
+        "debugCodes.h",
+        "testenv/TestArURIResolver_plugin.h",
+    ],
+    cppfiles = [
+        "debugCodes.cpp",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapAsset.cpp",
+        "wrapAssetInfo.cpp",
+        "wrapDefaultResolverContext.cpp",
+        "wrapDefaultResolver.cpp",
+        "wrapNotice.cpp",
+        "wrapPackageUtils.cpp",
+        "wrapResolvedPath.cpp",
+        "wrapResolverContextBinder.cpp",
+        "wrapResolverContext.cpp",
+        "wrapResolverScopedCache.cpp",
+        "wrapResolver.cpp",
+        "wrapTimestamp.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

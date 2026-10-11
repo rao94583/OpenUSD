@@ -1,0 +1,28 @@
+# Generated from pxr/usdValidation/usdPhysicsValidators/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdPhysicsValidators",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usdPhysics",
+        "//pxr/usdValidation/usdValidation",
+    ],
+    public_classes = [
+        "validatorTokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    cppfiles = [
+        "validators.cpp",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+)

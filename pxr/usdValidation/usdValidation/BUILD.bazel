@@ -1,0 +1,50 @@
+# Generated from pxr/usdValidation/usdValidation/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdValidation",
+    libraries = [
+        "//pxr/usd/sdf",
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+        "//pxr/usd/usd",
+        "//pxr/base/work",
+    ],
+    public_classes = [
+        "context",
+        "error",
+        "fixer",
+        "notice",
+        "registry",
+        "timeRange",
+        "validator",
+        "validatorTokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    cppfiles = [
+        "coreValidators.cpp",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapContext.cpp",
+        "wrapError.cpp",
+        "wrapFixer.cpp",
+        "wrapNotice.cpp",
+        "wrapRegistry.cpp",
+        "wrapTimeRange.cpp",
+        "wrapValidator.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    doxygen_files = [
+        "README.md",
+    ],
+)

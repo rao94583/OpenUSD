@@ -7,14 +7,21 @@ labels rather than CMake target names.
 Every library is a static cc_library with alwayslink, because TfType and
 TF_REGISTRY_FUNCTION registration rely on static initializers that a linker
 would otherwise drop. All libraries are linked into one shared library
-(//pxr:usd_ms), and Python extension modules link against it dynamically, so
-there is one copy of each registry.
+(//bazel/install:usd_ms), and Python extension modules and programs link
+against it dynamically, so there is one copy of each registry.
 """
 
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("//bazel:pxr_install.bzl", "pxr_resources")
 load("//bazel:pxr_python.bzl", "pxr_module_deps_cpp")
+
+# What programs need at runtime: the monolithic library and its resources.
+_MONOLITHIC = "//bazel/install:usd_ms"
+_RESOURCES = "//bazel/install:resources"
 
 # Flags from cmake/defaults/gccclangshareddefaults.cmake and clangdefaults.cmake.
 PXR_COPTS = [
@@ -74,6 +81,9 @@ _PER_OS_FIELDS = [
     "linkopts",
 ]
 
+def _unique(values):
+    return {v: None for v in values}.keys()
+
 def _library_name(label):
     """Library name of a pxr label: //pxr/base/tf -> tf."""
     if ":" in label:
@@ -101,6 +111,7 @@ def _per_os_select(per_os, field, transform = None):
 
 def pxr_library(
         name,
+        plugin = False,
         libraries = [],
         public_classes = [],
         python_public_classes = [],
@@ -128,6 +139,9 @@ def pxr_library(
 
     Args:
       name: library name, also PXR_PACKAGE (e.g. "tf").
+      plugin: True for pxr_plugin(). Core plugins are linked into the
+        monolithic library like other libraries (OBJECT_PLUGIN); only their
+        resources go elsewhere (plugin/usd instead of lib/usd).
       libraries: labels of libraries this one links against.
       public_classes: names X contributing X.h (public) and X.cpp.
       python_public_classes: as public_classes, compiled because Python
@@ -178,6 +192,11 @@ def pxr_library(
         [c + ".cpp" for c in all_public_classes + all_private_classes] +
         cppfiles + python_cppfiles
     )
+    # CMake target sources are sets: a class may be listed twice (e.g. in
+    # CMakeLists.txt and generatedSchema.classes.txt).
+    hdrs = _unique(hdrs)
+    srcs = _unique(srcs)
+    pymodule_cppfiles = _unique(pymodule_cppfiles)
     objc_srcs = [s for s in srcs if _is_objc(s)]
     cc_srcs = _without_objc(srcs)
 
@@ -272,7 +291,11 @@ def pxr_library(
     if pymodule_cppfiles:
         cc_library(
             name = "_" + name,
-            srcs = pymodule_cppfiles,
+            # Schema modules' module.cpp includes this from its directory.
+            srcs = pymodule_cppfiles + native.glob(
+                ["generatedSchema.module.h"],
+                allow_empty = True,
+            ),
             copts = copts,
             local_defines = mfb_defines + pymodule_local_defines,
             deps = [":" + name] + _PYTHON_DEPS,
@@ -286,11 +309,41 @@ def pxr_library(
             visibility = visibility,
         )
 
-    # Placeholder for a later phase: resource installation with plugInfo.json
-    # substitution.
     if resource_files:
-        native.filegroup(
+        pxr_resources(
             name = name + "_resources",
-            srcs = resource_files,
+            library = name,
+            plugin = plugin,
+            entries = resource_files,
+            srcs = {e.split(":")[0]: None for e in resource_files}.keys(),
             visibility = visibility,
         )
+
+def pxr_cpp_bin(name, libraries = []):
+    """A C++ program, like pxr_cpp_bin() in Public.cmake: <name>.cpp.
+
+    pxr libraries come from the monolithic library; the program links
+    libpython itself, as CMake executables do.
+    """
+    cc_binary(
+        name = name,
+        srcs = [name + ".cpp"],
+        copts = PXR_COPTS,
+        linkopts = PXR_LINKOPTS,
+        deps = ["//pxr"] + libraries + [
+            "@rules_python//python/cc:current_py_cc_libs",
+        ],
+        dynamic_deps = [_MONOLITHIC],
+        data = [_RESOURCES],
+        visibility = ["//visibility:public"],
+    )
+
+def pxr_python_bin(name, python_file):
+    """A Python program, like pxr_python_bin() in Public.cmake."""
+    py_binary(
+        name = name,
+        srcs = [python_file],
+        main = python_file,
+        deps = ["//bazel/install:python"],
+        visibility = ["//visibility:public"],
+    )

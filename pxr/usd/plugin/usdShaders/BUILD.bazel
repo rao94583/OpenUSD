@@ -1,0 +1,27 @@
+# Generated from pxr/usd/plugin/usdShaders/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdShaders",
+    plugin = True,
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/usd/sdr",
+        "//pxr/usd/usdShade",
+    ],
+    private_classes = [
+        "discoveryPlugin",
+    ],
+    resource_files = [
+        "plugInfo.json",
+        "shaders/shaderDefs.usda",
+        "shaders/previewSurface.glslfx",
+        "shaders/uvTexture.glslfx",
+        "shaders/primvarReader.glslfx",
+        "shaders/transform2d.glslfx",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

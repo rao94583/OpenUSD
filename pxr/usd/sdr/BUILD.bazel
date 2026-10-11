@@ -1,0 +1,68 @@
+# Generated from pxr/usd/sdr/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "sdr",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/plug",
+        "//pxr/base/trace",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/base/work",
+        "//pxr/usd/ar",
+        "//pxr/usd/sdf",
+    ],
+    public_classes = [
+        "debugCodes",
+        "declare",
+        "discoveryPlugin",
+        "filesystemDiscovery",
+        "filesystemDiscoveryHelpers",
+        "parserPlugin",
+        "registry",
+        "sdfTypeIndicator",
+        "shaderMetadataHelpers",
+        "shaderNode",
+        "shaderNodeMetadata",
+        "shaderNodeQuery",
+        "shaderNodeQueryUtils",
+        "shaderProperty",
+        "shaderPropertyMetadata",
+    ],
+    public_headers = [
+        "api.h",
+        "shaderNodeDiscoveryResult.h",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapDeclare.cpp",
+        "wrapDiscoveryPlugin.cpp",
+        "wrapFilesystemDiscovery.cpp",
+        "wrapFilesystemDiscoveryHelpers.cpp",
+        "wrapRegistry.cpp",
+        "wrapSdfTypeIndicator.cpp",
+        "wrapShaderMetadataHelpers.cpp",
+        "wrapShaderNode.cpp",
+        "wrapShaderNodeDiscoveryResult.cpp",
+        "wrapShaderNodeMetadata.cpp",
+        "wrapShaderNodeQuery.cpp",
+        "wrapShaderNodeQueryUtils.cpp",
+        "wrapShaderProperty.cpp",
+        "wrapShaderPropertyMetadata.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+        "shaderParserTestUtils.py",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    doxygen_files = [
+        "docs/front.md",
+        "docs/registry.md",
+        "docs/shaderNode.md",
+        "docs/shaderProperty.md",
+    ],
+)

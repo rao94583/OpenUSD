@@ -1,0 +1,52 @@
+# Generated from pxr/usd/usdLod/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdLod",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+        "//pxr/base/vt",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+    ],
+    public_classes = [
+        "distanceHeuristicQuery",
+        "heuristicQuery",
+        "screenSizeHeuristicQuery",
+        "distanceHeuristic",
+        "heuristic",
+        "overrideAPI",
+        "rootAPI",
+        "screenSizeHeuristic",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "wrapDistanceHeuristicQuery.cpp",
+        "wrapHeuristicQuery.cpp",
+        "wrapScreenSizeHeuristicQuery.cpp",
+        "module.cpp",
+        "wrapDistanceHeuristic.cpp",
+        "wrapHeuristic.cpp",
+        "wrapOverrideAPI.cpp",
+        "wrapRootAPI.cpp",
+        "wrapScreenSizeHeuristic.cpp",
+        "wrapTokens.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "generatedSchema.usda",
+        "plugInfo.json",
+        "schema.usda:usdLod/schema.usda",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

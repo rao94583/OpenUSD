@@ -30,7 +30,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__))))
 
 # Directories translated so far. Grows with each phase of the Bazel port.
-SCOPE = ["pxr/external", "pxr/base"]
+SCOPE = ["pxr/external", "pxr/base", "pxr/usd", "pxr/usdValidation"]
 
 # File listing all generated libraries and Python modules, for //pxr and
 # //bazel/python.
@@ -77,6 +77,23 @@ DROPPED_GENEX = {
     "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>",
 }
 
+# pxr_* commands that do not affect what Bazel builds yet. Any other pxr_*
+# command is an error, so new macros are not skipped by accident.
+IGNORED_PXR_COMMANDS = {
+    "pxr_core_prologue",
+    "pxr_core_epilogue",
+    # Tests: Phase 3.
+    "pxr_build_test",
+    "pxr_build_test_plugin",
+    "pxr_build_test_shared_lib",
+    "pxr_create_test_module",
+    "pxr_install_test_dir",
+    "pxr_register_test",
+    "pxr_test_scripts",
+    # Rpaths of boost::python's test libraries.
+    "pxr_set_rpaths_for_target",
+}
+
 # pxr_library() keywords that take lists, in output order.
 LIST_KEYWORDS = [
     "LIBRARIES",
@@ -96,8 +113,9 @@ LIST_KEYWORDS = [
     "DOXYGEN_FILES",
 ]
 # Keywords that are accepted but have no Bazel equivalent.
-IGNORED_KEYWORDS = {"INCLUDE_DIRS", "DISABLE_PRECOMPILED_HEADERS", "TYPE",
-                    "PRECOMPILED_HEADER_NAME"}
+IGNORED_KEYWORDS = {"INCLUDE_DIRS", "TYPE", "PRECOMPILED_HEADER_NAME"}
+# pxr_library() options (flags without values).
+OPTIONS = {"DISABLE_PRECOMPILED_HEADERS", "INCLUDE_SCHEMA_FILES"}
 
 # Bazel attributes in output order; LIST_KEYWORDS map to their lower-case
 # names, the rest come from other CMake commands.
@@ -283,6 +301,7 @@ class Library:
         self.name, self.args, self.line = name, args, line
         self.defines, self.local_defines = [], []
         self.pymodule_local_defines = []
+        self.plugin = False
 
 
 class Directory:
@@ -292,6 +311,9 @@ class Directory:
         self.path = path  # relative to REPO
         self.libraries = []
         self.configured = []  # (template, out, {placeholder: value})
+        self.definitions = []  # add_definitions()
+        self.cpp_bins = []  # (name, [library])
+        self.python_bins = []  # (name, python file)
 
 
 class Return(Exception):
@@ -332,6 +354,8 @@ class Interpreter:
 
     def condition(self, raw, vars):
         toks = self.args(raw, vars, keep_kind=True)
+        if not toks:
+            return False  # e.g. if(${UNDEFINED})
         pos = [0]
 
         def peek():
@@ -502,6 +526,12 @@ class Interpreter:
             else:
                 raise CMakeError("line %d: list(%s) unsupported" % (line, op))
             vars[var] = ";".join(current)
+        elif name in ("find_program", "find_library", "find_file",
+                      "find_path"):
+            # Never probe the host: results must not depend on the machine.
+            var = self.args(raw, vars)[0]
+            if var not in vars:
+                vars[var] = var + "-NOTFOUND"
         elif name == "return":
             raise Return()
         elif name == "message":
@@ -517,6 +547,23 @@ class Interpreter:
         elif name in ("pxr_library", "pxr_shared_library",
                       "pxr_static_library"):
             self.pxr_library(raw, line, vars, directory)
+        elif name == "pxr_plugin":
+            # Core plugins are OBJECT_PLUGINs in a monolithic build: linked
+            # into usd_ms, resources under plugin/usd.
+            self.pxr_library(raw, line, vars, directory).plugin = True
+        elif name == "pxr_cpp_bin":
+            self.cpp_bin(raw, vars, directory)
+        elif name == "pxr_python_bin":
+            self.python_bin(raw, vars, directory)
+        elif name == "add_definitions":
+            for arg in self.args(raw, vars):
+                if not arg.startswith("-D"):
+                    raise CMakeError("line %d: add_definitions(%s) is not a "
+                                     "definition" % (line, arg))
+                directory.definitions.append(arg[2:])
+        elif name.startswith("pxr_") and name not in IGNORED_PXR_COMMANDS:
+            raise CMakeError("line %d: unsupported command %s()"
+                             % (line, name))
         elif name == "target_compile_definitions":
             self.compile_definitions(raw, line, vars, directory)
         elif name == "configure_file":
@@ -526,9 +573,12 @@ class Interpreter:
 
     def pxr_library(self, raw, line, vars, directory):
         tokens = self.args(raw, vars)
-        name, args, current = tokens[0], {}, None
+        name, args, current, options = tokens[0], {}, None, set()
         for tok in tokens[1:]:
-            if tok in LIST_KEYWORDS or tok in IGNORED_KEYWORDS:
+            if tok in OPTIONS:
+                options.add(tok)
+                current = None
+            elif tok in LIST_KEYWORDS or tok in IGNORED_KEYWORDS:
                 current = tok
                 args.setdefault(tok, [])
             elif current is None:
@@ -536,6 +586,9 @@ class Interpreter:
                                  % (line, tok, name))
             else:
                 args[current].append(tok)
+        if "INCLUDE_SCHEMA_FILES" in options:
+            for kw, values in schema_classes(directory.path).items():
+                args.setdefault(kw, []).extend(values)
         if name in self.libraries:
             raise CMakeError("line %d: library %s defined twice"
                              % (line, name))
@@ -545,6 +598,29 @@ class Interpreter:
         self.targets.add(name)
         if args.get("PYMODULE_CPPFILES"):
             self.targets.add("_" + name)
+        return library
+
+    def cpp_bin(self, raw, vars, directory):
+        # Mirrors cmake_parse_arguments in pxr_cpp_bin: the sources are
+        # always <name>.cpp.
+        tokens = self.args(raw, vars)
+        libraries, current = [], None
+        for tok in tokens[1:]:
+            if tok in ("LIBRARIES", "INCLUDE_DIRS"):
+                current = tok
+            elif current == "LIBRARIES":
+                libraries.append(tok)
+        directory.cpp_bins.append((tokens[0], libraries))
+        self.targets.add(tokens[0])
+
+    def python_bin(self, raw, vars, directory):
+        # DEPENDENCIES only order the CMake build; every Python program
+        # depends on the whole pxr package in Bazel.
+        tokens = self.args(raw, vars)
+        name, python_file = tokens[0], tokens[0] + ".py"
+        if "PYTHON_FILE" in tokens:
+            python_file = tokens[tokens.index("PYTHON_FILE") + 1]
+        directory.python_bins.append((name, python_file))
 
     def compile_definitions(self, raw, line, vars, directory):
         args = self.args(raw, vars)
@@ -596,6 +672,28 @@ class Interpreter:
                                      substitutions))
 
 
+def schema_classes(path):
+    """Lists from generatedSchema.classes.txt, as pxr_library() adds them.
+
+    Mirrors _pxr_parse_generated_schema_classes in cmake/macros/Private.cmake.
+    """
+    sections = {
+        "# Public Classes": "PUBLIC_CLASSES",
+        "# Python Module Files": "PYMODULE_CPPFILES",
+        "# Resource Files": "RESOURCE_FILES",
+    }
+    result, current = {}, None
+    with open(os.path.join(REPO, path, "generatedSchema.classes.txt")) as f:
+        for line in f:
+            line = line.strip()
+            if line in sections:
+                current = sections[line]
+                result[current] = []
+            elif line and current:
+                result[current].append(line)
+    return result
+
+
 def load_options(interp, vars):
     path = "cmake/defaults/Options.cmake"
     with open(os.path.join(REPO, path)) as f:
@@ -623,6 +721,23 @@ def label(path, name):
         "//%s:%s" % (path, name)
 
 
+def resolve_libraries(libraries, interp, where):
+    """Translates CMake LIBRARIES into ([(label,)], [linkopt group])."""
+    labels, linkopts = [], []
+    for lib in libraries:
+        if lib in interp.libraries:
+            labels.append((label(interp.libraries[lib][0].path, lib),))
+        elif lib in EXTERNAL_LABELS:
+            labels.append((EXTERNAL_LABELS[lib],))
+        elif "$<" in lib or "::" in lib:
+            raise CMakeError("%s: cannot translate %s" % (where, lib))
+        elif lib.startswith("-"):
+            linkopts.append(tuple(lib.split()))
+        else:
+            linkopts.append(("-l" + lib,))
+    return labels, linkopts
+
+
 def translate(directory, library, interp):
     """Bazel attributes of one library for one OS: {attr: [group, ...]}.
 
@@ -634,23 +749,14 @@ def translate(directory, library, interp):
         if kw == "LIBRARIES":
             continue
         attrs[kw.lower()] = [(v,) for v in library.args.get(kw, [])]
-    for lib in library.args.get("LIBRARIES", []):
-        if lib in interp.libraries:
-            attrs["libraries"].append(
-                (label(interp.libraries[lib][0].path, lib),))
-        elif lib in EXTERNAL_LABELS:
-            attrs["libraries"].append((EXTERNAL_LABELS[lib],))
-        elif "$<" in lib or "::" in lib:
-            raise CMakeError("%s: pxr_library(%s): cannot translate %s"
-                             % (directory.path, library.name, lib))
-        elif lib.startswith("-"):
-            attrs["linkopts"].append(tuple(lib.split()))
-        else:
-            attrs["linkopts"].append(("-l" + lib,))
+    attrs["libraries"], attrs["linkopts"] = resolve_libraries(
+        library.args.get("LIBRARIES", []), interp,
+        "%s: pxr_library(%s)" % (directory.path, library.name))
     attrs["defines"] = [(d,) for d in library.defines]
-    attrs["local_defines"] = [(d,) for d in library.local_defines]
+    attrs["local_defines"] = [
+        (d,) for d in directory.definitions + library.local_defines]
     attrs["pymodule_local_defines"] = [
-        (d,) for d in library.pymodule_local_defines]
+        (d,) for d in directory.definitions + library.pymodule_local_defines]
     attrs["generated_headers"] = [
         (":" + configured_name(out),) for _, out, _ in directory.configured]
     return attrs
@@ -690,8 +796,10 @@ def _string_list(values, indent):
         [pad + "]"]
 
 
-def starlark_library(name, common, per_os):
+def starlark_library(name, plugin, common, per_os):
     out = ["pxr_library(", '    name = %s,' % json.dumps(name)]
+    if plugin:
+        out.append("    plugin = True,")
     for attr in ATTRS:
         values = _flatten(common[attr])
         if values:
@@ -732,6 +840,24 @@ def starlark_configure_file(template, out, substitutions):
     return "\n".join(lines)
 
 
+def starlark_cpp_bin(name, libraries):
+    lines = ["pxr_cpp_bin(", "    name = %s," % json.dumps(name)]
+    if libraries:
+        body = _string_list(libraries, 4)
+        lines += ["    libraries = " + body[0]] + body[1:-1] + [body[-1] + ","]
+    lines.append(")")
+    return "\n".join(lines)
+
+
+def starlark_python_bin(name, python_file):
+    return "\n".join([
+        "pxr_python_bin(",
+        "    name = %s," % json.dumps(name),
+        "    python_file = %s," % json.dumps(python_file),
+        ")",
+    ])
+
+
 def generate(warn):
     """Returns {path: contents} for every generated file."""
     interps = {os: evaluate(os, warn) for os in OSES}
@@ -742,7 +868,7 @@ def generate(warn):
             raise CMakeError("directories differ between OSes")
 
     files = {}
-    all_libraries, python_modules = [], []
+    all_libraries, python_modules, resources = [], [], []
     for index, directory in enumerate(first.directories):
         dirs = {os: interps[os].directories[index] for os in OSES}
         names = [lib.name for lib in directory.libraries]
@@ -750,10 +876,16 @@ def generate(warn):
             if [lib.name for lib in dirs[os].libraries] != names:
                 raise CMakeError("%s: libraries differ between OSes"
                                  % directory.path)
-            if dirs[os].configured != directory.configured:
-                raise CMakeError("%s: configure_file() differs between OSes"
+            for attr in ("configured", "python_bins"):
+                if getattr(dirs[os], attr, None) != \
+                        getattr(directory, attr, None):
+                    raise CMakeError("%s: %s differs between OSes"
+                                     % (directory.path, attr))
+            if [b[0] for b in dirs[os].cpp_bins] != \
+                    [b[0] for b in directory.cpp_bins]:
+                raise CMakeError("%s: pxr_cpp_bin()s differ between OSes"
                                  % directory.path)
-        if not names:
+        if not (names or directory.cpp_bins or directory.python_bins):
             continue
         if directory.configured and len(names) != 1:
             raise CMakeError("%s: configure_file() with several libraries"
@@ -765,13 +897,42 @@ def generate(warn):
                                    interps[os]) for os in OSES}
             common, per_os = merge(attrs, "%s: pxr_library(%s)"
                                    % (directory.path, name))
-            blocks.append(starlark_library(name, common, per_os))
+            library = directory.libraries[i]
+            if any(lib.plugin != library.plugin
+                   for lib in (d.libraries[i] for d in dirs.values())):
+                raise CMakeError("%s: %s is a plugin on some OSes only"
+                                 % (directory.path, name))
+            blocks.append(starlark_library(name, library.plugin, common,
+                                           per_os))
             all_libraries.append(label(directory.path, name))
             if common["pymodule_cppfiles"]:
                 python_modules.append((name, directory.path))
+            if common["resource_files"]:
+                resources.append("//%s:%s_resources" % (directory.path, name))
 
-        symbols = ["pxr_library"] + (["pxr_configure_file"]
-                                     if directory.configured else [])
+        for i, (name, _) in enumerate(directory.cpp_bins):
+            libs = {}
+            for os in OSES:
+                labels, linkopts = resolve_libraries(
+                    dirs[os].cpp_bins[i][1], interps[os],
+                    "%s: pxr_cpp_bin(%s)" % (directory.path, name))
+                if linkopts:
+                    raise CMakeError("%s: pxr_cpp_bin(%s): link flags are "
+                                     "unsupported" % (directory.path, name))
+                libs[os] = _flatten(labels)
+            if any(l != libs[OSES[0]] for l in libs.values()):
+                raise CMakeError("%s: pxr_cpp_bin(%s) differs between OSes"
+                                 % (directory.path, name))
+            blocks.append(starlark_cpp_bin(name, libs[OSES[0]]))
+        for name, python_file in directory.python_bins:
+            blocks.append(starlark_python_bin(name, python_file))
+
+        symbols = (
+            (["pxr_configure_file"] if directory.configured else []) +
+            (["pxr_cpp_bin"] if directory.cpp_bins else []) +
+            (["pxr_library"] if names else []) +
+            (["pxr_python_bin"] if directory.python_bins else [])
+        )
         load = "load(%s)" % ", ".join(
             json.dumps(s) for s in ["//bazel:pxr_library.bzl"] + symbols)
         files[directory.path + "/BUILD.bazel"] = (
@@ -779,7 +940,7 @@ def generate(warn):
             load + "\n\n" + "\n\n".join(blocks) + "\n")
 
     lines = [HEADER.format(source="pxr/**/CMakeLists.txt").rstrip("\n"),
-             '"""pxr libraries and Python modules in CMake build order."""',
+             '"""pxr libraries, Python modules and resources in CMake build order."""',
              "", "PXR_LIBRARIES = ["]
     lines += ["    %s," % json.dumps(l) for l in all_libraries]
     lines += ["]", "", "# One entry per _<library> Python extension module.",
@@ -788,6 +949,9 @@ def generate(warn):
         lines.append("    struct(library = %s, module = %s, package = %s),"
                      % (json.dumps(name), json.dumps(python_module_name(name)),
                         json.dumps("//" + path)))
+    lines += ["]", "", "# Resources of each library, placed by //bazel/install.",
+              "PXR_RESOURCES = ["]
+    lines += ["    %s," % json.dumps(r) for r in resources]
     lines.append("]")
     files[LIBRARIES_BZL] = "\n".join(lines) + "\n"
     return files

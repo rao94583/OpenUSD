@@ -46,7 +46,8 @@ pxr_module_deps_cpp = rule(
 
 def _python_tree_impl(ctx):
     outputs = []
-    init = ctx.actions.declare_file("pxr/__init__.py")
+    root = ctx.attr.prefix + "/pxr/"
+    init = ctx.actions.declare_file(root + "__init__.py")
     ctx.actions.write(init, "__all__ = [%s]\n" % ", ".join(
         ["'%s'" % m for m in ctx.attr.all_modules],
     ))
@@ -57,7 +58,7 @@ def _python_tree_impl(ctx):
             if not f.short_path.startswith(package + "/"):
                 fail("%s: %s is outside its package" % (target.label, f.path))
             relative = f.short_path[len(package) + 1:]
-            out = ctx.actions.declare_file("pxr/%s/%s" % (module, relative))
+            out = ctx.actions.declare_file(root + module + "/" + relative)
             ctx.actions.symlink(output = out, target_file = f)
             outputs.append(out)
     return [DefaultInfo(files = depset(outputs))]
@@ -66,6 +67,7 @@ _pxr_python_tree = rule(
     implementation = _python_tree_impl,
     doc = "Lays out pxr/__init__.py and pxr/<Module>/ Python files.",
     attrs = {
+        "prefix": attr.string(mandatory = True),
         "all_modules": attr.string_list(
             doc = "Modules listed in pxr.__all__, as pxr_setup_python does.",
         ),
@@ -75,22 +77,30 @@ _pxr_python_tree = rule(
     },
 )
 
-def pxr_python_package(name, modules, monolithic, visibility = None):
-    """The importable pxr package, rooted at this BUILD file's directory.
+def pxr_python_package(
+        name,
+        prefix,
+        modules,
+        monolithic,
+        runtime = [],
+        visibility = None):
+    """The importable pxr package, at <prefix>/pxr in this package.
 
-    Builds pxr/<Module>/_<library>.so for every module, linked against the
-    monolithic library, next to the module's Python files.
+    Builds <prefix>/pxr/<Module>/_<library>.so for every module, linked
+    against the monolithic library, next to the module's Python files.
 
     Args:
       name: name of the resulting py_library.
+      prefix: directory of the pxr package, relative to this package.
       modules: structs with library, module and package fields
         (PXR_PYTHON_MODULES from pxr_libraries.bzl).
       monolithic: label of the cc_shared_library holding all pxr libraries.
+      runtime: other files the modules need at runtime (resources).
       visibility: visibility of the py_library.
     """
     extensions = []
     for m in modules:
-        extension = "pxr/%s/_%s" % (m.module, m.library)
+        extension = "%s/pxr/%s/_%s" % (prefix, m.module, m.library)
         cc_shared_library(
             name = extension,
             shared_lib_name = extension + ".so",
@@ -102,6 +112,7 @@ def pxr_python_package(name, modules, monolithic, visibility = None):
 
     _pxr_python_tree(
         name = name + "_tree",
+        prefix = prefix,
         all_modules = [m.module for m in modules],
         pyfiles = {
             "%s:%s_pyfiles" % (m.package, m.library): m.module
@@ -111,7 +122,7 @@ def pxr_python_package(name, modules, monolithic, visibility = None):
 
     py_library(
         name = name,
-        data = [":" + name + "_tree", monolithic] + extensions,
-        imports = ["."],
+        data = [":" + name + "_tree", monolithic] + extensions + runtime,
+        imports = [prefix],
         visibility = visibility,
     )

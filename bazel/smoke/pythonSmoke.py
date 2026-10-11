@@ -7,8 +7,9 @@ class TestPxrBase(unittest.TestCase):
     def test_imports(self):
         import pxr
         from pxr import Tf, Gf, Vt, Work, Plug, Trace, Ts
+        # pxr/base modules come first, in CMake build order.
         self.assertEqual(
-            pxr.__all__, ["Tf", "Gf", "Trace", "Work", "Plug", "Vt", "Ts"])
+            pxr.__all__[:7], ["Tf", "Gf", "Trace", "Work", "Plug", "Vt", "Ts"])
         for module in (Tf, Gf, Vt, Work, Plug, Trace, Ts):
             self.assertTrue(module.__file__.endswith("__init__.py"))
 

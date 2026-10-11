@@ -1,0 +1,47 @@
+# Generated from pxr/usd/usdRi/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdRi",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdShade",
+        "//pxr/usd/usdGeom",
+    ],
+    public_classes = [
+        "rmanUtilities",
+        "materialAPI",
+        "splineAPI",
+        "statementsAPI",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    private_classes = [
+        "typeUtils",
+    ],
+    pymodule_cppfiles = [
+        "wrapRmanUtilities.cpp",
+        "module.cpp",
+        "wrapMaterialAPI.cpp",
+        "wrapSplineAPI.cpp",
+        "wrapStatementsAPI.cpp",
+        "wrapTokens.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "generatedSchema.usda",
+        "plugInfo.json",
+        "schema.usda:usdRi/schema.usda",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

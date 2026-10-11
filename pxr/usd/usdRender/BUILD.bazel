@@ -1,0 +1,51 @@
+# Generated from pxr/usd/usdRender/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdRender",
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usdShade",
+    ],
+    public_classes = [
+        "spec",
+        "pass",
+        "product",
+        "settings",
+        "settingsBase",
+        "tokens",
+        "var",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapPass.cpp",
+        "wrapProduct.cpp",
+        "wrapSettings.cpp",
+        "wrapSettingsBase.cpp",
+        "wrapTokens.cpp",
+        "wrapVar.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "generatedSchema.usda",
+        "plugInfo.json",
+        "schema.usda:usdRender/schema.usda",
+    ],
+    doxygen_files = [
+        "overview.dox",
+        "images/aperture.svg",
+        "images/dataWindow.svg",
+        "images/nonSquarePixels.svg",
+        "images/pixelAspectRatio.svg",
+        "doxygen/renderSettings.usda",
+    ],
+)

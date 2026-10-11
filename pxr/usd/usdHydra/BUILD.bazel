@@ -1,0 +1,43 @@
+# Generated from pxr/usd/usdHydra/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "usdHydra",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdShade",
+    ],
+    public_classes = [
+        "discoveryPlugin",
+        "renderPassAPI",
+        "generativeProceduralAPI",
+        "primAPI",
+        "renderPassAPI",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapGenerativeProceduralAPI.cpp",
+        "wrapPrimAPI.cpp",
+        "wrapRenderPassAPI.cpp",
+        "wrapTokens.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "shaders/shaderDefs.usda",
+        "shaders/empty.glslfx",
+        "generatedSchema.usda",
+        "plugInfo.json",
+        "schema.usda:usdHydra/schema.usda",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)
