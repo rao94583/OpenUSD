@@ -1,0 +1,57 @@
+load("@rules_apple//apple:macos.bzl", "macos_application")
+load("@rules_cc//cc:cc_import.bzl", "cc_import")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("@rules_python//python:py_test.bzl", "py_test")
+load(":bundle.bzl", "usd_headers", "vela_runtime", "vela_archive")
+
+usd_headers(
+    name = "usd_headers",
+    deps = ["//pxr/usd/usd", "//pxr/base/plug"],
+)
+
+cc_import(
+    name = "usd_shared",
+    shared_library = "//bazel/install:usd_ms",
+)
+
+objc_library(
+    name = "frontend",
+    srcs = ["main.mm"],
+    copts = ["-fobjc-arc"],
+    sdk_frameworks = ["AppKit"],
+    deps = [
+        ":usd_headers",
+        ":usd_shared",
+        "@rules_python//python/cc:current_py_cc_libs",
+    ],
+)
+
+py_binary(name = "copy_runtime", srcs = ["copy_runtime.py"])
+py_binary(name = "sign_runtime", srcs = ["sign_runtime.py"])
+vela_runtime(name = "runtime", usd = ["//bazel/install:python"])
+
+macos_application(
+    name = "Vela",
+    bundle_id = "org.openusd.vela",
+    minimum_os_version = "13.0",
+    infoplists = ["Info.plist"],
+    deps = [":frontend"],
+    additional_contents = {":runtime": "Resources/Runtime"},
+    ipa_post_processor = ":sign_runtime",
+    linkopts = [
+        "-rpath", "@executable_path/../Resources/Runtime/usd/lib",
+        "-rpath", "@executable_path/../Resources/Runtime/python/lib",
+    ],
+)
+
+vela_archive(name = "archive", app = ":Vela")
+
+py_test(
+    name = "bundle_smoke_test",
+    srcs = ["test_bundle.py"],
+    main = "test_bundle.py",
+    args = ["$(location :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
+)
