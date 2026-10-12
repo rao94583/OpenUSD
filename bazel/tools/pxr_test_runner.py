@@ -17,6 +17,7 @@ pxr_register_test (cmake/macros/Public.cmake) would give it.
 Usage: pxr_test_runner.py <spec.json>
 """
 
+import importlib.util
 import json
 import os
 import shutil
@@ -182,12 +183,11 @@ def main():
         shutil.rmtree(prefix)
     _make_prefix(spec, root, prefix)
 
-    # Python packages CMake's interpreter provides (FindJinja2.cmake).
-    import jinja2
-    import markupsafe
+    # Python packages CMake's interpreter provides (FindJinja2.cmake,
+    # FindPySide.cmake, FindPyOpenGL.cmake); //bazel:python_deps.
     python_path = ":".join(
-        os.path.dirname(os.path.dirname(m.__file__))
-        for m in (jinja2, markupsafe))
+        os.path.dirname(os.path.dirname(importlib.util.find_spec(m).origin))
+        for m in ("jinja2", "markupsafe", "PySide6", "shiboken6", "OpenGL"))
 
     build = os.environ.get("TEST_UNDECLARED_OUTPUTS_DIR", tmp)
     substitutions = {

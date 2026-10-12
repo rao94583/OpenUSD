@@ -1,0 +1,184 @@
+# Generated from pxr/usdImaging/usdviewq/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
+
+pxr_library(
+    name = "usdviewq",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usdUI",
+        "//pxr/imaging/hd",
+    ],
+    public_classes = [
+        "debugCodes",
+        "hydraObserver",
+        "utils",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapHydraObserver.cpp",
+        "wrapUtils.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+        "appEventFilter.py",
+        "arrayAttributeView.py",
+        "customAttributes.py",
+        "frameSlider.py",
+        "appController.py",
+        "usdviewApi.py",
+        "plugin.py",
+        "scalarTypes.py",
+        "stageView.py",
+        "usdviewContextMenuItem.py",
+        "primContextMenu.py",
+        "primContextMenuItems.py",
+        "headerContextMenu.py",
+        "attributeViewContextMenu.py",
+        "layerStackContextMenu.py",
+        "prettyPrint.py",
+        "pythonInterpreter.py",
+        "settings.py",
+        "adjustDefaultMaterial.py",
+        "adjustFreeCamera.py",
+        "preferences.py",
+        "primViewItem.py",
+        "common.py",
+        "hydraSceneDebugger.py",
+        "legendUtil.py",
+        "primLegend.py",
+        "primTreeWidget.py",
+        "propertyLegend.py",
+        "attributeValueEditor.py",
+        "overridableLineEdit.py",
+        "variantComboBox.py",
+        "qt.py",
+        "rootDataModel.py",
+        "selectionDataModel.py",
+        "splineViewer.py",
+        "viewSettingsDataModel.py",
+        "freeCamera.py",
+        "debugFlagsWidget.py",
+        "configController.py",
+        "usdviewstyle.qss",
+        "validationWidget.py",
+    ],
+    pymodule_dirs = [
+        "icons",
+        "fonts",
+    ],
+    pyside_ui_files = [
+        "mainWindowUI.ui",
+        "adjustDefaultMaterialUI.ui",
+        "adjustFreeCameraUI.ui",
+        "attributeValueEditorUI.ui",
+        "preferencesUI.ui",
+        "primLegendUI.ui",
+        "propertyLegendUI.ui",
+    ],
+    doxygen_files = [
+        "README.md",
+        "blackBoxTesting.md",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    files = {
+        "testUsdviewqLauncher": "testenv/testUsdviewqLauncher.py",
+        "testUsdviewqRootDataModel": "testenv/testUsdviewqRootDataModel.py",
+        "testUsdviewqSelectionDataModel": "testenv/testUsdviewqSelectionDataModel.py",
+        "testUsdviewqSettings": "testenv/testUsdviewqSettings.py",
+        "testUsdviewqToolSpawn": "testenv/testUsdviewqToolSpawn.py",
+        "testUsdviewqViewSettingsDataModel": "testenv/testUsdviewqViewSettingsDataModel.py",
+    },
+    testenvs = {
+        "testUsdviewqRootDataModel": "testenv/testUsdviewqRootDataModel",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdviewqSettings",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdviewqSettings",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdviewqRootDataModel",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdviewqRootDataModel",
+        "TESTENV": "testenv/testUsdviewqRootDataModel",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdviewqSelectionDataModel",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdviewqSelectionDataModel",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdviewqLauncher",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdviewqLauncher",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdviewqViewSettingsDataModel",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdviewqViewSettingsDataModel",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdviewqToolSpawn",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/tests/testUsdviewqToolSpawn",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)

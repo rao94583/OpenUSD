@@ -53,9 +53,16 @@ _COMMON_VARS = {
     # Every library is linked into //bazel/install:usd_ms, like CMake's
     # monolithic build (usd_m target).
     "PXR_BUILD_MONOLITHIC": "ON",
-    # Not ported yet (deferred in the Bazel plan); both default to ON.
+    # Not ported yet (deferred in the Bazel plan); defaults to ON.
     "PXR_BUILD_EXEC": "OFF",
-    "PXR_BUILD_USDVIEW": "OFF",
+    # Off by default in Options.cmake but on in build_scripts/build_usd.py;
+    # MaterialX is vendored (//vendor/materialx). //pxr defines
+    # PXR_MATERIALX_SUPPORT_ENABLED to match (Packages.cmake).
+    "PXR_ENABLE_MATERIALX_SUPPORT": "ON",
+    # find_package(MaterialX). MATERIALX_STDLIB_DIR stays unset: the data
+    # library is installed through RESOURCE_TREES instead, and nothing
+    # points at the build machine (PXR_MATERIALX_STDLIB_DIR).
+    "MaterialX_FOUND": "TRUE",
     "M_LIB": "m",  # Packages.cmake
     # Packages.cmake; mapped to a label in EXTERNAL_LABELS.
     "PYTHON_LIBRARIES": "Python3::Python",
@@ -92,40 +99,30 @@ EXTERNAL_LABELS = {
     # executables link libpython themselves.
     "Python3::Python": "@rules_python//python/cc:current_py_cc_headers",
 }
+EXTERNAL_LABELS.update({
+    name: "//vendor/materialx:" + name
+    for name in [
+        "MaterialXCore", "MaterialXFormat", "MaterialXGenShader",
+        "MaterialXGenGlsl", "MaterialXGenMsl", "MaterialXRender",
+        "MaterialXRenderGlsl",
+    ]
+})
+
+# Resources from other packages, per library: CMake globs these from
+# directories outside the source tree.
+RESOURCE_TREES = {
+    # MATERIALX_STDLIB_DIR's files under resources/libraries
+    # (pxr/usd/usdMtlx/CMakeLists.txt).
+    "usdMtlx": ["//vendor/materialx:libraries"],
+}
 # Tests CMake registers that cannot pass in this build, with the reason.
 # They are generated with excluded = "<reason>" (tagged manual: skipped by
 # `bazel test //...`, still runnable by label). Stale entries are errors.
-_NEEDS_PYSIDE = ("needs PySide for an OpenGL context (usdview's "
-                 "dependencies, deferred)")
-_NEEDS_MATERIALX = ("uses MaterialX shaders; PXR_ENABLE_MATERIALX_SUPPORT "
-                    "is OFF (deferred)")
 EXCLUDED_TESTS = {
-    "pxr/usdImaging/bin/usdrecord:" + name: _NEEDS_PYSIDE
-    for name in [
-        "testUsdRecordMultipleFrames",
-        "testUsdRecordMultipleFrames_SceneIndex",
-        "testUsdRecordSessionLayer",
-        "testUsdRecordSessionLayer_SceneIndex",
-        "testUsdRecordSingleFrame",
-        "testUsdRecordSingleFrame_SceneIndex",
-        "testUsdRecordSmallObject",
-        "testUsdRecordSmallObject_SceneIndex",
-    ]
-}
-EXCLUDED_TESTS.update({
-    "pxr/usdImaging/usdAppUtils:testUsdAppUtilsFrameRecorder": _NEEDS_PYSIDE,
-    "pxr/usdImaging/usdImagingGL:testUsdImagingGLUsdRenderPassWithInstances_default": _NEEDS_PYSIDE,
-    "pxr/usdImaging/usdImagingGL:testUsdImagingGLUsdRenderPassWithInstances_prune_test": _NEEDS_PYSIDE,
-    "pxr/usdImaging/usdImagingGL:testUsdImagingGLUsdRenderPassWithInstances_renderVisibility_test": _NEEDS_PYSIDE,
-    "pxr/usdImaging/usdImagingGL:testUsdImagingGLUsdRenderPassWithInstances_renderVisibility_test2": _NEEDS_PYSIDE,
-    "pxr/usdImaging/usdImagingGL:testUsdImagingGLUsdRenderPass_prune": _NEEDS_PYSIDE,
-    "pxr/usdImaging/usdImagingGL:testUsdImagingGLUsdRenderPass_visibility": _NEEDS_PYSIDE,
-    "pxr/usdImaging/usdImagingGL:testUsdImagingGLMaterialsAndInstancers_materialAsNiInstance": _NEEDS_MATERIALX,
-    "pxr/usdImaging/usdImagingGL:testUsdImagingGLMaterialsAndInstancers_materialAsPiDescendant": _NEEDS_MATERIALX,
     "pxr/usdImaging/usdImagingGL:testUsdImagingGLBasisCurvesWithScale": (
         "0.5% of pixels differ from the baseline at curve edges (limit "
         "0.3%) with Metal on macOS 27; not diagnosed"),
-})
+}
 
 # IMAGE_DIFF_TOOL in Packages.cmake: OpenImageIO's idiff, vendored.
 IMAGE_DIFF_TOOL = "//vendor/openimageio:idiff"
@@ -190,6 +187,8 @@ LIST_KEYWORDS = [
     "PYTHON_CPPFILES",
     "PYMODULE_CPPFILES",
     "PYMODULE_FILES",
+    "PYMODULE_DIRS",
+    "PYSIDE_UI_FILES",
     "RESOURCE_FILES",
     "DOXYGEN_FILES",
 ]
@@ -201,7 +200,7 @@ OPTIONS = {"DISABLE_PRECOMPILED_HEADERS", "INCLUDE_SCHEMA_FILES"}
 # Bazel attributes in output order; LIST_KEYWORDS map to their lower-case
 # names, the rest come from other CMake commands.
 EXTRA_ATTRS = ["copts", "linkopts", "defines", "local_defines",
-               "pymodule_local_defines", "generated_headers"]
+               "pymodule_local_defines", "generated_headers", "resource_trees"]
 ATTRS = [k.lower() for k in LIST_KEYWORDS] + EXTRA_ATTRS
 # Attributes pxr_library() accepts under per_os.
 PER_OS_ATTRS = {"libraries", "public_headers", "private_headers", "cppfiles",
@@ -1207,6 +1206,8 @@ def translate(directory, library, interp):
         (d,) for d in directory.definitions + library.pymodule_local_defines]
     attrs["generated_headers"] = [
         (":" + configured_name(out),) for _, out, _ in directory.configured]
+    attrs["resource_trees"] = [
+        (t,) for t in RESOURCE_TREES.get(library.name, [])]
     return attrs
 
 
@@ -1655,7 +1656,7 @@ def generate(warn):
             all_libraries.append((label(path, name), oses))
             if common["pymodule_cppfiles"]:
                 python_modules.append(((name, path), oses))
-            if common["resource_files"]:
+            if common["resource_files"] or common["resource_trees"]:
                 resources.append(("//%s:%s_resources" % (path, name), oses))
 
         for name in bin_names:

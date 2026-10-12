@@ -43,6 +43,9 @@ cc_library(
         "BOOST_NO_CXX98_FUNCTION_BASE",
         "GL_GLEXT_PROTOTYPES",
         "GLX_GLXEXT_PROTOTYPES",
+        # Packages.cmake, with PXR_ENABLE_MATERIALX_SUPPORT (on in
+        # cmake2bazel.py, as in build_scripts/build_usd.py).
+        "PXR_MATERIALX_SUPPORT_ENABLED",
     ] + select({
         # Packages.cmake (imaging): OpenGL and Metal on macOS; OpenGL and X11
         # on Linux. Must match PXR_ENABLE_*_SUPPORT in cmake2bazel.py.

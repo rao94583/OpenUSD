@@ -2,7 +2,9 @@
 
 The CMake build remains the reference build. Third-party C++ dependencies
 are vendored as source under vendor/; only Bazel rule sets and the hermetic
-Python toolchain are fetched from the Bazel Central Registry.
+Python toolchain are fetched from the Bazel Central Registry, and usdview's
+prebuilt Python dependencies (PySide6, PyOpenGL) from PyPI, pinned by hash in
+bazel/requirements_lock.txt.
 """
 
 module(
@@ -23,3 +25,11 @@ python.toolchain(
     is_default = True,
     python_version = "3.11",
 )
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "pypi",
+    python_version = "3.11",
+    requirements_lock = "//bazel:requirements_lock.txt",
+)
+use_repo(pip, "pypi")

@@ -419,6 +419,19 @@ pxr_test_program(
     ],
 )
 
+pxr_test_program(
+    name = "testUsdImagingHdMtlx",
+    srcs = [
+        "testenv/testUsdImagingHdMtlx.cpp",
+    ],
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdMtlx",
+        "//pxr/usdImaging/usdImaging",
+    ],
+)
+
 pxr_test_files(
     name = "test_files",
     testenvs = {
@@ -426,6 +439,7 @@ pxr_test_files(
         "testUsdImagingColorSpace": "testenv/testUsdImagingColorSpace",
         "testUsdImagingDelegate": "testenv/testUsdImagingDelegate",
         "testUsdImagingDelegateChanges": "testenv/testUsdImagingDelegateChanges",
+        "testUsdImagingHdMtlx": "testenv/testUsdImagingHdMtlx",
         "testUsdImagingInstanceProxyTraversal": "testenv/testUsdImagingInstanceProxyTraversal",
         "testUsdImagingMaterialBinding": "testenv/testUsdImagingMaterialBinding",
         "testUsdImagingNestedInstancingCategories": "testenv/testUsdImagingNestedInstancingCategories",
@@ -454,6 +468,7 @@ pxr_test_tree(
         ":tests/testUsdImagingInstanceProxyTraversal",
         ":tests/testUsdImagingCollectionExpressionEvaluation",
         ":tests/testUsdImagingCollectionPredicateLibrary",
+        ":tests/testUsdImagingHdMtlx",
         ":test_files",
     ],
 )
@@ -727,6 +742,81 @@ pxr_test(
     arguments = {
         "COMMAND": "<prefix>/tests/testUsdImagingCollectionPredicateLibrary",
         "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingHdMtlx_withMtlxVersion",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingHdMtlx --filename withMtlxVersion.usda",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "withMtlxVersion.mtlx",
+        ],
+        "TESTENV": "testenv/testUsdImagingHdMtlx",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingHdMtlx_withoutMtlxVersion",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingHdMtlx --filename withoutMtlxVersion.usda",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "withoutMtlxVersion.mtlx",
+        ],
+        "TESTENV": "testenv/testUsdImagingHdMtlx",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingHdMtlx_atan2Node",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingHdMtlx --filename atan2Node.usda",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "atan2Node.mtlx",
+        ],
+        "TESTENV": "testenv/testUsdImagingHdMtlx",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingHdMtlx_switchNode",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingHdMtlx --filename switchNode.usda",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "switchNode.mtlx",
+        ],
+        "TESTENV": "testenv/testUsdImagingHdMtlx",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingHdMtlx_swizzleNode",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingHdMtlx --filename swizzleNode.usda",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "swizzleNode.mtlx",
+        ],
+        "TESTENV": "testenv/testUsdImagingHdMtlx",
     },
     test_trees = [
         ":test_tree",

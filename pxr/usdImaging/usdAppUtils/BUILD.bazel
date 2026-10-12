@@ -111,5 +111,4 @@ pxr_test(
     test_trees = [
         ":test_tree",
     ],
-    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
 )

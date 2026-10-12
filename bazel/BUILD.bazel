@@ -1,1 +1,18 @@
+load("@rules_python//python:py_library.bzl", "py_library")
+
 package(default_visibility = ["//visibility:public"])
+
+exports_files(["requirements_lock.txt"])
+
+# The Python packages CMake finds in its interpreter (Packages.cmake):
+# Jinja2 for the schema generators, PySide6 and PyOpenGL for usdview.
+# Python programs and tests run with them importable.
+py_library(
+    name = "python_deps",
+    deps = [
+        "//vendor/jinja2",
+        "@pypi//pyopengl",
+        "@pypi//pyside6_essentials",
+        "@pypi//shiboken6",
+    ],
+)

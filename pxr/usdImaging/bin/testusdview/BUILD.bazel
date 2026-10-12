@@ -1,0 +1,1621 @@
+# Generated from pxr/usdImaging/bin/testusdview/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_python_bin")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
+
+pxr_python_bin(
+    name = "testusdview",
+    python_file = "testusdview.py",
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testUsdviewAdditive": "testenv/testUsdviewAdditive",
+        "testUsdviewAlive": "testenv/testUsdviewAlive",
+        "testUsdviewAnimatedBounds": "testenv/testUsdviewAnimatedBounds",
+        "testUsdviewBackgroundColor": "testenv/testUsdviewBackgroundColor",
+        "testUsdviewCameraMaskMode": "testenv/testUsdviewCameraMaskMode",
+        "testUsdviewClippingPlanes": "testenv/testUsdviewClippingPlanes",
+        "testUsdviewComplexity": "testenv/testUsdviewComplexity",
+        "testUsdviewDeactivate": "testenv/testUsdviewDeactivate",
+        "testUsdviewDefaultFontFamily": "testenv/testUsdviewDefaultFontFamily",
+        "testUsdviewDefaultMaterial": "testenv/testUsdviewDefaultMaterial",
+        "testUsdviewDetachedLayers": "testenv/testUsdviewDetachedLayers",
+        "testUsdviewExpressionVariableEdits": "testenv/testUsdviewExpressionVariableEdits",
+        "testUsdviewFieldOfView": "testenv/testUsdviewFieldOfView",
+        "testUsdviewFileArguments": "testenv/testUsdviewFileArguments",
+        "testUsdviewFrameSelection": "testenv/testUsdviewFrameSelection",
+        "testUsdviewFreeCamera": "testenv/testUsdviewFreeCamera",
+        "testUsdviewFreeCameraAspect": "testenv/testUsdviewFreeCameraAspect",
+        "testUsdviewInfGeom": "testenv/testUsdviewInfGeom",
+        "testUsdviewInstancingEdits": "testenv/testUsdviewInstancingEdits",
+        "testUsdviewInterpreterNoRender": "testenv/testUsdviewInterpreterNoRender",
+        "testUsdviewLightVisibility": "testenv/testUsdviewLightVisibility",
+        "testUsdviewLights": "testenv/testUsdviewLights",
+        "testUsdviewLoadPlugins": "testenv/testUsdviewLoadPlugins",
+        "testUsdviewMaterialEdits": "testenv/testUsdviewMaterialEdits",
+        "testUsdviewMeshBounds": "testenv/testUsdviewMeshBounds",
+        "testUsdviewMetadatatabSelect": "testenv/testUsdviewMetadatatabSelect",
+        "testUsdviewModelAPIEdits": "testenv/testUsdviewModelAPIEdits",
+        "testUsdviewNavigationKeys": "testenv/testUsdviewNavigationKeys",
+        "testUsdviewNoPlugins": "testenv/testUsdviewNoPlugins",
+        "testUsdviewOIT": "testenv/testUsdviewOIT",
+        "testUsdviewPointInstancerVariant": "testenv/testUsdviewPointInstancerVariant",
+        "testUsdviewPointWidths": "testenv/testUsdviewPointWidths",
+        "testUsdviewPrimPathBar": "testenv/testUsdviewPrimPathBar",
+        "testUsdviewPrimSearch": "testenv/testUsdviewPrimSearch",
+        "testUsdviewPrimTreeExpansion": "testenv/testUsdviewPrimTreeExpansion",
+        "testUsdviewPrimvarEdits": "testenv/testUsdviewPrimvarEdits",
+        "testUsdviewPropertySearch": "testenv/testUsdviewPropertySearch",
+        "testUsdviewReferencedNodegraphEdits": "testenv/testUsdviewReferencedNodegraphEdits",
+        "testUsdviewReloadReopen": "testenv/testUsdviewReloadReopen",
+        "testUsdviewRenderMode": "testenv/testUsdviewRenderMode",
+        "testUsdviewSceneLights": "testenv/testUsdviewSceneLights",
+        "testUsdviewSceneMaterials": "testenv/testUsdviewSceneMaterials",
+        "testUsdviewSelectionHighlighting": "testenv/testUsdviewSelectionHighlighting",
+        "testUsdviewSkinning": "testenv/testUsdviewSkinning",
+        "testUsdviewTimeSamples": "testenv/testUsdviewTimeSamples",
+        "testUsdviewUpAxis": "testenv/testUsdviewUpAxis",
+        "testUsdviewVariantSelection": "testenv/testUsdviewVariantSelection",
+        "testUsdviewWrapper": "testenv/testUsdviewWrapper",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdviewAlive",
+    arguments = {
+        "PRE_COMMAND": "<python> testUsdviewAliveSetup.py",
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testAlive.py test.usda",
+        "TESTENV": "testenv/testUsdviewAlive",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewDetachedLayers1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testDetachedLayers_1.py --norender --detachLayers root.usd",
+        "TESTENV": "testenv/testUsdviewDetachedLayers",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewDetachedLayers2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testDetachedLayers_2.py --norender --detachLayersInclude 'foo,with spaces' root.usd",
+        "TESTENV": "testenv/testUsdviewDetachedLayers",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewDetachedLayers3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testDetachedLayers_3.py --norender --detachLayers --detachLayersExclude 'foo,with spaces' root.usd",
+        "TESTENV": "testenv/testUsdviewDetachedLayers",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewDetachedLayers4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testDetachedLayers_4.py --norender root.usd",
+        "TESTENV": "testenv/testUsdviewDetachedLayers",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewFileArguments1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testValidFileArg.py test.usda",
+        "TESTENV": "testenv/testUsdviewFileArguments",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewFileArguments2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testValidFileArg.py test.usd",
+        "TESTENV": "testenv/testUsdviewFileArguments",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewFileArguments3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testValidFileArg.py test.usdc",
+        "TESTENV": "testenv/testUsdviewFileArguments",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewFileArguments4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testInvalidFileArg.py test.py",
+        "TESTENV": "testenv/testUsdviewFileArguments",
+        "STDERR_REDIRECT": "py_test_out",
+        "DIFF_COMPARE": [
+            "py_test_out",
+        ],
+        "EXPECTED_RETURN_CODE": "1",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewFileArguments5",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testInvalidFileArg.py invalidSyntax.usda",
+        "TESTENV": "testenv/testUsdviewFileArguments",
+        "CLEAN_OUTPUT": "(?:[A-Za-z]:)?/.*(?=invalidSyntax)",
+        "STDERR_REDIRECT": "invalidSyntax_test_out",
+        "DIFF_COMPARE": [
+            "invalidSyntax_test_out",
+        ],
+        "EXPECTED_RETURN_CODE": "1",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewFileArguments6",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testInvalidFileArg.py test.txt",
+        "TESTENV": "testenv/testUsdviewFileArguments",
+        "STDERR_REDIRECT": "txt_test_out",
+        "DIFF_COMPARE": [
+            "txt_test_out",
+        ],
+        "EXPECTED_RETURN_CODE": "1",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewFileArguments7",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testInvalidFileArg.py missing",
+        "TESTENV": "testenv/testUsdviewFileArguments",
+        "STDERR_REDIRECT": "missing_test_out",
+        "DIFF_COMPARE": [
+            "missing_test_out",
+        ],
+        "EXPECTED_RETURN_CODE": "1",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewWrapper0",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testCallback.py",
+        "TESTENV": "testenv/testUsdviewWrapper",
+        "STDOUT_REDIRECT": "valid_output_no_file",
+        "DIFF_COMPARE": [
+            "valid_output_no_file",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewWrapper1",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testCallback.py test.usda",
+        "TESTENV": "testenv/testUsdviewWrapper",
+        "STDOUT_REDIRECT": "valid_output",
+        "DIFF_COMPARE": [
+            "valid_output",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewWrapper2",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testCallback_Invalid_1.py test.usda",
+        "TESTENV": "testenv/testUsdviewWrapper",
+        "EXPECTED_RETURN_CODE": "1",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewWrapper3",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testCallback_Invalid_2.py test.usda",
+        "TESTENV": "testenv/testUsdviewWrapper",
+        "EXPECTED_RETURN_CODE": "1",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewWrapper4",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testCallback_Invalid_3.py test.usda",
+        "TESTENV": "testenv/testUsdviewWrapper",
+        "EXPECTED_RETURN_CODE": "1",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewWrapper5",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview test.usda",
+        "TESTENV": "testenv/testUsdviewWrapper",
+        "EXPECTED_RETURN_CODE": "2",
+        "ENV": [
+            "PXR_USDVIEW_SUPPRESS_STATE_SAVING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewPrimPathBar",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewPrimPathBar.py test.usda",
+        "TESTENV": "testenv/testUsdviewPrimPathBar",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewPrimSearch",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewPrimSearch.py test.usda",
+        "TESTENV": "testenv/testUsdviewPrimSearch",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewPropertySearch",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewPropertySearch.py test.usda",
+        "TESTENV": "testenv/testUsdviewPropertySearch",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewMetadatatabSelect",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewMetadatatabSelect.py test.usda",
+        "TESTENV": "testenv/testUsdviewMetadatatabSelect",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewTimeSamples",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewTimeSamples.py test.usda",
+        "TESTENV": "testenv/testUsdviewTimeSamples",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewNavigationKeys",
+    arguments = {
+        "RUN_SERIAL": True,
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewNavigationKeys.py test.usda",
+        "TESTENV": "testenv/testUsdviewNavigationKeys",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    tags = [
+        "exclusive",
+    ],
+)
+
+pxr_test(
+    name = "testUsdviewNoPlugins",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewNoPlugins.py --noplugins test.usda",
+        "TESTENV": "testenv/testUsdviewNoPlugins",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewInterpreterNoRender",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewInterpreterNoRender.py --norender test.usda",
+        "TESTENV": "testenv/testUsdviewInterpreterNoRender",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewLoadPlugins_alive",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewLoadPlugins_alive.py test.usda",
+        "TESTENV": "testenv/testUsdviewLoadPlugins",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewLoadPlugins_multipleContainers",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewLoadPlugins_multipleContainers.py test.usda",
+        "TESTENV": "testenv/testUsdviewLoadPlugins",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewLoadPlugins_missingContainer",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewLoadPlugins_missingContainer.py test.usda",
+        "TESTENV": "testenv/testUsdviewLoadPlugins",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewLoadPlugins_duplicateCommand",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewLoadPlugins_duplicateCommand.py test.usda",
+        "TESTENV": "testenv/testUsdviewLoadPlugins",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewLoadPlugins_chained",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewLoadPlugins_chained.py test.usda",
+        "TESTENV": "testenv/testUsdviewLoadPlugins",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewUpAxis_yUp",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewUpAxis_yUp.py testYUp.usda",
+        "TESTENV": "testenv/testUsdviewUpAxis",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewDefaultFontFamily",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewDefaultFontFamily.py test.usda",
+        "TESTENV": "testenv/testUsdviewDefaultFontFamily",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewPrimTreeExpansion",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewPrimTreeExpansion.py test.usda",
+        "TESTENV": "testenv/testUsdviewPrimTreeExpansion",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewAnimatedBounds",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewAnimatedBounds.py test.usda",
+        "TESTENV": "testenv/testUsdviewAnimatedBounds",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewMeshBounds",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewMeshBounds.py meshBounds.usda",
+        "TESTENV": "testenv/testUsdviewMeshBounds",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+)
+
+pxr_test(
+    name = "testUsdviewFreeCamera",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewFreeCamera.py Block.usda",
+        "TESTENV": "testenv/testUsdviewFreeCamera",
+        "IMAGE_DIFF_COMPARE": [
+            "start.png",
+            "block_F.png",
+            "block_L.png",
+            "block_B.png",
+            "block_R.png",
+            "phi45.png",
+            "adjustDist_05.png",
+            "adjustDist_05_20.png",
+            "rot_truck.png",
+            "truck_-1_-1.png",
+            "truck_1_1.png",
+            "end.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewFreeCameraAspect",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewFreeCameraAspect.py test.usda",
+        "TESTENV": "testenv/testUsdviewFreeCameraAspect",
+        "IMAGE_DIFF_COMPARE": [
+            "aspect185.png",
+            "aspect239.png",
+            "aspect05.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewSelectionHighlighting",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewSelectionHighlighting.py test.usda",
+        "TESTENV": "testenv/testUsdviewSelectionHighlighting",
+        "IMAGE_DIFF_COMPARE": [
+            "sel_highlight.png",
+            "sel_highlight_none.png",
+            "sel_highlight_double.png",
+            "sel_highlight_color.png",
+            "nestedInstanceSelection1.png",
+            "nestedInstanceSelection2.png",
+            "nestedInstanceSelection3.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewRenderMode",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewRenderMode.py test.usda",
+        "TESTENV": "testenv/testUsdviewRenderMode",
+        "IMAGE_DIFF_COMPARE": [
+            "render_mode_wireframe.png",
+            "render_mode_wireframe_on_surface.png",
+            "render_mode_smooth.png",
+            "render_mode_flat.png",
+            "render_mode_points.png",
+            "geom_only.png",
+            "geom_smooth.png",
+            "geom_flat.png",
+            "render_mode_hidden_surface_wireframe.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewLights",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewLights.py test.usda",
+        "TESTENV": "testenv/testUsdviewLights",
+        "IMAGE_DIFF_COMPARE": [
+            "camera.png",
+            "noLights.png",
+            "dome.png",
+            "bothLights.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewLights_yup",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewLightsYup.py testYup.usda",
+        "TESTENV": "testenv/testUsdviewLights",
+        "IMAGE_DIFF_COMPARE": [
+            "domeYup.png",
+            "bothLightsYup.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewSceneLights",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewSceneLights.py test.usda",
+        "TESTENV": "testenv/testUsdviewSceneLights",
+        "IMAGE_DIFF_COMPARE": [
+            "camera_noScene_Storm.png",
+            "camera_scene_Storm.png",
+            "domeVis_noScene_Storm.png",
+            "domeVis_scene_Storm.png",
+            "domeInvis_noScene_Storm.png",
+            "domeInvis_scene_Storm.png",
+            "sceneLights_Storm.png",
+            "sceneLights_edit_Storm.png",
+            "noLights_Storm.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewSceneMaterials",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewSceneMaterials.py test.usda",
+        "TESTENV": "testenv/testUsdviewSceneMaterials",
+        "IMAGE_DIFF_COMPARE": [
+            "enabledSceneMaterials_Storm.png",
+            "disabledSceneMaterials_Storm.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewLightVisibility",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewLightVisibility.py test.usda",
+        "TESTENV": "testenv/testUsdviewLightVisibility",
+        "IMAGE_DIFF_COMPARE": [
+            "singleInvisible1.png",
+            "singleInvisible2.png",
+            "allVisible.png",
+            "allInvisible.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewLightVisibility_varying",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewVaryLightVisibility.py testVarying.usda",
+        "TESTENV": "testenv/testUsdviewLightVisibility",
+        "IMAGE_DIFF_COMPARE": [
+            "visible.png",
+            "invisible.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewBackgroundColor",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewBackgroundColor.py test.usda",
+        "TESTENV": "testenv/testUsdviewBackgroundColor",
+        "IMAGE_DIFF_COMPARE": [
+            "black.png",
+            "grey_dark.png",
+            "grey_light.png",
+            "white.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewComplexity",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewComplexity.py test.usda",
+        "TESTENV": "testenv/testUsdviewComplexity",
+        "IMAGE_DIFF_COMPARE": [
+            "low.png",
+            "medium.png",
+            "high.png",
+            "very_high.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewFieldOfView",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewFieldOfView.py test.usda",
+        "TESTENV": "testenv/testUsdviewFieldOfView",
+        "IMAGE_DIFF_COMPARE": [
+            "fov45.png",
+            "fov60.png",
+            "fov90.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewClippingPlanes",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewClippingPlanes.py test.usda",
+        "TESTENV": "testenv/testUsdviewClippingPlanes",
+        "IMAGE_DIFF_COMPARE": [
+            "no_override.png",
+            "override_near.png",
+            "override_far.png",
+            "override_both.png",
+            "before_recompute.png",
+            "after_recompute.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewDefaultMaterial",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewDefaultMaterial.py test.usda",
+        "TESTENV": "testenv/testUsdviewDefaultMaterial",
+        "IMAGE_DIFF_COMPARE": [
+            "none.png",
+            "ambient.png",
+            "specular.png",
+            "both.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewCameraMaskMode",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --camera /camera --renderer Storm --testScript testUsdviewCameraMaskMode.py test.usda",
+        "TESTENV": "testenv/testUsdviewCameraMaskMode",
+        "IMAGE_DIFF_COMPARE": [
+            "none_storm.png",
+            "outline_storm.png",
+            "partial_storm.png",
+            "full_storm.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewFrameSelection",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewFrameSelection.py test.usda",
+        "TESTENV": "testenv/testUsdviewFrameSelection",
+        "IMAGE_DIFF_COMPARE": [
+            "framed.png",
+            "toggleToStart.png",
+            "rotatedStart.png",
+            "toggleToFramed.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewReloadReopen",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewReloadReopen.py test.usda",
+        "TESTENV": "testenv/testUsdviewReloadReopen",
+        "IMAGE_DIFF_COMPARE": [
+            "coloredAndFramed.png",
+            "reloaded.png",
+            "reopened.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewMaterialEdits",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewMaterialEdits.py test.usda",
+        "TESTENV": "testenv/testUsdviewMaterialEdits",
+        "IMAGE_DIFF_COMPARE": [
+            "1.png",
+            "2.png",
+            "3.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewModelAPIEdits",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewModelAPIEdits.py sphere.usda",
+        "TESTENV": "testenv/testUsdviewModelAPIEdits",
+        "IMAGE_DIFF_COMPARE": [
+            "start.png",
+            "bounds.png",
+            "cards.png",
+            "api-removed.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewReferencedNodegraphEdits",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewReferencedNodegraphEdits.py referenced-nodegraph.usda",
+        "TESTENV": "testenv/testUsdviewReferencedNodegraphEdits",
+        "IMAGE_DIFF_COMPARE": [
+            "before.png",
+            "after.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewUpAxis_zUp",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewUpAxis_zUp.py testZUp.usda",
+        "TESTENV": "testenv/testUsdviewUpAxis",
+        "IMAGE_DIFF_COMPARE": [
+            "zUp.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewDeactivate",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewDeactivate.py test.usda",
+        "TESTENV": "testenv/testUsdviewDeactivate",
+        "IMAGE_DIFF_COMPARE": [
+            "singleDeactivate.png",
+            "parentDeactivate.png",
+            "parentChildDeactivate1.png",
+            "parentChildDeactivate2.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewCPUSkinning",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewSkinning.py arm.usda",
+        "TESTENV": "testenv/testUsdviewSkinning",
+        "IMAGE_DIFF_COMPARE": [
+            "change_complexity.png",
+            "vis_frame_4.png",
+            "invis_frame_4.png",
+            "vis_frame_8.png",
+            "pre_skinned_prim_resync_frame_2.png",
+            "post_skinned_prim_resync_frame_2.png",
+            "pre_skel_resync_frame_6.png",
+            "post_skel_resync_frame_6.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "USDSKELIMAGING_FORCE_CPU_COMPUTE=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewGPUSkinning",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewSkinning.py arm.usda",
+        "TESTENV": "testenv/testUsdviewSkinning",
+        "IMAGE_DIFF_COMPARE": [
+            "change_complexity.png",
+            "vis_frame_4.png",
+            "invis_frame_4.png",
+            "vis_frame_8.png",
+            "pre_skinned_prim_resync_frame_2.png",
+            "post_skinned_prim_resync_frame_2.png",
+            "pre_skel_resync_frame_6.png",
+            "post_skel_resync_frame_6.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "USDSKELIMAGING_FORCE_CPU_COMPUTE=0",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewInfGeom",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewInfGeom.py infGeom.usda",
+        "TESTENV": "testenv/testUsdviewInfGeom",
+        "IMAGE_DIFF_COMPARE": [
+            "infGeom.png",
+            "fixedGeom.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewPrimvarEdits",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewPrimvarEdits.py primvars.usda",
+        "TESTENV": "testenv/testUsdviewPrimvarEdits",
+        "IMAGE_DIFF_COMPARE": [
+            "start.png",
+            "add_fallback_primvar_smooth.png",
+            "add_fallback_primvar_flat.png",
+            "remove_fallback_primvar_flat.png",
+            "remove_fallback_primvar_wireOnSurf.png",
+            "add_unused_primvars.png",
+            "remove_unused_primvars.png",
+            "add_primvars_for_varname_edit.png",
+            "primvar_reader_varname_edit.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewOIT",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewOIT.py test.usda",
+        "TESTENV": "testenv/testUsdviewOIT",
+        "IMAGE_DIFF_COMPARE": [
+            "oit.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewAdditive",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewAdditive.py test.usda",
+        "TESTENV": "testenv/testUsdviewAdditive",
+        "IMAGE_DIFF_COMPARE": [
+            "additive.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewVariantSelection",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewVariantSelection.py test.usda",
+        "TESTENV": "testenv/testUsdviewVariantSelection",
+        "IMAGE_DIFF_COMPARE": [
+            "capsule1.png",
+            "cone1.png",
+            "cube1.png",
+            "cylinder1.png",
+            "capsule2.png",
+            "cone2.png",
+            "cube2.png",
+            "cylinder2.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewPointWidths",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewPointWidths.py points.usda",
+        "TESTENV": "testenv/testUsdviewPointWidths",
+        "IMAGE_DIFF_COMPARE": [
+            "start.png",
+            "set_point_widths_025.png",
+            "set_point_widths_050.png",
+            "set_point_widths_primvar_075.png",
+            "end.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewPointInstancerVariant",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewPointInstancerVariant.py test.usda",
+        "TESTENV": "testenv/testUsdviewPointInstancerVariant",
+        "IMAGE_DIFF_COMPARE": [
+            "variantB.png",
+            "variantA.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.3",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewExpressionVariableEdits",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewExpressionVariableEdits.py test.usda",
+        "TESTENV": "testenv/testUsdviewExpressionVariableEdits",
+        "IMAGE_DIFF_COMPARE": [
+            "start.png",
+            "step_1.png",
+            "step_2.png",
+        ],
+        "FAIL": "0.05",
+        "FAIL_PERCENT": "0.03",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdviewInstancingEdits_SceneIndex",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/testusdview --testScript testUsdviewInstancingEdits.py test.usda",
+        "TESTENV": "testenv/testUsdviewInstancingEdits",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "instanceWithParent.png",
+            "instanceWithParentDeactivated.png",
+            "instancerInvisible.png",
+            "instancerVisible.png",
+            "primNotInstanceable.png",
+            "primInstanceable.png",
+            "completeResyncWithNativeInstances1.png",
+            "completeResyncWithNativeInstances2.png",
+        ],
+        "FAIL": "0.04",
+        "FAIL_PERCENT": "0.1",
+        "WARN": "0.02",
+        "WARN_PERCENT": "0.2",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)

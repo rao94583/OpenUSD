@@ -25,6 +25,7 @@ PXR_DYNAMIC_DEPS = [
     "//bazel/install:usd_ms",
     "//bazel/install:tbb",
     "//bazel/install:opensubdiv",
+    "//bazel/install:materialx",
 ]
 _RESOURCES = "//bazel/install:resources"
 
@@ -161,7 +162,10 @@ def pxr_library(
         python_cppfiles = [],
         pymodule_cppfiles = [],
         pymodule_files = [],
+        pymodule_dirs = [],
+        pyside_ui_files = [],
         resource_files = [],
+        resource_trees = [],
         doxygen_files = [],
         copts = [],
         linkopts = [],
@@ -196,7 +200,14 @@ def pxr_library(
       python_cppfiles: Python-only sources compiled into the library.
       pymodule_cppfiles: sources of the _<name> Python extension module.
       pymodule_files: pure-Python files of the pxr.<Name> package.
+      pymodule_dirs: directories installed whole into the pxr.<Name>
+        package.
+      pyside_ui_files: Qt Designer .ui files, compiled to <file>.py in the
+        pxr.<Name> package with pyside6-uic.
       resource_files: files installed under lib/usd/<name>/resources.
+      resource_trees: labels of files in other packages installed under
+        lib/usd/<name>/resources at their path relative to their package
+        (RESOURCE_TREES in cmake2bazel.py).
       doxygen_files: accepted for parity with CMake; unused.
       copts: extra compiler flags.
       linkopts: extra linker flags.
@@ -357,21 +368,37 @@ def pxr_library(
             visibility = visibility,
             target_compatible_with = target_compatible_with,
         )
-    if pymodule_files:
+    for ui in pyside_ui_files:
+        # _install_pyside_ui_files in cmake/macros/Private.cmake.
+        native.genrule(
+            name = name + "_" + ui.replace(".", "_"),
+            srcs = [ui],
+            outs = [ui.rpartition(".")[0] + ".py"],
+            cmd = "$(execpath //bazel/tools:pyside6_uic) -o $@ $<",
+            tools = ["//bazel/tools:pyside6_uic"],
+            target_compatible_with = target_compatible_with,
+        )
+    if pymodule_files or pymodule_dirs or pyside_ui_files:
         native.filegroup(
             name = name + "_pyfiles",
-            srcs = pymodule_files,
+            srcs = pymodule_files + (native.glob(
+                [d + "/**" for d in pymodule_dirs],
+            ) if pymodule_dirs else []) + [
+                ui.rpartition(".")[0] + ".py"
+                for ui in pyside_ui_files
+            ],
             visibility = visibility,
             target_compatible_with = target_compatible_with,
         )
 
-    if resource_files:
+    if resource_files or resource_trees:
         pxr_resources(
             name = name + "_resources",
             library = name,
             plugin = plugin,
             entries = resource_files,
             srcs = {e.split(":")[0]: None for e in resource_files}.keys(),
+            trees = resource_trees,
             visibility = visibility,
             target_compatible_with = target_compatible_with,
         )
@@ -399,8 +426,9 @@ def pxr_cpp_bin(name, libraries = [], target_compatible_with = None):
 def pxr_python_bin(name, python_file, target_compatible_with = None):
     """A Python program, like pxr_python_bin() in Public.cmake.
 
-    Programs run with the Python packages CMake looks for (Jinja2, for the
-    schema generators) importable, as they are in CMake's interpreter.
+    Programs run with the Python packages CMake looks for (Jinja2 for the
+    schema generators, PySide6 and PyOpenGL for usdview) importable, as they
+    are in CMake's interpreter.
     Tests install the source itself as <prefix>/bin/<name>, as CMake does.
     """
     native.exports_files([python_file])
@@ -410,7 +438,7 @@ def pxr_python_bin(name, python_file, target_compatible_with = None):
         main = python_file,
         deps = [
             "//bazel/install:python",
-            "//vendor/jinja2",
+            "//bazel:python_deps",
         ],
         visibility = ["//visibility:public"],
         target_compatible_with = target_compatible_with,

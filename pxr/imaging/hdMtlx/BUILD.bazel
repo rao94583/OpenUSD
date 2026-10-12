@@ -1,0 +1,28 @@
+# Generated from pxr/imaging/hdMtlx/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "hdMtlx",
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/usd/sdr",
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+        "//pxr/usd/usdMtlx",
+        "//pxr/base/vt",
+        "//vendor/materialx:MaterialXCore",
+        "//vendor/materialx:MaterialXFormat",
+    ],
+    public_classes = [
+        "hdMtlx",
+        "debugCodes",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+        "combinedMtlxVersion.h",
+    ],
+)

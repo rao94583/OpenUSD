@@ -19,6 +19,12 @@ pxr_library(
         "//vendor/onetbb:tbb",
         "//vendor/opensubdiv:osd_cpu",
         "//vendor/opensubdiv:osd_gpu",
+        "//vendor/materialx:MaterialXGenShader",
+        "//vendor/materialx:MaterialXRender",
+        "//vendor/materialx:MaterialXCore",
+        "//vendor/materialx:MaterialXFormat",
+        "//vendor/materialx:MaterialXGenGlsl",
+        "//pxr/imaging/hdMtlx",
     ],
     public_classes = [
         "backPlateSceneIndexPlugin",
@@ -151,6 +157,8 @@ pxr_library(
         "vertexAdjacency",
         "volumeShader",
         "volumeShaderKey",
+        "materialXFilter",
+        "materialXShaderGen",
     ],
     resource_files = [
         "plugInfo.json",
@@ -197,6 +205,13 @@ pxr_library(
     doxygen_files = [
         "overview.dox",
     ],
+    per_os = {
+        "macos": {
+            "libraries": [
+                "//vendor/materialx:MaterialXGenMsl",
+            ],
+        },
+    },
 )
 
 pxr_test_program(
@@ -542,6 +557,18 @@ pxr_test_program(
 )
 
 pxr_test_program(
+    name = "testHdStMaterialXShaderGen",
+    srcs = [
+        "testenv/testHdStMaterialXShaderGen.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hdMtlx",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
     name = "testHdStMeshTopology",
     srcs = [
         "testenv/testHdStMeshTopology.cpp",
@@ -754,6 +781,7 @@ pxr_test_files(
         "testHdStInstancing": "testenv/testHdStInstancing",
         "testHdStInstancingUnbalanced": "testenv/testHdStInstancingUnbalanced",
         "testHdStInstancingUnbalancedNoBindless": "testenv/testHdStInstancingUnbalancedNoBindless",
+        "testHdStMaterialXShaderGen": "testenv/testHdStMaterialXShaderGen",
         "testHdStMultipleFvarTopologies": "testenv/testHdStMultipleFvarTopologies",
         "testHdStPrimGather": "testenv/testHdStPrimGather",
         "testHdStPrimvars": "testenv/testHdStPrimvars",
@@ -797,6 +825,7 @@ pxr_test_tree(
         ":tests/testHdStInitRepr",
         ":tests/testHdStInstancing",
         ":tests/testHdStInstancingUnbalanced",
+        ":tests/testHdStMaterialXShaderGen",
         ":tests/testHdStMeshTopology",
         ":tests/testHdStMultipleFvarTopologies",
         ":tests/testHdStPrimGather",
@@ -5054,6 +5083,177 @@ pxr_test(
             "testHdStHWFaceCulling-Run1-stdout.txt",
         ],
         "TESTENV": "testenv/testHdStHWFaceCulling",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMaterialXShaderGen_UsdPSdefault",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMaterialXShaderGen --filename usd_preview_surface_default.mtlx",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "shadergen_UsdPSdefault.out",
+        "DIFF_COMPARE": [
+            "shadergen_UsdPSdefault.out",
+        ],
+        "TESTENV": "testenv/testHdStMaterialXShaderGen",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMaterialXShaderGen_SSmarble",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMaterialXShaderGen --filename standard_surface_marble_solid.mtlx",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "shadergen_SSmarble.out",
+        "DIFF_COMPARE": [
+            "shadergen_SSmarble.out",
+        ],
+        "TESTENV": "testenv/testHdStMaterialXShaderGen",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMaterialXShaderGen_SScopper",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMaterialXShaderGen --filename standard_surface_copper.mtlx",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "shadergen_SScopper.out",
+        "DIFF_COMPARE": [
+            "shadergen_SScopper.out",
+        ],
+        "TESTENV": "testenv/testHdStMaterialXShaderGen",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMaterialXShaderGen_SSdefault",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMaterialXShaderGen --filename standard_surface_default.mtlx --config materialTag:customTag",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "shadergen_SSdefault.out",
+        "DIFF_COMPARE": [
+            "shadergen_SSdefault.out",
+        ],
+        "TESTENV": "testenv/testHdStMaterialXShaderGen",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMaterialXShaderGen_UsdPStextured",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMaterialXShaderGen --filename usd_preview_surface_brass_tiled.mtlx --textureName image_color_file --textureName image_roughness_file",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "shadergen_UsdPStextured.out",
+        "DIFF_COMPARE": [
+            "shadergen_UsdPStextured.out",
+        ],
+        "TESTENV": "testenv/testHdStMaterialXShaderGen",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMaterialXShaderGen_SStextured",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMaterialXShaderGen --filename standard_surface_brass_tiled.mtlx --textureName image_color_file --textureName image_roughness_file --primvarMap uv:vector2",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "shadergen_SStextured.out",
+        "DIFF_COMPARE": [
+            "shadergen_SStextured.out",
+        ],
+        "TESTENV": "testenv/testHdStMaterialXShaderGen",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMaterialXShaderGen_UsdPSglass",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMaterialXShaderGen --filename usd_preview_surface_glass.mtlx",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "shadergen_UsdPSglass.out",
+        "DIFF_COMPARE": [
+            "shadergen_UsdPSglass.out",
+        ],
+        "TESTENV": "testenv/testHdStMaterialXShaderGen",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMaterialXShaderGen_SStextured_bindless",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMaterialXShaderGen --filename standard_surface_brass_tiled.mtlx --textureName image_color_file --textureName image_roughness_file --primvarMap uv:vector2 --bindless",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "shadergen_SStextured_bindless.out",
+        "DIFF_COMPARE": [
+            "shadergen_SStextured_bindless.out",
+        ],
+        "TESTENV": "testenv/testHdStMaterialXShaderGen",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMaterialXShaderGen_texcoord",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMaterialXShaderGen --filename texcoord.mtlx --primvarMap st:vector2",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "shadergen_texcoord.out",
+        "DIFF_COMPARE": [
+            "shadergen_texcoord.out",
+        ],
+        "TESTENV": "testenv/testHdStMaterialXShaderGen",
     },
     test_trees = [
         ":test_tree",

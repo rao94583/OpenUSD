@@ -49,6 +49,16 @@ def _resources_impl(ctx):
             dest = dest,
             subst = dest.split("/")[-1] == "plugInfo.json" and not no_subst,
         ))
+    for tree in ctx.attr.trees:
+        prefix = tree.label.package + "/"
+        for f in tree.files.to_list():
+            if not f.short_path.startswith(prefix):
+                fail("%s: %s is not in its package" % (tree.label, f.short_path))
+            files.append(struct(
+                src = f,
+                dest = f.short_path[len(prefix):],
+                subst = False,
+            ))
     return [PxrResourcesInfo(
         library = ctx.attr.library,
         plugin = ctx.attr.plugin,
@@ -63,6 +73,11 @@ pxr_resources = rule(
         "plugin": attr.bool(),
         "entries": attr.string_list(doc = "RESOURCE_FILES entries, verbatim."),
         "srcs": attr.label_list(allow_files = True),
+        "trees": attr.label_list(
+            allow_files = True,
+            doc = "Files from other packages, installed at their path " +
+                  "relative to their package.",
+        ),
     },
 )
 

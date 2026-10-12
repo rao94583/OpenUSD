@@ -10,3 +10,11 @@ py_binary(
     srcs = ["cmake_configure_file.py"],
     visibility = ["//visibility:public"],
 )
+
+# pyside6-uic, for PYSIDE_UI_FILES (see //bazel:pxr_library.bzl).
+py_binary(
+    name = "pyside6_uic",
+    srcs = ["pyside6_uic.py"],
+    visibility = ["//visibility:public"],
+    deps = ["@pypi//pyside6_essentials"],
+)

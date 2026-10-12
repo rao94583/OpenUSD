@@ -311,7 +311,7 @@ def pxr_test(
         ] + test_trees + tools.keys() + python_tools.keys() + (
             [image_diff_tool] if image_diff_tool else []
         ),
-        deps = ["//vendor/jinja2"],
+        deps = ["//bazel:python_deps"],
         tags = tags,
         size = size,
         target_compatible_with = target_compatible_with,

@@ -301,6 +301,10 @@ pxr_test_files(
         "testUsdImagingGLMaterialPrimvars": "testenv/testUsdImagingGLMaterialPrimvars",
         "testUsdImagingGLMaterialStrengthOrder": "testenv/testUsdImagingGLMaterialStrengthOrder",
         "testUsdImagingGLMaterialTag": "testenv/testUsdImagingGLMaterialTag",
+        "testUsdImagingGLMaterialXBasic": "testenv/testUsdImagingGLMaterialXBasic",
+        "testUsdImagingGLMaterialXLibraryCustomNodes": "testenv/testUsdImagingGLMaterialXLibraryCustomNodes",
+        "testUsdImagingGLMaterialXLocalCustomNodes": "testenv/testUsdImagingGLMaterialXLocalCustomNodes",
+        "testUsdImagingGLMaterialXTextured": "testenv/testUsdImagingGLMaterialXTextured",
         "testUsdImagingGLMaterialsAndInstancers": "testenv/testUsdImagingGLMaterialsAndInstancers",
         "testUsdImagingGLMeshQuadrangulation": "testenv/testUsdImagingGLMeshQuadrangulation",
         "testUsdImagingGLNativeImplicits": "testenv/testUsdImagingGLNativeImplicits",
@@ -7295,7 +7299,6 @@ pxr_test(
         ":test_tree",
     ],
     image_diff_tool = "//vendor/openimageio:idiff",
-    excluded = "uses MaterialX shaders; PXR_ENABLE_MATERIALX_SUPPORT is OFF (deferred)",
 )
 
 pxr_test(
@@ -7313,7 +7316,6 @@ pxr_test(
         ":test_tree",
     ],
     image_diff_tool = "//vendor/openimageio:idiff",
-    excluded = "uses MaterialX shaders; PXR_ENABLE_MATERIALX_SUPPORT is OFF (deferred)",
 )
 
 pxr_test(
@@ -7337,7 +7339,6 @@ pxr_test(
         "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
     },
     image_diff_tool = "//vendor/openimageio:idiff",
-    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
 )
 
 pxr_test(
@@ -7361,7 +7362,6 @@ pxr_test(
         "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
     },
     image_diff_tool = "//vendor/openimageio:idiff",
-    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
 )
 
 pxr_test(
@@ -7385,7 +7385,6 @@ pxr_test(
         "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
     },
     image_diff_tool = "//vendor/openimageio:idiff",
-    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
 )
 
 pxr_test(
@@ -7409,7 +7408,6 @@ pxr_test(
         "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
     },
     image_diff_tool = "//vendor/openimageio:idiff",
-    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
 )
 
 pxr_test(
@@ -7433,7 +7431,6 @@ pxr_test(
         "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
     },
     image_diff_tool = "//vendor/openimageio:idiff",
-    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
 )
 
 pxr_test(
@@ -7457,7 +7454,6 @@ pxr_test(
         "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
     },
     image_diff_tool = "//vendor/openimageio:idiff",
-    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
 )
 
 pxr_test(
@@ -7513,6 +7509,554 @@ pxr_test(
         "TESTENV": "testenv/testUsdImagingGLOIT",
         "ENV": [
             "HDX_ENABLE_OIT_PACKED_DATA=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_mxSimple",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxSimple.usda -write mxSimple.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxSimple.png",
+        ],
+        "FAIL": "0.3",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.03",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_standardSurface",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage standardSurface.usda -write standardSurface.png",
+        "IMAGE_DIFF_COMPARE": [
+            "standardSurface.png",
+        ],
+        "FAIL": "0.3",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.2",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_standardSurfaceMarble",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage standardSurfaceMarble.usda -write standardSurfaceMarble.png",
+        "IMAGE_DIFF_COMPARE": [
+            "standardSurfaceMarble.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.01",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_usdPreviewSurface",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage usdPreviewSurface.usda -write usdPreviewSurface.png",
+        "IMAGE_DIFF_COMPARE": [
+            "usdPreviewSurface.png",
+        ],
+        "FAIL": "0.3",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.09",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_mxGlass",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxGlass.usda -write mxGlass.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxGlass.png",
+        ],
+        "FAIL": "0.3",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.02",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_basicMxYup",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -stage basicMxYup.usda -camera /FrontCamera -write basicMxYup.png",
+        "IMAGE_DIFF_COMPARE": [
+            "basicMxYup.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0025",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_basicMxZup",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -stage basicMxZup.usda -camera /FrontCamera -write basicMxZup.png",
+        "IMAGE_DIFF_COMPARE": [
+            "basicMxZup.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0025",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_mxDirectLights",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxDirectLights.usda -write mxDirectLights.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxDirectLights.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0025",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_mxDirectLightsCameraLight",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -camlight -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxDirectLights.usda -write mxDirectLightsCameraLight.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxDirectLightsCameraLight.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0025",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_mxLights",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxLights.usda -write mxLights.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxLights.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.02",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_mxColorspaces",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxColorspaces.usda -write mxColorspaces.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxColorspaces.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.02",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXBasic_normalMap",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxNormalMap.usda -write mxNormalMap.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxNormalMap.png",
+        ],
+        "FAIL": "0.15",
+        "FAIL_PERCENT": "0.1",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.03",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXBasic",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXTextured_mxTextured",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxTextured.usda -write mxTextured.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxTextured.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.05",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXTextured",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXTextured_mxTextured2",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxTextured2.usda -write mxTextured2.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxTextured2.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0025",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXTextured",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXTextured_mxGeomprop",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxGeomprop.usda -write mxGeomprop.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxGeomprop.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.02",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXTextured",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXTextured_mxTexcoord",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxTexcoord.usda -write mxTexcoord.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxTexcoord.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.02",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXTextured",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXTextured_mxDefaultTextureVals",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxDefaultTextureVals.usda -write mxDefaultTextureVals.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxDefaultTextureVals.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.02",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXTextured",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXTextured_mxFallbackDome",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxFallbackDome.usda -write mxFallbackDome.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxFallbackDome.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.02",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXTextured",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXTextured_mxDefaultGemopropVal",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -camera /Camera -stage mxDefaultGeompropVal.usda -write mxDefaultGeompropVal.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxDefaultGeompropVal.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.02",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXTextured",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXTextured_mxTexColorspaces",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -frameAll -stage mxTexColorspaces.usda -write mxTexColorspaces.png",
+        "IMAGE_DIFF_COMPARE": [
+            "mxTexColorspaces.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.02",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXTextured",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXLocalCustomNodes_simpleNodes",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -camera /Camera -stage simpleNodes.usda -write simpleNodes.png",
+        "IMAGE_DIFF_COMPARE": [
+            "simpleNodes.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.1",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.2",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXLocalCustomNodes",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXLocalCustomNodes_nestedNodes",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -camera /Camera -stage nestedNodes.usda -write nestedNodes.png",
+        "IMAGE_DIFF_COMPARE": [
+            "nestedNodes.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.2",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXLocalCustomNodes",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXLibraryCustomNodes_colorNode",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -camera /Camera -stage colorNode.usda -write colorNode.png",
+        "IMAGE_DIFF_COMPARE": [
+            "colorNode.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.2",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXLibraryCustomNodes",
+        "ENV": [
+            "PXR_MTLX_PLUGIN_SEARCH_PATHS=./libraryNodes",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXLibraryCustomNodes_nestedNodes",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -camera /Camera -stage nestedNodes.usda -write nestedNodes.png",
+        "IMAGE_DIFF_COMPARE": [
+            "nestedNodes.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.2",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXLibraryCustomNodes",
+        "ENV": [
+            "PXR_MTLX_PLUGIN_SEARCH_PATHS=./libraryNodes",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXLibraryCustomNodes_texcoordNodes",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -camera /Camera -stage texcoordNodes.usda -write texcoordNodes.png",
+        "IMAGE_DIFF_COMPARE": [
+            "texcoordNodes.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.2",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXLibraryCustomNodes",
+        "ENV": [
+            "PXR_MTLX_PLUGIN_SEARCH_PATHS=./libraryNodes",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLGeomSubsets_Primvars_SceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -offscreen -lighting -sceneLights -shading wireOnSurface -stage primvars.usda -camera /World/main_cam -write testUsdImagingGLGeomSubsets_Primvars.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testUsdImagingGLGeomSubsets_Primvars.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLGeomSubsets",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdImagingGLNativeImplicits_implicitsWithMaterials",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -offscreen -lighting -sceneLights -stage implicitsWithMaterials.usda -camera /main_cam -write testUsdImagingGLNativeImplicits_implicitsWithMaterials.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testUsdImagingGLNativeImplicits_implicitsWithMaterials.png",
+        ],
+        "FAIL_PERCENT": "0.05",
+        "FAIL": "0.2",
+        "TESTENV": "testenv/testUsdImagingGLNativeImplicits",
+        "ENV": [
+            "HDST_ENABLE_NATIVE_IMPLICITS=1",
         ],
     },
     test_trees = [
@@ -7684,6 +8228,55 @@ pxr_test(
         "WARN_PERCENT": "0.002",
         "EXPECTED_RETURN_CODE": "0",
         "TESTENV": "testenv/testUsdImagingGLAovVisualization",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXLocalCustomNodes_surfaceShaderNodes",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -camera /Camera -stage surfaceShaderNodes.usda -write surfaceShaderNodes.png",
+        "IMAGE_DIFF_COMPARE": [
+            "surfaceShaderNodes.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.2",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXLocalCustomNodes",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingGLMaterialXLibraryCustomNodes_surfaceShaderNodes",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingGLBasicDrawing -lighting -sceneLights -shading smooth -complexity 1.3 -offscreen -camera /Camera -stage surfaceShaderNodes.usda -write surfaceShaderNodes.png",
+        "IMAGE_DIFF_COMPARE": [
+            "surfaceShaderNodes.png",
+        ],
+        "FAIL": "0.1",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.2",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdImagingGLMaterialXLibraryCustomNodes",
+        "ENV": [
+            "PXR_MTLX_PLUGIN_SEARCH_PATHS=./libraryNodes",
+        ],
     },
     test_trees = [
         ":test_tree",

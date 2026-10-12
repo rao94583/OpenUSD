@@ -36,6 +36,28 @@ cc_shared_library(
     ],
 )
 
+# MaterialX as its own shared library: pxr headers include MaterialX headers,
+# and tests link MaterialX directly. CMake builds link one shared library per
+# MaterialX module; these are combined, like MATERIALX_BUILD_MONOLITHIC.
+cc_shared_library(
+    name = "materialx",
+    shared_lib_name = select({
+        "@platforms//os:macos": "lib/libMaterialX.dylib",
+        "//conditions:default": "lib/libMaterialX.so",
+    }),
+    deps = [
+        "//vendor/materialx:MaterialXCore",
+        "//vendor/materialx:MaterialXFormat",
+        "//vendor/materialx:MaterialXGenGlsl",
+        "//vendor/materialx:MaterialXGenHw",
+        "//vendor/materialx:MaterialXGenMsl",
+        "//vendor/materialx:MaterialXGenShader",
+        "//vendor/materialx:MaterialXRender",
+        "//vendor/materialx:MaterialXRenderGlsl",
+        "//vendor/materialx:MaterialXRenderHw",
+    ],
+)
+
 # The monolithic library (CMake's PXR_BUILD_MONOLITHIC usd_ms): every pxr
 # library, so that Python extensions and programs share one copy of each
 # registry.
@@ -47,6 +69,7 @@ cc_shared_library(
     }),
     deps = PXR_LIBRARIES,
     dynamic_deps = [
+        ":materialx",
         ":opensubdiv",
         ":tbb",
     ],
@@ -67,6 +90,7 @@ pxr_python_package(
         ":usd_ms",
         ":tbb",
         ":opensubdiv",
+        ":materialx",
     ],
     runtime = [":resources"],
 )

@@ -41,6 +41,7 @@ PXR_LIBRARIES = [
     "//pxr/usd/usdUtils",
     "//pxr/usd/usdPhysics",
     "//pxr/usd/plugin/usdShaders",
+    "//pxr/usd/usdMtlx",
     "//pxr/usdValidation/usdValidation",
     "//pxr/usdValidation/usdGeomValidators",
     "//pxr/usdValidation/usdLuxValidators",
@@ -63,6 +64,7 @@ PXR_LIBRARIES = [
     "//pxr/imaging/hdar",
     "//pxr/imaging/hdGp",
     "//pxr/imaging/hdsi",
+    "//pxr/imaging/hdMtlx",
     "//pxr/imaging/hdSt",
     "//pxr/imaging/hdx",
     "//pxr/imaging/plugin/hdStorm",
@@ -74,6 +76,8 @@ PXR_LIBRARIES = [
     "//pxr/usdImaging/usdSkelImaging",
     "//pxr/usdImaging/usdVolImaging",
     "//pxr/usdImaging/usdAppUtils",
+    "//pxr/usdImaging/usdviewq",
+    "//pxr/usdImaging/bin/usdBakeMtlx",
     "//pxr/usdImaging/plugin/sdrGlslfx",
 ] + select({
     "@platforms//os:macos": [
@@ -115,6 +119,7 @@ PXR_PYTHON_MODULES = [
     struct(library = "usdUI", module = "UsdUI", package = "//pxr/usd/usdUI", target_compatible_with = []),
     struct(library = "usdUtils", module = "UsdUtils", package = "//pxr/usd/usdUtils", target_compatible_with = []),
     struct(library = "usdPhysics", module = "UsdPhysics", package = "//pxr/usd/usdPhysics", target_compatible_with = []),
+    struct(library = "usdMtlx", module = "UsdMtlx", package = "//pxr/usd/usdMtlx", target_compatible_with = []),
     struct(library = "usdValidation", module = "UsdValidation", package = "//pxr/usdValidation/usdValidation", target_compatible_with = []),
     struct(library = "cameraUtil", module = "CameraUtil", package = "//pxr/imaging/cameraUtil", target_compatible_with = []),
     struct(library = "pxOsd", module = "PxOsd", package = "//pxr/imaging/pxOsd", target_compatible_with = []),
@@ -122,6 +127,8 @@ PXR_PYTHON_MODULES = [
     struct(library = "glf", module = "Glf", package = "//pxr/imaging/glf", target_compatible_with = []),
     struct(library = "usdImagingGL", module = "UsdImagingGL", package = "//pxr/usdImaging/usdImagingGL", target_compatible_with = []),
     struct(library = "usdAppUtils", module = "UsdAppUtils", package = "//pxr/usdImaging/usdAppUtils", target_compatible_with = []),
+    struct(library = "usdviewq", module = "Usdviewq", package = "//pxr/usdImaging/usdviewq", target_compatible_with = []),
+    struct(library = "usdBakeMtlx", module = "UsdBakeMtlx", package = "//pxr/usdImaging/bin/usdBakeMtlx", target_compatible_with = []),
 ]
 
 # Resources of each library, placed by //bazel/install.
@@ -146,6 +153,7 @@ PXR_RESOURCES = [
     "//pxr/usd/usdUI:usdUI_resources",
     "//pxr/usd/usdPhysics:usdPhysics_resources",
     "//pxr/usd/plugin/usdShaders:usdShaders_resources",
+    "//pxr/usd/usdMtlx:usdMtlx_resources",
     "//pxr/usdValidation/usdValidation:usdValidation_resources",
     "//pxr/usdValidation/usdGeomValidators:usdGeomValidators_resources",
     "//pxr/usdValidation/usdLuxValidators:usdLuxValidators_resources",

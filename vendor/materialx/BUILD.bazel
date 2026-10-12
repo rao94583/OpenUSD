@@ -1,0 +1,178 @@
+# MaterialX, for usdMtlx, hdMtlx, hdSt and usdBakeMtlx (see README.md).
+# Mirrors source/*/CMakeLists.txt and the top-level CMakeLists.txt as
+# build_scripts/build_usd.py configures it (shared libraries, no OCIO, OIIO,
+# Python or tests). Only the modules USD links are built.
+#
+# Linked into //bazel/install:materialx, one shared library (like MaterialX's
+# MATERIALX_BUILD_MONOLITHIC), so usd_ms and everything linking it share one
+# copy.
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel:cmake_configure_file.bzl", "cmake_configure_file")
+load(":mx_add_library.bzl", "mx_add_library")
+
+package(default_visibility = ["//visibility:public"])
+
+_VERSION = ("1", "39", "5")
+
+cmake_configure_file(
+    name = "generated_h",
+    src = "source/MaterialXCore/Generated.h.in",
+    out = "source/MaterialXCore/Generated.h",
+    values = {
+        "MATERIALX_MAJOR_VERSION": _VERSION[0],
+        "MATERIALX_MINOR_VERSION": _VERSION[1],
+        "MATERIALX_BUILD_VERSION": _VERSION[2],
+        "MATERIALX_BUILD_SHARED_LIBS": "ON",
+        "MATERIALX_NAMESPACE": "MaterialX_v" + "_".join(_VERSION),
+    },
+)
+
+mx_add_library(
+    name = "MaterialXCore",
+    srcs = glob(["source/MaterialXCore/*.cpp"]),
+    hdrs = glob(["source/MaterialXCore/*.h"]) + [":generated_h"],
+    deps = [],
+)
+
+mx_add_library(
+    name = "MaterialXFormat",
+    srcs = glob([
+        "source/MaterialXFormat/*.cpp",
+        "source/MaterialXFormat/External/PugiXML/*.cpp",
+    ]),
+    hdrs = glob([
+        "source/MaterialXFormat/*.h*",
+        "source/MaterialXFormat/External/PugiXML/*.hpp",
+    ]),
+    deps = [":MaterialXCore"],
+)
+
+# MaterialXTrace is only built with MATERIALX_BUILD_PERFETTO_TRACING, but its
+# headers are included regardless (from the source tree in CMake builds).
+cc_library(
+    name = "MaterialXTrace_headers",
+    hdrs = [
+        "source/MaterialXTrace/Export.h",
+        "source/MaterialXTrace/Tracing.h",
+    ],
+    includes = ["source"],
+    visibility = ["//visibility:private"],
+    deps = [":MaterialXCore"],
+)
+
+mx_add_library(
+    name = "MaterialXGenShader",
+    srcs = glob(["source/MaterialXGenShader/**/*.cpp"]),
+    hdrs = glob(["source/MaterialXGenShader/**/*.h*"]),
+    deps = [
+        ":MaterialXCore",
+        ":MaterialXFormat",
+        ":MaterialXTrace_headers",
+    ],
+)
+
+mx_add_library(
+    name = "MaterialXGenHw",
+    srcs = glob(["source/MaterialXGenHw/**/*.cpp"]),
+    hdrs = glob(["source/MaterialXGenHw/**/*.h*"]),
+    deps = [":MaterialXGenShader"],
+)
+
+mx_add_library(
+    name = "MaterialXGenGlsl",
+    srcs = glob(["source/MaterialXGenGlsl/**/*.cpp"]),
+    hdrs = glob(["source/MaterialXGenGlsl/**/*.h*"]),
+    deps = [
+        ":MaterialXCore",
+        ":MaterialXGenHw",
+    ],
+)
+
+mx_add_library(
+    name = "MaterialXGenMsl",
+    srcs = glob(["source/MaterialXGenMsl/**/*.cpp"]),
+    hdrs = glob(["source/MaterialXGenMsl/**/*.h*"]),
+    deps = [
+        ":MaterialXCore",
+        ":MaterialXGenHw",
+    ],
+)
+
+mx_add_library(
+    name = "MaterialXRender",
+    srcs = glob(["source/MaterialXRender/**/*.cpp"]),
+    hdrs = glob([
+        "source/MaterialXRender/**/*.h*",
+        "source/MaterialXRender/**/*.inl",
+    ]),
+    deps = [
+        ":MaterialXGenHw",
+        ":MaterialXGenShader",
+    ],
+)
+
+mx_add_library(
+    name = "MaterialXRenderHw",
+    srcs = glob(["source/MaterialXRenderHw/*.cpp"]),
+    hdrs = glob(["source/MaterialXRenderHw/*.h*"]),
+    linkopts = select({
+        "@platforms//os:macos": [
+            "-framework Foundation",
+            "-framework Metal",
+            "-framework Cocoa",
+        ],
+        "//conditions:default": [
+            "-lX11",
+            "-lXt",
+        ],
+    }),
+    objc_srcs = glob(["source/MaterialXRenderHw/*.m"]),
+    deps = [":MaterialXRender"],
+)
+
+mx_add_library(
+    name = "MaterialXRenderGlsl",
+    srcs = glob(["source/MaterialXRenderGlsl/**/*.c*"]),
+    hdrs = glob(["source/MaterialXRenderGlsl/**/*.h*"]),
+    copts = ["-Wno-deprecated-declarations"],
+    # MATERIALX_BUILD_SHARED_LIBS
+    defines = ["GLAD_GLAPI_EXPORT"],
+    linkopts = select({
+        "@platforms//os:macos": [
+            "-framework OpenGL",
+            "-framework Foundation",
+            "-framework Cocoa",
+            "-framework Metal",
+        ],
+        "//conditions:default": [
+            "-lGL",
+            "-lX11",
+            "-lXt",
+        ],
+    }),
+    # GL_SILENCE_DEPRECATION is set on macOS only; other OSes ignore it.
+    local_defines = [
+        "GLAD_GLAPI_EXPORT_BUILD",
+        "GL_SILENCE_DEPRECATION",
+    ],
+    objc_srcs = glob(["source/MaterialXRenderGlsl/*.m"]),
+    deps = [
+        ":MaterialXGenGlsl",
+        ":MaterialXRenderHw",
+    ],
+)
+
+# The data library (MATERIALX_INSTALL_STDLIB_PATH), installed under
+# usdMtlx's resources/libraries. Like pxr/usd/usdMtlx/CMakeLists.txt, which
+# copies MATERIALX_STDLIB_DIR there, this leaves out .txt and .md files.
+filegroup(
+    name = "libraries",
+    srcs = glob(
+        ["libraries/**"],
+        exclude = [
+            "libraries/**/*.txt",
+            "libraries/**/*.md",
+        ],
+    ),
+)

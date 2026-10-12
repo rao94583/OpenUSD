@@ -1,0 +1,37 @@
+# Generated from pxr/usdImaging/bin/usdBakeMtlx/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library", "pxr_python_bin")
+
+pxr_library(
+    name = "usdBakeMtlx",
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/usd/sdr",
+        "//pxr/usd/usdMtlx",
+        "//pxr/usd/usdShade",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdMtlx",
+        "//pxr/usdImaging/usdImaging",
+        "//vendor/materialx:MaterialXCore",
+        "//vendor/materialx:MaterialXFormat",
+        "//vendor/materialx:MaterialXRenderGlsl",
+    ],
+    public_classes = [
+        "bakeMaterialX",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapBakeMaterialX.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+)
+
+pxr_python_bin(
+    name = "usdBakeMaterialX",
+    python_file = "usdBakeMaterialX.py",
+)
