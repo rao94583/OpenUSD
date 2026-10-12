@@ -1,0 +1,2 @@
+# Pixar's install test for the usd-core wheel, reused by //bazel/wheel.
+exports_files(["test.py"])

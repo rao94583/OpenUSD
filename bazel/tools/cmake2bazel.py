@@ -1614,6 +1614,7 @@ def generate(warn):
     files = {}
     # (value, [os, ...]) in CMake build order.
     all_libraries, python_modules, resources = [], [], []
+    python_programs = []
     test_indexes = {os: TestIndex(interps[os]) for os in OSES}
     for path in paths:
         dirs = {os: by_path[os][path] for os in OSES if path in by_path[os]}
@@ -1681,6 +1682,8 @@ def generate(warn):
         for name, python_file in py_bins:
             oses = [os for os in OSES
                     if os in dirs and (name, python_file) in dirs[os].python_bins]
+            python_programs.append(
+                ("//%s:%s" % (path, python_file), name, oses))
             blocks.append(add_compatibility(
                 starlark_python_bin(name, python_file), oses))
         test_blocks = merge_blocks(path, {
@@ -1743,6 +1746,17 @@ def generate(warn):
         "",
         "# Resources of each library, placed by //bazel/install.",
         "PXR_RESOURCES = " + _starlark_os_list(resources, json.dumps),
+        "",
+        "# Python programs (pxr_python_bin): source file -> program name.",
+        "PXR_PYTHON_PROGRAMS = {",
+    ]
+    for source, name, oses in python_programs:
+        if len(oses) != len(OSES):
+            raise CMakeError("%s exists on some OSes only, which "
+                             "PXR_PYTHON_PROGRAMS does not support" % name)
+        lines.append("    %s: %s," % (json.dumps(source), json.dumps(name)))
+    lines += [
+        "}",
     ]
     files[LIBRARIES_BZL] = "\n".join(lines) + "\n"
     stale = set(EXCLUDED_TESTS) - _USED_EXCLUSIONS

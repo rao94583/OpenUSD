@@ -10,6 +10,12 @@ common:macos --host_macos_minimum_os=13.0
 # Pick up the per-OS config above automatically.
 common --enable_platform_specific_config
 
+# Offline builds. Run `bazel vendor --config=offline //...` once while online:
+# it copies every external repository (Bazel rule sets, the hermetic Python,
+# the PyPI wheels) into bazel-vendor/ (untracked, ~600 MB). Builds with
+# --config=offline then never download anything.
+common:offline --vendor_dir=bazel-vendor
+
 # Keep test output readable.
 test --test_output=errors
 

@@ -15,6 +15,26 @@ PXR_PY_SHARED_LINKOPTS = select({
     "//conditions:default": [],
 })
 
+# Rpaths for the relocatable layouts, beyond the bazel-out ones Bazel adds:
+# the install tree (lib/python/pxr/<Module>/_<lib>.so -> lib/) and the wheel
+# (pxr/<Module>/_<lib>.so -> pxr/lib/), and between the shared libraries in
+# lib/. The counterpart of _pxr_install_rpath in cmake/macros/Private.cmake.
+# ($$ escapes make-variable expansion.)
+PXR_EXTENSION_RPATHS = select({
+    "@platforms//os:macos": [
+        "-Wl,-rpath,@loader_path/../../..",
+        "-Wl,-rpath,@loader_path/../lib",
+    ],
+    "//conditions:default": [
+        "-Wl,-rpath,$$ORIGIN/../../..",
+        "-Wl,-rpath,$$ORIGIN/../lib",
+    ],
+})
+PXR_LIBRARY_RPATHS = select({
+    "@platforms//os:macos": ["-Wl,-rpath,@loader_path"],
+    "//conditions:default": ["-Wl,-rpath,$$ORIGIN"],
+})
+
 def _module_deps_cpp_impl(ctx):
     reqs = ",\n".join(['\t\tTfToken("%s")' % r for r in ctx.attr.reqs])
     ctx.actions.expand_template(
@@ -112,7 +132,7 @@ def pxr_python_package(
             shared_lib_name = extension + ".so",
             deps = ["%s:_%s" % (m.package, m.library)],
             dynamic_deps = dynamic_deps,
-            user_link_flags = PXR_PY_SHARED_LINKOPTS,
+            user_link_flags = PXR_PY_SHARED_LINKOPTS + PXR_EXTENSION_RPATHS,
         )
         extensions.append(":" + extension)
 

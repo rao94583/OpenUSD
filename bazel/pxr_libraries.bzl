@@ -186,3 +186,22 @@ PXR_RESOURCES = [
     ],
     "//conditions:default": [],
 })
+
+# Python programs (pxr_python_bin): source file -> program name.
+PXR_PYTHON_PROGRAMS = {
+    "//pxr/usd/usd:usdGenSchema.py": "usdGenSchema",
+    "//pxr/usd/usd:usdInitSchema.py": "usdInitSchema",
+    "//pxr/usd/bin/usddiff:usddiff.py": "usddiff",
+    "//pxr/usd/bin/usddumpcrate:usddumpcrate.py": "usddumpcrate",
+    "//pxr/usd/bin/usdgenschemafromsdr:usdgenschemafromsdr.py": "usdgenschemafromsdr",
+    "//pxr/usd/bin/usdedit:usdedit.py": "usdedit",
+    "//pxr/usd/bin/usdresolve:usdresolve.py": "usdresolve",
+    "//pxr/usd/bin/usdstitch:usdstitch.py": "usdstitch",
+    "//pxr/usd/bin/usdstitchclips:usdstitchclips.py": "usdstitchclips",
+    "//pxr/usd/bin/usdupdatecrate:usdupdatecrate.py": "usdupdatecrate",
+    "//pxr/imaging/hd:hdGenSchema.py": "hdGenSchema",
+    "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    "//pxr/usdImaging/bin/usdview:usdview.py": "usdview",
+    "//pxr/usdImaging/bin/testusdview:testusdview.py": "testusdview",
+    "//pxr/usdImaging/bin/usdBakeMtlx:usdBakeMaterialX.py": "usdBakeMaterialX",
+}

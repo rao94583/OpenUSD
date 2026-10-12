@@ -1,0 +1,3 @@
+# Output of `bazel vendor --config=offline` (see .bazelrc); its packages are
+# external repositories, not part of this workspace.
+bazel-vendor

@@ -1,4 +1,4 @@
-# Bazel build for OpenUSD — Phase 5 handoff
+# Bazel build for OpenUSD — Phase 6 handoff
 
 Self-contained context for continuing the Bazel build of this OpenUSD fork.
 Repo: `~/Code/OpenUSD`, branch `bazel-build` (pushed to `origin` =
@@ -9,13 +9,13 @@ github.com/rao94583/OpenUSD; `upstream` = Pixar, never push there).
 Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
 
 - **Scope:** core (`pxr/base`, `pxr/usd`, `usdValidation`, CLI tools, Python)
-  plus imaging (Hydra/Storm/usdImaging, OpenSubdiv). Deferred: usdview
-  (needs PySide), exec, MaterialX and other optional plugins. The generator
-  sets `PXR_BUILD_EXEC=OFF` and `PXR_BUILD_USDVIEW=OFF` until they are
-  ported.
+  plus imaging (Hydra/Storm/usdImaging, OpenSubdiv), MaterialX and usdview.
+  Deferred: exec (the generator sets `PXR_BUILD_EXEC=OFF`) and other
+  optional plugins (OSL, Ptex, Embree, Alembic, Draco, OpenVDB, ...).
 - **Platform:** macOS arm64 now; keep Linux possible (all platform
   differences through `select()`/`per_os`, no macOS-only assumptions).
-  Linux has not been built yet.
+  Linux has not been built yet; the user deferred it in Phase 5.
+- **CI:** none for now (user decision in Phase 5).
 - **Graphics (user decision):** Metal renders on macOS, OpenGL on Linux.
   macOS uses CMake's default of `PXR_ENABLE_GL_SUPPORT=ON` *and*
   `PXR_ENABLE_METAL_SUPPORT=ON`, because hdSt/hdx are only built with GL
@@ -29,21 +29,32 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
   nothing is fetched at build time. Versions follow `VERSIONS.md`, then
   `build_scripts/build_usd.py`, then what the depending project pins. Bazel
   rule sets and the hermetic Python come from BCR.
+- **PyPI exception (user decision):** usdview's PySide6-Essentials 6.11.2,
+  shiboken6 and PyOpenGL 3.1.5 are prebuilt wheels fetched by rules_python's
+  `pip.parse`, pinned by SHA-256 (macOS and Linux wheels) in
+  `bazel/requirements_lock.txt`. `--config=offline` (below) makes builds
+  download-free.
 - **Image comparisons (user decision):** the full OpenImageIO 3.1.8.0 stack
   is vendored to build `idiff`, which `IMAGE_DIFF_COMPARE` uses (CMake's
   `IMAGE_DIFF_TOOL`). The hioOiio plugin stays off; deviating from CMake,
   image comparisons run although `PXR_BUILD_OPENIMAGEIO_PLUGIN` is off.
 - **Linking model:** each module is a static `cc_library` with
   `alwayslink = True`. All of them, core plugins included, are linked into
-  one monolithic shared library, `//bazel/install:usd_ms`. oneTBB and
-  OpenSubdiv are separate shared libraries (`:tbb`, `:opensubdiv`), as in
-  CMake builds: pxr static initializers call into tbb, and only a separate
-  image is guaranteed to be initialized first. Python extensions, programs
-  and tests link all three (`PXR_DYNAMIC_DEPS` in `pxr_library.bzl`). The
-  OIIO stack is linked statically into `idiff` only.
+  one monolithic shared library, `//bazel/install:usd_ms`. oneTBB,
+  OpenSubdiv and MaterialX are separate shared libraries (`:tbb`,
+  `:opensubdiv`, `:materialx`), as in CMake builds: pxr static
+  initializers call into tbb, and only a separate image is guaranteed to be
+  initialized first. Python extensions, programs and tests link all four
+  (`PXR_DYNAMIC_DEPS` in `pxr_library.bzl`). The OIIO stack is linked
+  statically into `idiff` only.
 - **Install tree:** `//bazel/install` mirrors CMake's install layout so Plug
   finds resources relative to the monolithic library as in an installed
   build. Tests mirror CMake's `<prefix>/tests` per package.
+- **Wheel:** `//bazel/wheel` is the install tree under `pxr/` (Python
+  package at the root, `pxr/lib/` libraries and resources), so nothing is
+  rewritten. Distribution `openusd` (not Pixar's `usd-core`), tag
+  `cp311-cp311-macosx_13_0_arm64`, extra `[usdview]` for PySide6/PyOpenGL,
+  Python programs as wheel scripts. Build it with `-c opt`.
 
 ## Phases
 
@@ -54,17 +65,22 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
 | 2 ✅ | pxr/usd/\*, usdValidation, CLI tools, plugInfo substitution | open a stage from Python; `bazel run` usdcat |
 | 3 ✅ | Port tests via `cmake/macros/testWrapper.py` | core tests pass |
 | 4 ✅ | Imaging: OpenSubdiv, hgiMetal/hgiGL, hd, hdSt, hdx, usdImaging; OIIO idiff | headless Storm render matches baseline |
-| **5** | **`cmake2bazel --check` in CI, `py_wheel`, optional `bazel vendor`; Linux bring-up** | — |
+| 5 ✅ | MaterialX, usdview, `py_wheel`, `bazel vendor` (CI and Linux deferred by the user) | all tests pass incl. usdview; wheel works in a venv; offline analysis |
+| **6** | **Next: user's choice — Linux bring-up, CI, exec, more plugins** | — |
 
-## What exists (Phases 0–4)
+## What exists (Phases 0–5)
 
 - `MODULE.bazel`: Bazel 9.3.0 (`.bazelversion`); `apple_support` 2.10.1
   (`repo_name = "build_bazel_apple_support"`, declared before rules_cc),
   `bazel_skylib` 1.9.2, `platforms` 1.1.0, `rules_cc` 0.2.26,
-  `rules_python` 2.4.2 with hermetic Python 3.11. Commit
-  `MODULE.bazel.lock` with any dependency change.
+  `rules_python` 2.4.2 with hermetic Python 3.11 and `pip.parse` (hub
+  `@pypi`, `bazel/requirements_lock.txt`). Commit `MODULE.bazel.lock` with
+  any dependency change.
 - `.bazelrc`: `-std=c++17`, macOS min 13.0 via
-  `--enable_platform_specific_config`.
+  `--enable_platform_specific_config`; `--config=offline` =
+  `--vendor_dir=bazel-vendor`. Fill it with `bazel vendor --config=offline
+  //...` (untracked, ~600 MB, host-specific: macOS arm64 wheels and
+  Python); `.bazelignore` keeps its packages out of `//...`.
 - **Vendored** (each with README; BUILD files are ours):
   - oneTBB 2021.12.0 (build-only definitions are `local_defines`; public
     ones leaked `_XOPEN_SOURCE` into pxr), Jinja2 3.1.6, MarkupSafe 3.0.3.
@@ -80,6 +96,10 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
     3.1.8.0 (static, embedded plugins for formats whose deps are vendored,
     `//vendor/openimageio:idiff`). OpenEXR and libpng also expose their
     install layout (`<OpenEXR/...>`, `<libpng16/...>`).
+  - MaterialX 1.39.5: the modules USD links (Core, Format, GenShader,
+    GenHw, GenGlsl, GenMsl, Render, RenderHw, RenderGlsl) and the data
+    library (`:libraries`); `mx_add_library.bzl` mirrors CMake's macro
+    (`.m` files compiled as Objective-C++ in a companion `objc_library`).
 - `bazel/cmake_configure_file.bzl` + `bazel/tools/cmake_configure_file.py`:
   CMake `configure_file()` (`#cmakedefine`, `#cmakedefine01`, `@VAR@`,
   `${VAR}`, `@ONLY`) for vendored config headers from upstream templates.
@@ -87,12 +107,24 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
   project-wide defines from `CXXDefaults.cmake` and, per OS, the imaging
   ones from `Packages.cmake` (`PXR_GL_SUPPORT_ENABLED`,
   `PXR_METAL_SUPPORT_ENABLED` on macOS, `PXR_X11_SUPPORT_ENABLED` on
-  Linux). Keep these in step with the generator's `PXR_ENABLE_*` values.
+  Linux) and `PXR_MATERIALX_SUPPORT_ENABLED`. Keep these in step with the
+  generator's `PXR_ENABLE_*` values.
 - `cmake/macros/BUILD.bazel`: exports `moduleDeps.cpp.in`, `testWrapper.py`.
 - **`//bazel/install`** (hand-written BUILD; rules in `pxr_install.bzl`,
-  `pxr_python.bzl`): `:tbb`, `:opensubdiv`, `:usd_ms` (`lib/lib*.dylib`,
-  `.so` on Linux), `:resources` (lib/usd and plugin/usd trees with
-  substituted plugInfo.json), `:python` (`lib/python/pxr`).
+  `pxr_python.bzl`): `:tbb`, `:opensubdiv`, `:materialx`, `:usd_ms`
+  (`lib/lib*.dylib`, `.so` on Linux), `:resources` (lib/usd and plugin/usd
+  trees with substituted plugInfo.json), `:python` (`lib/python/pxr`).
+  Besides Bazel's bazel-out rpaths, extensions carry rpaths for the install
+  tree and the wheel (`PXR_EXTENSION_RPATHS`) and usd_ms one to its own
+  directory (`PXR_LIBRARY_RPATHS`), so both layouts are relocatable.
+- **`//bazel/wheel`** (`pxr_wheel.bzl`): `:tree` lays out the install tree
+  for the wheel, `:wheel` is the `py_wheel`, `:wheel_test` unpacks it and
+  runs `build_scripts/pypi/test.py` (Pixar's usd-core install test) plus an
+  Sdr/MaterialX check in an isolated interpreter.
+- `//bazel:python_deps`: Jinja2, PySide6-Essentials, shiboken6, PyOpenGL —
+  what CMake finds in its interpreter. Python programs and tests depend on
+  it; the test runner puts the same packages on `PYTHONPATH`.
+  `//bazel/tools:pyside6_uic` compiles usdview's `.ui` files.
 - **Generator** `bazel/tools/cmake2bazel.py` (`--write`, `--check`, or no
   flag to print). Follows `add_subdirectory()` from `pxr/CMakeLists.txt`
   into `SCOPE` (`pxr/external`, `pxr/base`, `pxr/usd`, `pxr/usdValidation`,
@@ -112,8 +144,13 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
   `test_tree` lists OS-specific targets in a `select()`.
   `bazel/pxr_libraries.bzl` (`PXR_LIBRARIES`, `PXR_RESOURCES` with OS
   `select()`s; `PXR_PYTHON_MODULES` with `target_compatible_with`, which
-  `pxr_python_package` rejects if non-empty until supported).
+  `pxr_python_package` rejects if non-empty until supported;
+  `PXR_PYTHON_PROGRAMS`, the wheel's scripts).
   `EXCLUDED_TESTS` lists tests that cannot pass here, with reasons.
+  `RESOURCE_TREES` adds resources from other packages that CMake globs
+  from outside the source tree (MaterialX's data library for usdMtlx,
+  instead of `MATERIALX_STDLIB_DIR`). `PYMODULE_DIRS` and
+  `PYSIDE_UI_FILES` are translated (`pymodule_dirs`, `pyside_ui_files`).
 - `bazel/pxr_library.bzl`: `pxr_library` (all targets take
   `target_compatible_with`; macOS-only libraries may list `.mm` sources
   directly; the `objc_library` also carries the library's `linkopts`, since
@@ -129,20 +166,35 @@ Bazel build of OpenUSD with Python bindings, dependencies vendored as source.
 - `bazel/smoke/`: 7 smoke tests, kept (cheap; `schemaToolsSmoke` is the
   only coverage of usdGenSchema/usdInitSchema).
 
-Verified at the end of Phase 4 on macOS arm64: `bazel build //...`;
-`bazel test --nocache_test_results //...` — 1474 pass, 35 skipped (not
-compatible with macOS: OpenGL-only tests and `TfMallocTag`), in about 7
-minutes; `cmake2bazel.py --check` (86 files). Storm renders through Metal
-and 154 hdSt tests compare images with idiff; replacing a baseline image
-makes its test fail with `IMAGE_DIFF_COMPARE`. 18 tests are excluded
-(tagged `manual`):
+Verified at the end of Phase 5 on macOS arm64: `bazel build //...`;
+`bazel test --nocache_test_results //...` — 1604 pass, 46 skipped (not
+compatible with macOS: OpenGL-only tests, `TfMallocTag`, and 11 MaterialX
+tests CMake registers on other OSes only), in about 8 minutes;
+`cmake2bazel.py --check` (92 files). This includes 74 testusdview tests and
+6 usdviewq tests (they open windows briefly), and the 17 tests Phase 4
+excluded for PySide or MaterialX. `//bazel/wheel:wheel_test` passes in
+fastbuild and opt; the wheel also installs with pip into a venv of the
+hermetic Python and its `usdrecord` renders MaterialX materials with
+Storm/Metal. `--config=offline` analyzes `//...` with downloads blocked and
+no repository cache.
 
-- 15 need PySide for an OpenGL context (usdrecord ×8,
-  testUsdAppUtilsFrameRecorder, testUsdImagingGLUsdRenderPass* ×6).
-- 2 use MaterialX shaders (testUsdImagingGLMaterialsAndInstancers_*);
-  MaterialX support is off by default.
-- 1 undiagnosed: testUsdImagingGLBasisCurvesWithScale differs on 0.5% of
-  pixels at curve edges (limit 0.3%) with Metal on macOS 27.
+Desktop-dependent: `testUsdviewNavigationKeys` needs the usdview window to
+get keyboard focus. It passes when nothing else holds focus, and fails
+("focusWidget() is None") while another app is frontmost. The usdview tests
+open real windows, so they need a logged-in GUI session. Under heavy load
+(a cold `-c opt` build running at the same time) about 40 small tests hit
+timeouts; they pass when rerun.
+
+The opt wheel is 33 MB (libusd_ms 60 MB unpacked); fastbuild is 75 MB.
+
+One test is excluded (tagged `manual`): testUsdImagingGLBasisCurvesWithScale
+differs on 0.5% of pixels at curve edges (limit 0.3%) with Metal on macOS 27;
+not diagnosed.
+
+Known upstream issue, not a Bazel one: `usdBakeMaterialX` writes the baked
+`.mtlx` and then fails an assertion, because MaterialX 1.39.5 no longer
+appends `_baked` to baked material names, which usdBakeMaterialX.py
+expects. No test covers it.
 
 ## Gotchas already learned
 
@@ -174,37 +226,50 @@ makes its test fail with `IMAGE_DIFF_COMPARE`. 18 tests are excluded
 - A library is exported by usd_ms only if covered by `exports_filter`;
   vendored deps used by pxr headers need their own shared library in
   `PXR_DYNAMIC_DEPS`.
+- `bazel vendor` output inside the workspace must be in `.bazelignore`,
+  or `//...` loads the vendored repositories' packages and fails.
+- `cc_shared_library` `user_link_flags` undergo make-variable expansion:
+  write `$$ORIGIN` for Linux rpaths (untested until Linux is built).
+- `bazel test` of explicitly listed targets fails on OS-incompatible ones;
+  add `--skip_incompatible_explicit_targets`.
 - Shell is zsh: unquoted `$VAR` does not word-split; use `${=VAR}`.
   Globs with no match abort a command; use `find`.
 - Use the session scratchpad for downloads; vendored sources must come from
   official release tarballs with recorded SHA-256.
 
-## Phase 5 tasks
+## Phase 6 candidates (each needs the user's go-ahead)
 
-1. **CI:** a job running `cmake2bazel.py --check`, `bazel build //...` and
-   `bazel test //...` on macOS (and Linux once it builds). Decide with the
-   user where CI runs (GitHub Actions on the fork?) and whether GPU tests
-   run there (Metal on GitHub's macOS runners).
-2. **Wheel:** `py_wheel` for the pxr package (`lib/python/pxr` plus
-   `libusd_ms`, `libtbb`, `libopensubdiv` and resources). Needs its own
-   rpaths for the installed layout (extensions find `../../../` libs) and a
-   decision on the Python tag/platform; compare with the `usd-core` wheel.
-3. **Optional `bazel vendor`** for fully offline builds of the BCR rule
-   sets and the hermetic Python.
-4. **Linux bring-up** (when the user wants it): OpenGL and X11 come from the
-   system (`-lGL`, `-lX11`); fix the Plug resource path caveat above;
-   OpenSubdiv's GL evaluators are not built (only patch shader sources).
-5. Deferred features for later phases, each needing a user decision:
-   usdview (PySide), exec, MaterialX (would re-enable 2 excluded tests).
+1. **Linux bring-up:** OpenGL and X11 come from the system (`-lGL`,
+   `-lX11`, `-lXt` for MaterialXRender*); check the Plug resource path
+   caveat above and the `$$ORIGIN` rpaths; OpenSubdiv's GL evaluators are
+   not built (only patch shader sources); the wheel's Linux tag is plain
+   `linux_*`, not manylinux (no auditwheel). `bazel/requirements_lock.txt`
+   already has the Linux wheel hashes.
+2. **CI** (deferred by the user): a GitHub Actions workflow on the fork
+   running `cmake2bazel.py --check`, `bazel build //...`, `bazel test
+   //...` on `macos-*` runners. Open questions: GPU/Metal on hosted runners
+   (Storm image tests, usdview windows), caching (`--disk_cache` with
+   actions/cache), runtime (~25 min cold).
+3. **exec** (`PXR_BUILD_EXEC`, still OFF).
+4. Other optional plugins (Ptex, OSL, Embree, Alembic, Draco, OpenVDB,
+   hioOiio), each a vendoring decision.
+5. Wheel polish if it will be published: a description, console-script
+   entry points instead of `.data/scripts`, C++ tools (usdcat, usdtree,
+   usdchecker, sdfdump, sdffilter are not in the wheel), universal2.
 
 ## Useful commands
 
 ```sh
 bazel build //...                          # everything
-bazel test //...                           # ~1500 tests
+bazel test //...                           # ~1650 tests
 bazel test //pxr/imaging/hdSt/...          # one package's tests
 python3 bazel/tools/cmake2bazel.py --write # regenerate BUILD files
 python3 bazel/tools/cmake2bazel.py --check # fail on drift
 cat bazel-testlogs/pxr/imaging/hdSt/<test>/test.log   # testWrapper/idiff output
 bazel-bin/vendor/openimageio/idiff a.png b.png        # compare images
+bazel run //pxr/usdImaging/bin/usdview -- file.usda   # usdview
+bazel build -c opt //bazel/wheel           # bazel-bin/bazel/wheel/openusd-*.whl
+bazel test -c opt //bazel/wheel:wheel_test # wheel works outside Bazel
+bazel vendor --config=offline //...        # once, online; then
+bazel build --config=offline //...         # no downloads
 ```

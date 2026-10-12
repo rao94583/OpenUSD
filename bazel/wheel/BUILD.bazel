@@ -1,0 +1,82 @@
+# A wheel of the pxr Python package with its libraries, resources and Python
+# programs (see //bazel:pxr_wheel.bzl):
+#
+#   bazel build //bazel/wheel
+#   pip install bazel-bin/bazel/wheel/openusd-*.whl
+#
+# The Python tag matches the hermetic Python the extensions are built for.
+
+load("@rules_python//python:packaging.bzl", "py_wheel")
+load("@rules_python//python:py_test.bzl", "py_test")
+load("//bazel:pxr_libraries.bzl", "PXR_PYTHON_PROGRAMS")
+load("//bazel:pxr_wheel.bzl", "pxr_wheel_scripts", "pxr_wheel_tree")
+load("//bazel:version.bzl", "PXR_MAJOR_VERSION", "PXR_MINOR_VERSION", "PXR_PATCH_VERSION")
+
+[
+    config_setting(
+        name = "%s_%s" % (os, cpu),
+        constraint_values = [
+            "@platforms//os:" + os,
+            "@platforms//cpu:" + cpu,
+        ],
+    )
+    for os, cpu in [
+        ("macos", "arm64"),
+        ("macos", "x86_64"),
+        ("linux", "x86_64"),
+        ("linux", "aarch64"),
+    ]
+]
+
+pxr_wheel_tree(
+    name = "tree",
+    srcs = ["//bazel/install:python"],
+)
+
+py_wheel(
+    name = "wheel",
+    # Not usd-core: that is Pixar's distribution, built differently (core
+    # only, no imaging).
+    distribution = "openusd",
+    version = "%d.%d.%d" % (
+        int(PXR_MAJOR_VERSION),
+        int(PXR_MINOR_VERSION),
+        int(PXR_PATCH_VERSION),
+    ),
+    python_tag = "cp311",
+    abi = "cp311",
+    platform = select({
+        # .bazelrc's --macos_minimum_os.
+        ":macos_arm64": "macosx_13_0_arm64",
+        ":macos_x86_64": "macosx_13_0_x86_64",
+        # Not a manylinux tag: the wheel is not checked with auditwheel.
+        ":linux_x86_64": "linux_x86_64",
+        ":linux_aarch64": "linux_aarch64",
+    }),
+    summary = "Pixar's Universal Scene Description, built with Bazel",
+    license = "LicenseRef-TOST-1.0",
+    python_requires = ">=3.11,<3.12",
+    # usdview's dependencies (bazel/requirements_lock.txt).
+    extra_requires = {
+        "usdview": [
+            "PySide6-Essentials==6.11.2",
+            "PyOpenGL==3.1.5",
+        ],
+    },
+    data_files = pxr_wheel_scripts("scripts", PXR_PYTHON_PROGRAMS),
+    strip_path_prefixes = ["bazel/wheel"],
+    deps = [":tree"],
+)
+
+py_test(
+    name = "wheel_test",
+    srcs = ["wheel_test.py"],
+    args = [
+        "$(rootpath :wheel)",
+        "$(rootpath //build_scripts/pypi:test.py)",
+    ],
+    data = [
+        ":wheel",
+        "//build_scripts/pypi:test.py",
+    ],
+)

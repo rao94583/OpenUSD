@@ -6,7 +6,7 @@
 load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//bazel:pxr_install.bzl", "pxr_install_resources")
 load("//bazel:pxr_libraries.bzl", "PXR_LIBRARIES", "PXR_PYTHON_MODULES", "PXR_RESOURCES")
-load("//bazel:pxr_python.bzl", "PXR_PY_SHARED_LINKOPTS", "pxr_python_package")
+load("//bazel:pxr_python.bzl", "PXR_LIBRARY_RPATHS", "PXR_PY_SHARED_LINKOPTS", "pxr_python_package")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -74,7 +74,7 @@ cc_shared_library(
         ":tbb",
     ],
     exports_filter = ["//pxr:__subpackages__"],
-    user_link_flags = PXR_PY_SHARED_LINKOPTS,
+    user_link_flags = PXR_PY_SHARED_LINKOPTS + PXR_LIBRARY_RPATHS,
 )
 
 pxr_install_resources(
