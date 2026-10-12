@@ -1,0 +1,80 @@
+# Generated from pxr/imaging/hio/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "hio",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/js",
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/base/trace",
+        "//pxr/usd/ar",
+        "//pxr/imaging/hf",
+    ],
+    public_classes = [
+        "fieldTextureData",
+        "glslfx",
+        "glslfxConfig",
+        "glslfxResourceLayout",
+        "image",
+        "imageRegistry",
+        "types",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    private_classes = [
+        "debugCodes",
+        "dictionary",
+    ],
+    private_headers = [
+        "rankedTypeMap.h",
+        "stb/stb_image.h",
+        "stb/stb_image_resize2.h",
+        "stb/stb_image_write.h",
+    ],
+    cppfiles = [
+        "stbImage.cpp",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testHioImage",
+    srcs = [
+        "testenv/testHioImage.cpp",
+    ],
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/imaging/hio",
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testHioImage",
+    ],
+)
+
+pxr_test(
+    name = "testHioImage",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHioImage",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)

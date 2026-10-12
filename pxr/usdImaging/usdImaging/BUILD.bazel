@@ -1,0 +1,734 @@
+# Generated from pxr/usdImaging/usdImaging/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "usdImaging",
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/base/plug",
+        "//pxr/base/trace",
+        "//pxr/base/vt",
+        "//pxr/base/work",
+        "//pxr/imaging/geomUtil",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdar",
+        "//pxr/imaging/hdsi",
+        "//pxr/imaging/hio",
+        "//pxr/imaging/pxOsd",
+        "//pxr/usd/sdf",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usdHydra",
+        "//pxr/usd/usdLux",
+        "//pxr/usd/usdRender",
+        "//pxr/usd/usdShade",
+        "//pxr/usd/usdSkel",
+        "//pxr/usd/usdVol",
+        "//pxr/usd/ar",
+        "//vendor/onetbb:tbb",
+    ],
+    public_classes = [
+        "adapterRegistry",
+        "collectionCache",
+        "collectionMaterialBindingSchema",
+        "collectionPredicateLibrary",
+        "directMaterialBindingSchema",
+        "dataSourceAttribute",
+        "dataSourceAttributeColorSpace",
+        "dataSourceAttributeTypeName",
+        "dataSourceBasisCurves",
+        "dataSourceCamera",
+        "dataSourceGprim",
+        "dataSourceMapped",
+        "dataSourceMaterial",
+        "dataSourceMesh",
+        "dataSourceNurbsCurves",
+        "dataSourceNurbsPatch",
+        "dataSourcePointInstancer",
+        "dataSourcePoints",
+        "dataSourcePrim",
+        "dataSourcePrimvars",
+        "dataSourceRelationship",
+        "dataSourceRenderPrims",
+        "dataSourceStage",
+        "dataSourceStageGlobals",
+        "dataSourceTetMesh",
+        "dataSourceUsdPrimInfo",
+        "dataSourceVolume",
+        "debugCodes",
+        "delegate",
+        "drawModeAdapter",
+        "drawModeSceneIndex",
+        "extentResolvingSceneIndex",
+        "extentsHintSchema",
+        "geomModelSchema",
+        "geomXformVectorsSchema",
+        "geomSubsetAdapter",
+        "indexProxy",
+        "legacyRenderSettingsSceneIndex",
+        "materialParamUtils",
+        "modelSchema",
+        "primvarUtils",
+        "prototypeSceneIndexUtils",
+        "resolvedAttributeCache",
+        "instancerContext",
+        "stageSceneIndex",
+        "stageSceneIndexInterface",
+        "selectionSceneIndex",
+        "tokens",
+        "apiSchemaAdapter",
+        "backPlateAPIAdapter",
+        "basisCurvesAdapter",
+        "capsuleAdapter",
+        "cameraAdapter",
+        "collectionAPIAdapter",
+        "coneAdapter",
+        "coordSysAdapter",
+        "coordSysAPIAdapter",
+        "cubeAdapter",
+        "cylinderAdapter",
+        "cylinderLightAdapter",
+        "diskLightAdapter",
+        "distantLightAdapter",
+        "domeLightAdapter",
+        "domeLight_1Adapter",
+        "fieldAdapter",
+        "flattenedDataSourceProviders",
+        "flattenedGeomModelDataSourceProvider",
+        "flattenedMaterialBindingsDataSourceProvider",
+        "geometryLightAdapter",
+        "geomModelAPIAdapter",
+        "gprimAdapter",
+        "hermiteCurvesAdapter",
+        "implicitSurfaceMeshUtils",
+        "instanceablePrimAdapter",
+        "instanceAdapter",
+        "lightAdapter",
+        "lightAPIAdapter",
+        "lightFilterAdapter",
+        "materialAdapter",
+        "materialBindingAPIAdapter",
+        "materialBindingSchema",
+        "materialBindingsSchema",
+        "materialBindingsResolvingSceneIndex",
+        "meshAdapter",
+        "motionAPIAdapter",
+        "niPrototypePropagatingSceneIndex",
+        "nurbsCurvesAdapter",
+        "nurbsPatchAdapter",
+        "piPrototypePropagatingSceneIndex",
+        "planeAdapter",
+        "pluginLightAdapter",
+        "pluginLightFilterAdapter",
+        "pointsAdapter",
+        "pointInstancerAdapter",
+        "portalLightAdapter",
+        "primAdapter",
+        "primvarDescCache",
+        "rootOverridesSceneIndex",
+        "unloadedDrawModeSceneIndex",
+        "usdPrimInfoSchema",
+        "usdRenderProductSchema",
+        "usdRenderSettingsSchema",
+        "usdRenderVarSchema",
+        "usdUpAxisSchema",
+        "rectLightAdapter",
+        "renderPassAdapter",
+        "renderProductAdapter",
+        "renderSettingsAdapter",
+        "renderSettingsFlatteningSceneIndex",
+        "renderVarAdapter",
+        "representedByAncestorPrimAdapter",
+        "rerootingContainerDataSource",
+        "rerootingSceneIndex",
+        "sceneIndex",
+        "sceneIndexCreateArgsSchema",
+        "sceneIndexPlugin",
+        "sceneIndexPrimAdapter",
+        "sceneIndices",
+        "sphereAdapter",
+        "sphereLightAdapter",
+        "tetMeshAdapter",
+        "textureUtils",
+        "volumeAdapter",
+    ],
+    public_headers = [
+        "api.h",
+        "types.h",
+        "unitTestHelper.h",
+        "version.h",
+    ],
+    private_classes = [
+        "adapterManager",
+        "dataSourceRelocatingSceneIndex",
+        "drawModeStandin",
+        "instanceProxyPathTranslationSceneIndex",
+        "niInstanceAggregationSceneIndex",
+        "niPrototypePruningSceneIndex",
+        "niPrototypeSceneIndex",
+        "piPrototypeSceneIndex",
+    ],
+    private_headers = [
+        "dataSourceImplicits-Impl.h",
+    ],
+    cppfiles = [
+        "renderPassPruneSceneIndexPlugin.cpp",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingDataSourceAttribute",
+    srcs = [
+        "testenv/testUsdImagingDataSourceAttribute.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingDelegate",
+    srcs = [
+        "testenv/testUsdImagingDelegate.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usd",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingDelegateChanges",
+    srcs = [
+        "testenv/testUsdImagingDelegateChanges.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdShade",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingExcluded",
+    srcs = [
+        "testenv/testUsdImagingExcluded.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usd",
+        "//pxr/imaging/hd",
+        "//pxr/base/gf",
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingMaterialBinding",
+    srcs = [
+        "testenv/testUsdImagingMaterialBinding.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdShade",
+        "//pxr/usd/usd",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+        "//pxr/base/vt",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingNestedInstancingCategories",
+    srcs = [
+        "testenv/testUsdImagingNestedInstancingCategories.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usd",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingPrimvarUtils",
+    srcs = [
+        "testenv/testUsdImagingPrimvarUtils.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdGeom",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingRerootingSceneIndex",
+    srcs = [
+        "testenv/testUsdImagingRerootingSceneIndex.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/imaging/hd",
+        "//pxr/base/vt",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingNiAggregationNonDescendantPaths",
+    srcs = [
+        "testenv/testUsdImagingNiAggregationNonDescendantPaths.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingRootPrim",
+    srcs = [
+        "testenv/testUsdImagingRootPrim.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usd",
+        "//pxr/imaging/hd",
+        "//pxr/base/gf",
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingPiPrototypeSceneIndex",
+    srcs = [
+        "testenv/testUsdImagingPiPrototypeSceneIndex.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingStageSceneIndex",
+    srcs = [
+        "testenv/testUsdImagingStageSceneIndex.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingStageSceneIndexContents",
+    srcs = [
+        "testenv/testUsdImagingStageSceneIndexContents.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/imaging/hd",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingColorSpace",
+    srcs = [
+        "testenv/testUsdImagingColorSpace.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/imaging/hd",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingInstanceProxyTraversal",
+    srcs = [
+        "testenv/testUsdImagingInstanceProxyTraversal.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/imaging/hd",
+        "//pxr/usd/usd",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingCollectionExpressionEvaluation",
+    srcs = [
+        "testenv/testUsdImagingCollectionExpressionEvaluation.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/imaging/hd",
+        "//pxr/usd/usd",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdImagingCollectionPredicateLibrary",
+    srcs = [
+        "testenv/testUsdImagingCollectionPredicateLibrary.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/imaging/hd",
+        "//pxr/usd/usd",
+        "//pxr/usd/kind",
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testUsdImagingCollectionExpressionEvaluation": "testenv/testUsdImagingCollectionExpressionEvaluation",
+        "testUsdImagingColorSpace": "testenv/testUsdImagingColorSpace",
+        "testUsdImagingDelegate": "testenv/testUsdImagingDelegate",
+        "testUsdImagingDelegateChanges": "testenv/testUsdImagingDelegateChanges",
+        "testUsdImagingInstanceProxyTraversal": "testenv/testUsdImagingInstanceProxyTraversal",
+        "testUsdImagingMaterialBinding": "testenv/testUsdImagingMaterialBinding",
+        "testUsdImagingNestedInstancingCategories": "testenv/testUsdImagingNestedInstancingCategories",
+        "testUsdImagingStageSceneIndex": "testenv/testUsdImagingStageSceneIndex",
+        "testUsdImagingStageSceneIndexContents": "testenv/testUsdImagingStageSceneIndexContents",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testUsdImagingDataSourceAttribute",
+        ":tests/testUsdImagingDelegate",
+        ":tests/testUsdImagingDelegateChanges",
+        ":tests/testUsdImagingExcluded",
+        ":tests/testUsdImagingMaterialBinding",
+        ":tests/testUsdImagingNestedInstancingCategories",
+        ":tests/testUsdImagingPrimvarUtils",
+        ":tests/testUsdImagingRerootingSceneIndex",
+        ":tests/testUsdImagingNiAggregationNonDescendantPaths",
+        ":tests/testUsdImagingRootPrim",
+        ":tests/testUsdImagingPiPrototypeSceneIndex",
+        ":tests/testUsdImagingStageSceneIndex",
+        ":tests/testUsdImagingStageSceneIndexContents",
+        ":tests/testUsdImagingColorSpace",
+        ":tests/testUsdImagingInstanceProxyTraversal",
+        ":tests/testUsdImagingCollectionExpressionEvaluation",
+        ":tests/testUsdImagingCollectionPredicateLibrary",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingDataSourceAttribute",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingDataSourceAttribute",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingDelegate",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingDelegate",
+        "TESTENV": "testenv/testUsdImagingDelegate",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingDelegateChanges",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingDelegateChanges",
+        "TESTENV": "testenv/testUsdImagingDelegateChanges",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingExcluded",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingExcluded",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingMaterialBinding",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingMaterialBinding -stage model.usda -validateBindingsFor /Model/Geom/Parent/mesh",
+        "TESTENV": "testenv/testUsdImagingMaterialBinding",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingMaterialBindingNI",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingMaterialBinding -stage ni-collection-material-binding.usda -validateBindingsFor /not_instanced/geo/cube /instanced/geo/cube",
+        "TESTENV": "testenv/testUsdImagingMaterialBinding",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingColorSpace",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingColorSpace",
+        "TESTENV": "testenv/testUsdImagingColorSpace",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingNestedInstancingCategories",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingNestedInstancingCategories",
+        "TESTENV": "testenv/testUsdImagingNestedInstancingCategories",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingPrimvarUtils",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingPrimvarUtils",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingRerootingSceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingRerootingSceneIndex",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingNiAggregationNonDescendantPaths",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingNiAggregationNonDescendantPaths",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingRootPrim",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingRootPrim",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingPiPrototypeSceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingPiPrototypeSceneIndex",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingStageSceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingStageSceneIndex",
+        "TESTENV": "testenv/testUsdImagingStageSceneIndex",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingStageSceneIndexContents",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingStageSceneIndexContents basic.usda basic.txt",
+        "TESTENV": "testenv/testUsdImagingStageSceneIndexContents",
+        "ENV": [
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "basic.txt",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingInstanceProxyTraversal_1",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingInstanceProxyTraversal 1_simple.usda",
+        "TESTENV": "testenv/testUsdImagingInstanceProxyTraversal",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "1_simple_usdTraversal.txt",
+            "1_simple_sceneIndexTraversal.txt",
+            "1_simple_sceneIndexInstanceProxyTraversal.txt",
+        ],
+        "ENV": [
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingInstanceProxyTraversal_2",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingInstanceProxyTraversal 2_ni-2-levels.usda",
+        "TESTENV": "testenv/testUsdImagingInstanceProxyTraversal",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "2_ni-2-levels_usdTraversal.txt",
+            "2_ni-2-levels_sceneIndexTraversal.txt",
+            "2_ni-2-levels_sceneIndexInstanceProxyTraversal.txt",
+        ],
+        "ENV": [
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingCollectionExpressionEvaluation_1",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingCollectionExpressionEvaluation 1_simple.usda // //Trunk /World/InstanceA /World/InstanceB// //{isa:Sphere}",
+        "TESTENV": "testenv/testUsdImagingCollectionExpressionEvaluation",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "1_simple_collectionExpressionEvaluation.txt",
+        ],
+        "ENV": [
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingCollectionExpressionEvaluation_2",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingCollectionExpressionEvaluation 2_ni-2-levels.usda // /World/Chars/Group_1/Humanoids /World/Chars/Group_2/Humanoids// /World/Chars/Group_2/Humanoids/I1 /World/Chars//Cylinder* //Group_1//{isa:Cone}",
+        "TESTENV": "testenv/testUsdImagingCollectionExpressionEvaluation",
+        "EXPECTED_RETURN_CODE": "0",
+        "DIFF_COMPARE": [
+            "2_ni-2-levels_collectionExpressionEvaluation.txt",
+        ],
+        "ENV": [
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdImagingCollectionPredicateLibrary",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdImagingCollectionPredicateLibrary",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)

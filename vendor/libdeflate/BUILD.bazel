@@ -1,0 +1,22 @@
+# libdeflate, for OpenEXR (see README.md). Mirrors libdeflate's
+# CMakeLists.txt with all features (compression, decompression, zlib, gzip)
+# enabled, as OpenEXR builds it.
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "libdeflate",
+    srcs = glob([
+        "lib/*.c",
+        "lib/*.h",
+        "lib/arm/*.c",
+        "lib/arm/*.h",
+        "lib/x86/*.c",
+        "lib/x86/*.h",
+    ]) + ["common_defs.h"],
+    hdrs = ["libdeflate.h"],
+    copts = ["-w"],
+    includes = ["."],
+)

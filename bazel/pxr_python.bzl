@@ -96,12 +96,16 @@ def pxr_python_package(
       modules: structs with library, module and package fields
         (PXR_PYTHON_MODULES from pxr_libraries.bzl).
       dynamic_deps: cc_shared_library targets the extensions link against
-        (the monolithic library and oneTBB).
+        (the monolithic library, oneTBB, OpenSubdiv).
       runtime: other files the modules need at runtime (resources).
       visibility: visibility of the py_library.
     """
     extensions = []
     for m in modules:
+        if m.target_compatible_with:
+            # Needs select()s in the tree below; no such module exists yet.
+            fail(("pxr_python_package: %s exists on some OSes only, which " +
+                  "is not supported yet") % m.library)
         extension = "%s/pxr/%s/_%s" % (prefix, m.module, m.library)
         cc_shared_library(
             name = extension,

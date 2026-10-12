@@ -1,0 +1,43 @@
+# zlib, for libpng, libtiff, OpenEXR, minizip-ng and OpenImageIO (see
+# README.md). Adapted from the BUILD.bazel shipped with zlib (itself from the
+# Bazel Central Registry).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+_HDRS = [
+    "crc32.h",
+    "deflate.h",
+    "gzguts.h",
+    "inffast.h",
+    "inffixed.h",
+    "inflate.h",
+    "inftrees.h",
+    "trees.h",
+    "zconf.h",
+    "zlib.h",
+    "zutil.h",
+]
+
+# Expose only zlib.h and zconf.h on the include path: zlib's private
+# headers (inflate.h, trees.h, ...) have generic names.
+genrule(
+    name = "public_headers",
+    srcs = ["zconf.h", "zlib.h"],
+    outs = ["include/zconf.h", "include/zlib.h"],
+    cmd = "cp $(SRCS) $(RULEDIR)/include/",
+)
+
+cc_library(
+    name = "zlib",
+    srcs = glob(["*.c"]) + _HDRS,
+    hdrs = [":public_headers"],
+    copts = ["-w"],
+    includes = ["include"],
+    # configure would set these on POSIX systems.
+    local_defines = [
+        "HAVE_UNISTD_H",
+        "HAVE_STDARG_H",
+    ],
+)

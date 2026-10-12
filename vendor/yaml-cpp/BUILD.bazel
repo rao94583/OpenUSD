@@ -1,0 +1,19 @@
+# yaml-cpp, for OpenColorIO (see README.md). Adapted from the BUILD.bazel
+# shipped with yaml-cpp; built as OpenColorIO's install script builds it
+# (static, YAML_CPP_BUILD_CONTRIB=OFF).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "yaml-cpp",
+    srcs = glob([
+        "src/*.cpp",
+        "src/*.h",
+    ]),
+    hdrs = glob(["include/**/*.h"]),
+    copts = ["-w"],
+    includes = ["include"],
+    local_defines = ["YAML_CPP_NO_CONTRIB"],
+)

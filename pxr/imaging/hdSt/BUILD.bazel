@@ -1,0 +1,5104 @@
+# Generated from pxr/imaging/hdSt/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "hdSt",
+    libraries = [
+        "//pxr/imaging/hio",
+        "//pxr/imaging/garch",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdsi",
+        "//pxr/imaging/hgiGL",
+        "//pxr/imaging/hgiInterop",
+        "//pxr/usd/sdr",
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+        "//vendor/onetbb:tbb",
+        "//vendor/opensubdiv:osd_cpu",
+        "//vendor/opensubdiv:osd_gpu",
+    ],
+    public_classes = [
+        "backPlateSceneIndexPlugin",
+        "basisCurves",
+        "binding",
+        "bufferArrayRange",
+        "bufferResource",
+        "bufferArrayRegistry",
+        "capsule",
+        "commandBuffer",
+        "computation",
+        "conicalFrustum",
+        "copyComputation",
+        "debugCodes",
+        "dependencyForwardingSceneIndexPlugin",
+        "dependencySceneIndexPlugin",
+        "dispatchBuffer",
+        "domeLightComputations",
+        "drawItem",
+        "drawItemInstance",
+        "drawTarget",
+        "drawTargetRenderPassState",
+        "dynamicUvTextureObject",
+        "extComputation",
+        "extCompCpuComputation",
+        "extCompGpuComputation",
+        "extCompGpuComputationResource",
+        "extCompGpuPrimvarBufferSource",
+        "extCompPrimvarBufferSource",
+        "fallbackLightingShader",
+        "field",
+        "fieldSubtextureIdentifier",
+        "flatNormals",
+        "geometricShader",
+        "glConversions",
+        "glslfxShader",
+        "glslProgram",
+        "bufferUtils",
+        "hgiConversions",
+        "hioConversions",
+        "imageShaderRenderPass",
+        "implicitSurface",
+        "implicitSurfaceSceneIndexPlugin",
+        "nurbsApproximatingSceneIndexPlugin",
+        "instancer",
+        "interleavedMemoryManager",
+        "light",
+        "lightingShader",
+        "material",
+        "materialNetwork",
+        "mesh",
+        "package",
+        "points",
+        "primUtils",
+        "ptexTextureObject",
+        "renderBuffer",
+        "renderBufferPool",
+        "renderDelegate",
+        "renderParam",
+        "renderPass",
+        "renderPassShader",
+        "renderPassState",
+        "resourceRegistry",
+        "samplerObject",
+        "samplerObjectRegistry",
+        "shaderCode",
+        "simpleLightingShader",
+        "smoothNormals",
+        "sphere",
+        "stagingBuffer",
+        "strategyBase",
+        "subtextureIdentifier",
+        "tetMeshConversionSceneIndexPlugin",
+        "textureBinder",
+        "textureCpuData",
+        "textureHandle",
+        "textureHandleRegistry",
+        "textureIdentifier",
+        "textureObject",
+        "textureObjectRegistry",
+        "textureUtils",
+        "tokens",
+        "udimTextureObject",
+        "unboundMaterialPruningSceneIndexPlugin",
+        "unitTestGLDrawing",
+        "vboMemoryManager",
+        "vboSimpleMemoryManager",
+        "velocityMotionResolvingSceneIndexPlugin",
+        "volume",
+    ],
+    public_headers = [
+        "api.h",
+        "dynamicUvTextureImplementation.h",
+        "enums.h",
+    ],
+    private_classes = [
+        "assetUvTextureCpuData",
+        "basisCurvesComputations",
+        "basisCurvesShaderKey",
+        "basisCurvesTopology",
+        "codeGen",
+        "cullingShaderKey",
+        "drawBatch",
+        "drawItemsCache",
+        "extCompComputeShader",
+        "extCompComputedInputSource",
+        "extCompInputSource",
+        "extCompSceneInputSource",
+        "fieldTextureCpuData",
+        "imageShaderShaderKey",
+        "implicitSurfaceShaderKey",
+        "indirectDrawBatch",
+        "materialNetworkShader",
+        "materialBindingResolvingSceneIndexPlugin",
+        "materialPrimvarTransferSceneIndexPlugin",
+        "materialParam",
+        "meshShaderKey",
+        "meshTopology",
+        "nodeIdentifierResolvingSceneIndexPlugin",
+        "pipelineDrawBatch",
+        "pointsShaderKey",
+        "quadrangulate",
+        "renderPassVisibilitySceneIndexPlugin",
+        "renderPassShaderKey",
+        "resourceBinder",
+        "shaderKey",
+        "subdivision",
+        "triangulate",
+        "unitTestHelper",
+        "vertexAdjacency",
+        "volumeShader",
+        "volumeShaderKey",
+    ],
+    resource_files = [
+        "plugInfo.json",
+        "shaders/basisCurves.glslfx",
+        "shaders/capsule.glslfx",
+        "shaders/compute.glslfx",
+        "shaders/conicalFrustum.glslfx",
+        "shaders/coordUtils.glslfx",
+        "shaders/domeLight.glslfx",
+        "shaders/edgeId.glslfx",
+        "shaders/fallbackLighting.glslfx",
+        "shaders/fallbackLightingShader.glslfx",
+        "shaders/fallbackMaterialNetwork.glslfx",
+        "shaders/fallbackVolume.glslfx",
+        "shaders/frustumCull.glslfx",
+        "shaders/imageShader.glslfx",
+        "shaders/implicitSurface.glslfx",
+        "shaders/implicitSurfaceFaceCull.glslfx",
+        "shaders/implicitSurfaceNormal.glslfx",
+        "shaders/instancing.glslfx",
+        "shaders/invalidMaterialNetwork.glslfx",
+        "shaders/mesh.glslfx",
+        "shaders/meshFaceCull.glslfx",
+        "shaders/meshNormal.glslfx",
+        "shaders/meshWire.glslfx",
+        "shaders/overlayShader.glslfx",
+        "shaders/pcfShader.glslfx",
+        "shaders/points.glslfx",
+        "shaders/pointId.glslfx",
+        "shaders/pointDisk.glslfx",
+        "shaders/ptexTexture.glslfx",
+        "shaders/renderPass.glslfx",
+        "shaders/renderPassShader.glslfx",
+        "shaders/simpleLighting.glslfx",
+        "shaders/simpleLightingShader.glslfx",
+        "shaders/skinning.glslfx",
+        "shaders/sphere.glslfx",
+        "shaders/surfaceHelpers.glslfx",
+        "shaders/terminals.glslfx",
+        "shaders/visibility.glslfx",
+        "shaders/volume.glslfx",
+        "textures/fallbackBlackDomeLight.png",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStQualifiers",
+    srcs = [
+        "testenv/testHdStQualifiers.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hgi",
+        "//pxr/imaging/hio",
+        "//pxr/imaging/hd",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStBasicDrawing",
+    srcs = [
+        "testenv/testHdStBasicDrawing.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/garch",
+        "//pxr/imaging/glf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStBarAllocationLimit",
+    srcs = [
+        "testenv/testHdStBarAllocationLimit.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStBufferAggregation",
+    srcs = [
+        "testenv/testHdStBufferAggregation.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hgi",
+        "//pxr/imaging/garch",
+        "//pxr/base/vt",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStBufferArray",
+    srcs = [
+        "testenv/testHdStBufferArray.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStBufferSource",
+    srcs = [
+        "testenv/testHdStBufferSource.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/base/vt",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+        "//pxr/imaging/hdSt",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStBufferSourceDependency",
+    srcs = [
+        "testenv/testHdStBufferSourceDependency.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStCodeGen",
+    srcs = [
+        "testenv/testHdStCodeGen.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hio",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStCurveDrawing",
+    srcs = [
+        "testenv/testHdStCurveDrawing.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStCurvePrimvarInterpolation",
+    srcs = [
+        "testenv/testHdStCurvePrimvarInterpolation.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStCurvesPrimvars",
+    srcs = [
+        "testenv/testHdStCurvesPrimvars.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/garch",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStDepthBias",
+    srcs = [
+        "testenv/testHdStDepthBias.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStDisplayStyle",
+    srcs = [
+        "testenv/testHdStDisplayStyle.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStDrawBatching",
+    srcs = [
+        "testenv/testHdStDrawBatching.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hio",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStDrawItemIntegrity",
+    srcs = [
+        "testenv/testHdStDrawItemIntegrity.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStDrawItemsCache",
+    srcs = [
+        "testenv/testHdStDrawItemsCache.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStDynamicUvTexture",
+    srcs = [
+        "testenv/testHdStDynamicUvTexture.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStFaceCulling",
+    srcs = [
+        "testenv/testHdStFaceCulling.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStFrustumCulling",
+    srcs = [
+        "testenv/testHdStFrustumCulling.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStGL",
+    srcs = [
+        "testenv/testHdStGL.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+        "//pxr/imaging/hdSt",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStGLSL",
+    srcs = [
+        "testenv/testHdStGLSL.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hio",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+        "//pxr/imaging/hdSt",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStHWFaceCulling",
+    srcs = [
+        "testenv/testHdStHWFaceCulling.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStIndirectDrawBatchCulling",
+    srcs = [
+        "testenv/testHdStIndirectDrawBatchCulling.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStInitRepr",
+    srcs = [
+        "testenv/testHdStInitRepr.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStInstancing",
+    srcs = [
+        "testenv/testHdStInstancing.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStInstancingUnbalanced",
+    srcs = [
+        "testenv/testHdStInstancingUnbalanced.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStMeshTopology",
+    srcs = [
+        "testenv/testHdStMeshTopology.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStMultipleFvarTopologies",
+    srcs = [
+        "testenv/testHdStMultipleFvarTopologies.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStPrimGather",
+    srcs = [
+        "testenv/testHdStPrimGather.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStPrimitiveParam",
+    srcs = [
+        "testenv/testHdStPrimitiveParam.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hgi",
+        "//pxr/imaging/garch",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStPrimvars",
+    srcs = [
+        "testenv/testHdStPrimvars.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/garch",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStQuadrangulation",
+    srcs = [
+        "testenv/testHdStQuadrangulation.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStRenderPass",
+    srcs = [
+        "testenv/testHdStRenderPass.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStSamplerObjectRegistry",
+    srcs = [
+        "testenv/testHdStSamplerObjectRegistry.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStSubdivision",
+    srcs = [
+        "testenv/testHdStSubdivision.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/pxOsd",
+        "//pxr/imaging/hgi",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStTextureHandleRegistry",
+    srcs = [
+        "testenv/testHdStTextureHandleRegistry.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStTextureObjectRegistry",
+    srcs = [
+        "testenv/testHdStTextureObjectRegistry.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStTransition",
+    srcs = [
+        "testenv/testHdStTransition.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStSubResourceRegistry",
+    srcs = [
+        "testenv/testHdStSubResourceRegistry.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/garch",
+        "//pxr/base/gf",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hgi",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdStShaders",
+    srcs = [
+        "testenv/testHdStShaders.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdr",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testHdStBarAllocationLimit": "testenv/testHdStBarAllocationLimit",
+        "testHdStBasicDrawing": "testenv/testHdStBasicDrawing",
+        "testHdStBasicDrawing_Adaptive": "testenv/testHdStBasicDrawing_Adaptive",
+        "testHdStBasicDrawing_Quadrangulate": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "testHdStBufferArray": "testenv/testHdStBufferArray",
+        "testHdStBufferArrayInstancingDisabled": "testenv/testHdStBufferArrayInstancingDisabled",
+        "testHdStClipPlanes": "testenv/testHdStClipPlanes",
+        "testHdStCodeGen_GL": "testenv/testHdStCodeGen_GL",
+        "testHdStCurveDrawing": "testenv/testHdStCurveDrawing",
+        "testHdStCurvePrimvarInterpolation": "testenv/testHdStCurvePrimvarInterpolation",
+        "testHdStDepthBias": "testenv/testHdStDepthBias",
+        "testHdStDisplayStyle": "testenv/testHdStDisplayStyle",
+        "testHdStDrawBatching": "testenv/testHdStDrawBatching",
+        "testHdStDynamicUvTexture": "testenv/testHdStDynamicUvTexture",
+        "testHdStFaceCulling": "testenv/testHdStFaceCulling",
+        "testHdStGLSL": "testenv/testHdStGLSL",
+        "testHdStHWFaceCulling": "testenv/testHdStHWFaceCulling",
+        "testHdStInitRepr": "testenv/testHdStInitRepr",
+        "testHdStInstancing": "testenv/testHdStInstancing",
+        "testHdStInstancingUnbalanced": "testenv/testHdStInstancingUnbalanced",
+        "testHdStInstancingUnbalancedNoBindless": "testenv/testHdStInstancingUnbalancedNoBindless",
+        "testHdStMultipleFvarTopologies": "testenv/testHdStMultipleFvarTopologies",
+        "testHdStPrimGather": "testenv/testHdStPrimGather",
+        "testHdStPrimvars": "testenv/testHdStPrimvars",
+        "testHdStQualifiers": "testenv/testHdStQualifiers",
+        "testHdStSamplerObjectRegistry": "testenv/testHdStSamplerObjectRegistry",
+        "testHdStShaders": "testenv/testHdStShaders",
+        "testHdStSubdivisionOsd3": "testenv/testHdStSubdivisionOsd3",
+        "testHdStTextureHandleRegistry": "testenv/testHdStTextureHandleRegistry",
+        "testHdStTextureObjectRegistry": "testenv/testHdStTextureObjectRegistry",
+        "testHdStTransition": "testenv/testHdStTransition",
+        "testHdStTransitionRefinedCurves": "testenv/testHdStTransitionRefinedCurves",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testHdStQualifiers",
+        ":tests/testHdStBasicDrawing",
+        ":tests/testHdStBarAllocationLimit",
+        ":tests/testHdStBufferAggregation",
+        ":tests/testHdStBufferArray",
+        ":tests/testHdStBufferSource",
+        ":tests/testHdStBufferSourceDependency",
+        ":tests/testHdStCodeGen",
+        ":tests/testHdStCurveDrawing",
+        ":tests/testHdStCurvePrimvarInterpolation",
+        ":tests/testHdStCurvesPrimvars",
+        ":tests/testHdStDepthBias",
+        ":tests/testHdStDisplayStyle",
+        ":tests/testHdStDrawBatching",
+        ":tests/testHdStDrawItemIntegrity",
+        ":tests/testHdStDrawItemsCache",
+        ":tests/testHdStDynamicUvTexture",
+        ":tests/testHdStFaceCulling",
+        ":tests/testHdStFrustumCulling",
+        ":tests/testHdStGL",
+        ":tests/testHdStGLSL",
+        ":tests/testHdStHWFaceCulling",
+        ":tests/testHdStIndirectDrawBatchCulling",
+        ":tests/testHdStInitRepr",
+        ":tests/testHdStInstancing",
+        ":tests/testHdStInstancingUnbalanced",
+        ":tests/testHdStMeshTopology",
+        ":tests/testHdStMultipleFvarTopologies",
+        ":tests/testHdStPrimGather",
+        ":tests/testHdStPrimitiveParam",
+        ":tests/testHdStPrimvars",
+        ":tests/testHdStQuadrangulation",
+        ":tests/testHdStRenderPass",
+        ":tests/testHdStSamplerObjectRegistry",
+        ":tests/testHdStSubdivision",
+        ":tests/testHdStTextureHandleRegistry",
+        ":tests/testHdStTextureObjectRegistry",
+        ":tests/testHdStTransition",
+        ":tests/testHdStSubResourceRegistry",
+        ":tests/testHdStShaders",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testHdStBufferSource",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBufferSource",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStQualifiers",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStQualifiers --offscreen --flatQF FlatMember --nopersQF NoPerspectiveMember --centroidQF CentroidMember --sampleQF SampleMember",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStQualifiers",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStBarAllocationLimit",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBarAllocationLimit --offscreen --write testHdStBarAllocationLimit.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBarAllocationLimit.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStBarAllocationLimit",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HD_MAX_VBO_SIZE=268435456",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv1_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr hull --refineLevel 1 --write testHdStBasicDrawing_adaptive_lighting_lv1_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv1_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv1_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr smoothHull --refineLevel 1 --write testHdStBasicDrawing_adaptive_lighting_lv1_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv1_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv1_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wire --refineLevel 1 --write testHdStBasicDrawing_adaptive_lighting_lv1_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv1_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv1_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wireOnSurf --refineLevel 1 --write testHdStBasicDrawing_adaptive_lighting_lv1_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv1_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv1_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refined --refineLevel 1 --write testHdStBasicDrawing_adaptive_lighting_lv1_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv1_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv1_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWire --refineLevel 1 --write testHdStBasicDrawing_adaptive_lighting_lv1_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv1_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv1_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWireOnSurf --refineLevel 1 --write testHdStBasicDrawing_adaptive_lighting_lv1_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv1_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv2_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr hull --refineLevel 2 --write testHdStBasicDrawing_adaptive_lighting_lv2_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv2_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv2_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr smoothHull --refineLevel 2 --write testHdStBasicDrawing_adaptive_lighting_lv2_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv2_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv2_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wire --refineLevel 2 --write testHdStBasicDrawing_adaptive_lighting_lv2_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv2_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv2_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wireOnSurf --refineLevel 2 --write testHdStBasicDrawing_adaptive_lighting_lv2_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv2_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv2_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refined --refineLevel 2 --write testHdStBasicDrawing_adaptive_lighting_lv2_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv2_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv2_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWire --refineLevel 2 --write testHdStBasicDrawing_adaptive_lighting_lv2_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv2_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Adaptive_lighting_lv2_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWireOnSurf --refineLevel 2 --write testHdStBasicDrawing_adaptive_lighting_lv2_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_adaptive_lighting_lv2_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Adaptive",
+        "ENV": [
+            "HD_ENABLE_OPENSUBDIV3_ADAPTIVE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_points",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr points --write testHdStBasicDrawing_lv0_points.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_points.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --write testHdStBasicDrawing_lv0_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --write testHdStBasicDrawing_lv0_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --write testHdStBasicDrawing_lv0_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --write testHdStBasicDrawing_lv0_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_hull_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_lv0_hull_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_hull_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_smoothHull_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_lv0_smoothHull_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_smoothHull_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_wire_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_lv0_wire_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wire_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_wireOnSurf_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_lv0_wireOnSurf_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wireOnSurf_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_hull_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_lv0_hull_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_hull_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_smoothHull_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_lv0_smoothHull_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_smoothHull_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_wire_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_lv0_wire_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wire_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv0_wireOnSurf_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_lv0_wireOnSurf_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wireOnSurf_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv1_points",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr points --refineLevel 1 --write testHdStBasicDrawing_lv1_points.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_points.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv1_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --refineLevel 1 --write testHdStBasicDrawing_lv1_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv1_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --refineLevel 1 --write testHdStBasicDrawing_lv1_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv1_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --refineLevel 1 --write testHdStBasicDrawing_lv1_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv1_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --refineLevel 1 --write testHdStBasicDrawing_lv1_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv1_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refined --refineLevel 1 --write testHdStBasicDrawing_lv1_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv1_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refinedWire --refineLevel 1 --write testHdStBasicDrawing_lv1_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv1_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refinedWireOnSurf --refineLevel 1 --write testHdStBasicDrawing_lv1_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv2_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --refineLevel 2 --write testHdStBasicDrawing_lv2_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv2_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --refineLevel 2 --write testHdStBasicDrawing_lv2_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv2_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --refineLevel 2 --write testHdStBasicDrawing_lv2_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv2_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --refineLevel 2 --write testHdStBasicDrawing_lv2_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv2_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refined --refineLevel 2 --write testHdStBasicDrawing_lv2_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv2_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refinedWire --refineLevel 2 --write testHdStBasicDrawing_lv2_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lv2_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refinedWireOnSurf --refineLevel 2 --write testHdStBasicDrawing_lv2_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv0_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr hull --write testHdStBasicDrawing_lighting_lv0_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv0_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv0_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr smoothHull --write testHdStBasicDrawing_lighting_lv0_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv0_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv0_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wire --write testHdStBasicDrawing_lighting_lv0_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv0_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv0_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wireOnSurf --write testHdStBasicDrawing_lighting_lv0_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv0_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv1_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr hull --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv1_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr smoothHull --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv1_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wire --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv1_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wireOnSurf --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv1_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refined --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv1_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWire --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv1_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWireOnSurf --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv2_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr hull --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv2_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr smoothHull --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv2_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wire --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv2_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wireOnSurf --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv2_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refined --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv2_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWire --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Immediate_lighting_lv2_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWireOnSurf --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "HGIGL_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "HGIVULKAN_ENABLE_MULTI_DRAW_INDIRECT=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_points",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr points --write testHdStBasicDrawing_lv0_points.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_points.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --write testHdStBasicDrawing_lv0_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --write testHdStBasicDrawing_lv0_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --write testHdStBasicDrawing_lv0_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --write testHdStBasicDrawing_lv0_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_hull_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_lv0_hull_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_hull_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_smoothHull_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_lv0_smoothHull_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_smoothHull_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_wire_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_lv0_wire_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wire_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_wireOnSurf_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_lv0_wireOnSurf_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wireOnSurf_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_hull_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_lv0_hull_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_hull_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_smoothHull_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_lv0_smoothHull_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_smoothHull_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_wire_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_lv0_wire_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wire_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv0_wireOnSurf_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_lv0_wireOnSurf_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv0_wireOnSurf_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv1_points",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr points --refineLevel 1 --write testHdStBasicDrawing_lv1_points.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_points.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv1_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --refineLevel 1 --write testHdStBasicDrawing_lv1_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv1_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --refineLevel 1 --write testHdStBasicDrawing_lv1_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv1_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --refineLevel 1 --write testHdStBasicDrawing_lv1_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv1_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --refineLevel 1 --write testHdStBasicDrawing_lv1_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv1_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refined --refineLevel 1 --write testHdStBasicDrawing_lv1_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv1_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refinedWire --refineLevel 1 --write testHdStBasicDrawing_lv1_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv1_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refinedWireOnSurf --refineLevel 1 --write testHdStBasicDrawing_lv1_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv1_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv2_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --refineLevel 2 --write testHdStBasicDrawing_lv2_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv2_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --refineLevel 2 --write testHdStBasicDrawing_lv2_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv2_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --refineLevel 2 --write testHdStBasicDrawing_lv2_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv2_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --refineLevel 2 --write testHdStBasicDrawing_lv2_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv2_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refined --refineLevel 2 --write testHdStBasicDrawing_lv2_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv2_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refinedWire --refineLevel 2 --write testHdStBasicDrawing_lv2_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lv2_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr refinedWireOnSurf --refineLevel 2 --write testHdStBasicDrawing_lv2_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lv2_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv0_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr hull --write testHdStBasicDrawing_lighting_lv0_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv0_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv0_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr smoothHull --write testHdStBasicDrawing_lighting_lv0_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv0_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv0_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wire --write testHdStBasicDrawing_lighting_lv0_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv0_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv0_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wireOnSurf --write testHdStBasicDrawing_lighting_lv0_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv0_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv1_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr hull --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv1_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr smoothHull --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv1_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wire --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv1_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wireOnSurf --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv1_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refined --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv1_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWire --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv1_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWireOnSurf --refineLevel 1 --write testHdStBasicDrawing_lighting_lv1_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv1_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv2_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr hull --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv2_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr smoothHull --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv2_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wire --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv2_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr wireOnSurf --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv2_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refined --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_refined.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv2_refinedWire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWire --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_refinedWire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_refinedWire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_MDI_lighting_lv2_refinedWireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --lighting --repr refinedWireOnSurf --refineLevel 2 --write testHdStBasicDrawing_lighting_lv2_refinedWireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_lighting_lv2_refinedWireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_hull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --write testHdStBasicDrawing_quad_hull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_hull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_smoothHull",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --write testHdStBasicDrawing_quad_smoothHull.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_smoothHull.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --write testHdStBasicDrawing_quad_wire.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_wireOnSurf",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --write testHdStBasicDrawing_quad_wireOnSurf.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_wireOnSurf.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_hull_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_quad_hull_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_hull_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_smoothHull_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_quad_smoothHull_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_smoothHull_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_wire_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_quad_wire_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_wire_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_wireOnSurf_cullback",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --cullStyle BackUnlessDoubleSided --write testHdStBasicDrawing_quad_wireOnSurf_cullback.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_wireOnSurf_cullback.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_hull_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr hull --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_quad_hull_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_hull_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_smoothHull_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr smoothHull --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_quad_smoothHull_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_smoothHull_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_wire_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wire --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_quad_wire_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_wire_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBasicDrawing_Quadrangulate_wireOnSurf_cullfront",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --repr wireOnSurf --cullStyle FrontUnlessDoubleSided --write testHdStBasicDrawing_quad_wireOnSurf_cullfront.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStBasicDrawing_quad_wireOnSurf_cullfront.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStBasicDrawing_Quadrangulate",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBufferAggregation",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBufferAggregation",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HD_MAX_VBO_SIZE=268435456",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStBufferSourceDependency",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBufferSourceDependency",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStClipPlanes1",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --clipPlane -1 0 0 -1.5 --write testHdStClipPlanes1.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStClipPlanes1.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStClipPlanes",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStClipPlanes2",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBasicDrawing --offscreen --clipPlane 1 0 0 1.5 --clipPlane -1 0 0 1.5 --write testHdStClipPlanes2.png",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStClipPlanes2.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStClipPlanes",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStCurveDrawing_lv0_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCurveDrawing --offscreen --repr refined --refineLevel 0 --write testHdStCurveDrawing_lv0_refined.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStCurveDrawing_lv0_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStCurveDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStCurveDrawing_lv1_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCurveDrawing --offscreen --repr refined --refineLevel 1 --write testHdStCurveDrawing_lv1_refined.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStCurveDrawing_lv1_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "3",
+        "TESTENV": "testenv/testHdStCurveDrawing",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStCurvePrimvarInterpolation_lv0_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCurvePrimvarInterpolation --offscreen --repr refined --refineLevel 0 --write testHdStCurvePrimvarInterpolation_lv0_refined.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStCurvePrimvarInterpolation_lv0_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStCurvePrimvarInterpolation",
+        "ENV": [
+            "TF_DEBUG=HD_DISABLE_MULTITHREADED_RPRIM_SYNC",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStCurvePrimvarInterpolation_lv1_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCurvePrimvarInterpolation --offscreen --repr refined --refineLevel 1 --write testHdStCurvePrimvarInterpolation_lv1_refined.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStCurvePrimvarInterpolation_lv1_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStCurvePrimvarInterpolation",
+        "ENV": [
+            "TF_DEBUG=HD_DISABLE_MULTITHREADED_RPRIM_SYNC",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStCurvePrimvarInterpolation_lv3_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCurvePrimvarInterpolation --offscreen --repr refined --refineLevel 3 --write testHdStCurvePrimvarInterpolation_lv3_refined.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStCurvePrimvarInterpolation_lv3_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "TESTENV": "testenv/testHdStCurvePrimvarInterpolation",
+        "ENV": [
+            "TF_DEBUG=HD_DISABLE_MULTITHREADED_RPRIM_SYNC",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStCurvesPrimvars",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCurvesPrimvars",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStDisplayStyle",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStDisplayStyle --offscreen --write testHdStDisplayStyle.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStDisplayStyle.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStDisplayStyle",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStDisplayStyle_refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStDisplayStyle --offscreen --refineLevel 2 --write testHdStDisplayStyle_refined.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStDisplayStyle_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStDisplayStyle",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStDepthBias",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStDepthBias --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStDepthBias_disabled.png",
+            "testHdStDepthBias_enabled.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "TESTENV": "testenv/testHdStDepthBias",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStDrawItemIntegrity",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStDrawItemIntegrity --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStDrawItemsCache",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStDrawItemsCache --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "HDST_ENABLE_DRAW_ITEMS_CACHE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStDynamicUvTexture",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStDynamicUvTexture --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "outTextureDarkBlue.png",
+            "outTextureLightBlue.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStDynamicUvTexture",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStFaceCulling_None",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStFaceCulling --offscreen --repr wireOnSurf --cullStyle Nothing --write testHdStFaceCulling_cull_none.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStFaceCulling_cull_none.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "TESTENV": "testenv/testHdStFaceCulling",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStFaceCulling_Back",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStFaceCulling --offscreen --repr wireOnSurf --cullStyle Back --write testHdStFaceCulling_cull_back.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStFaceCulling_cull_back.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "TESTENV": "testenv/testHdStFaceCulling",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStFaceCulling_Front",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStFaceCulling --offscreen --repr wireOnSurf --cullStyle Front --write testHdStFaceCulling_cull_front.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStFaceCulling_cull_front.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "TESTENV": "testenv/testHdStFaceCulling",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStFaceCulling_BackUnlessDoubleSided",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStFaceCulling --offscreen --repr wireOnSurf --cullStyle BackUnlessDoubleSided --write testHdStFaceCulling_cull_backUnlessDS.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStFaceCulling_cull_backUnlessDS.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "TESTENV": "testenv/testHdStFaceCulling",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStFaceCulling_FrontUnlessDoubleSided",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStFaceCulling --offscreen --repr wireOnSurf --cullStyle FrontUnlessDoubleSided --write testHdStFaceCulling_cull_frontUnlessDS.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStFaceCulling_cull_frontUnlessDS.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "TESTENV": "testenv/testHdStFaceCulling",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStFrustumCullingCPU",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStFrustumCulling --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "HD_ENABLE_GPU_FRUSTUM_CULLING=0",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStFrustumCullingGPU",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStFrustumCulling --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "HD_ENABLE_GPU_FRUSTUM_CULLING=1",
+            "HD_ENABLE_GPU_COUNT_VISIBLE_INSTANCES=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStFrustumCullingGPUTinyPrims",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStFrustumCulling --offscreen --tinyprim",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "HD_ENABLE_GPU_COUNT_VISIBLE_INSTANCES=1",
+            "HD_ENABLE_GPU_TINY_PRIM_CULLING=1",
+            "HD_ENABLE_GPU_FRUSTUM_CULLING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStFrustumCullingInstanceGPU",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStFrustumCulling --offscreen --instance",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "HD_ENABLE_GPU_COUNT_VISIBLE_INSTANCES=1",
+            "HD_ENABLE_GPU_FRUSTUM_CULLING=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStIndirectDrawBatchCulling",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStIndirectDrawBatchCulling",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "HD_ENABLE_GPU_TINY_PRIM_CULLING=true",
+            "HD_ENABLE_GPU_FRUSTUM_CULLING=true",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStInitRepr",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInitRepr --offscreen --outputFilePrefix testHdStInitRepr",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStInitRepr_0.png",
+            "testHdStInitRepr_1.png",
+            "testHdStInitRepr_2.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStInitRepr",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStInstancing",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInstancing --offscreen --write testHdStInstancing.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStInstancing.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStInstancing",
+        "ENV": [
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStInstancing_Refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInstancing --offscreen --refineLevel 2 --repr refined --write testHdStInstancing_refined.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStInstancing_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStInstancing",
+        "ENV": [
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStInstancing_Wire",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInstancing --offscreen --repr wire --write testHdStInstancing_wire.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStInstancing_wire.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStInstancing",
+        "ENV": [
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStInstancing_NoPrimvars",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInstancing --offscreen --noprimvars",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStInstancing",
+        "ENV": [
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStInstancing_Div4_Level4",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInstancing --offscreen --div 5 --level 2 --write testHdStInstancing_div5_level2.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStInstancing_div5_level2.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "TESTENV": "testenv/testHdStInstancing",
+        "ENV": [
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStInstancing_Div5_Level2",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInstancing --offscreen --div 4 --level 4 --repr refined --refineLevel 2 --write testHdStInstancing_div4_level4_refined.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStInstancing_div4_level4_refined.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStInstancing",
+        "ENV": [
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStInstancing_Div3_Level3",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInstancing --offscreen --div 3 --level 3 --rootTransform --write testHdStInstancing_div3_level3_rootTransform.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStInstancing_div3_level3_rootTransform.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStInstancing",
+        "ENV": [
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStInstancingUnbalanced",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInstancingUnbalanced --offscreen --write testHdStInstancingUnbalanced.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStInstancingUnbalanced.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStInstancingUnbalanced",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStInstancingUnbalancedNoBindless",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStInstancingUnbalanced --offscreen --write testHdStInstancingUnbalancedNoBindless.png",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStInstancingUnbalancedNoBindless.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStInstancingUnbalancedNoBindless",
+        "ENV": [
+            "HGIGL_ENABLE_BINDLESS_BUFFER=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStMultipleFvarTopologies",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMultipleFvarTopologies --offscreen --repr refinedWireOnSurf --refineLevel 1",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStMultipleFvarTopologies_0.png",
+            "testHdStMultipleFvarTopologies_1.png",
+            "testHdStMultipleFvarTopologies_2.png",
+            "testHdStMultipleFvarTopologies_3.png",
+            "testHdStMultipleFvarTopologies_4.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStMultipleFvarTopologies",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStPrimGather",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStPrimGather  --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStNestedDelegate_.png",
+            "testHdStNestedDelegate_a.png",
+            "testHdStNestedDelegate_i.png",
+            "testHdStNestedDelegate_i_a.png",
+            "testHdStNestedDelegate_i_j.png",
+            "testHdStNestedDelegate_i_j_a.png",
+            "testHdStNestedDelegate_i_j_k.png",
+            "testHdStNestedDelegate_i_j_k_a.png",
+            "testHdStNestedDelegate_i_j_k_l.png",
+            "testHdStNestedDelegate_i_j_k_z.png",
+            "testHdStNestedDelegate_i_j_z.png",
+            "testHdStNestedDelegate_i_z.png",
+            "testHdStNestedDelegate_z.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStPrimGather",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStPrimitiveParam",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStPrimitiveParam",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStQuadrangulation",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStQuadrangulation",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStRenderPass",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStRenderPass",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStSamplerObjectRegistry",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStSamplerObjectRegistry --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "outSampler1.png",
+            "outSampler2.png",
+            "outHiResSampler.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStSamplerObjectRegistry",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStSubdivisionOsd3",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStSubdivision",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "testHdStSubdivisionOsd3-Run1-stdout.txt",
+        "DIFF_COMPARE": [
+            "testHdStSubdivisionOsd3-Run1-stdout.txt",
+        ],
+        "TESTENV": "testenv/testHdStSubdivisionOsd3",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStTextureHandleRegistry",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStTextureHandleRegistry --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "outTextureBasic.png",
+            "outTextureSampler1LowRes.png",
+            "outTextureSampler1.png",
+            "outTextureSampler2.png",
+            "outTextureBeforeFileChange.png",
+            "outTextureAfterFileChange.png",
+            "outTextureAfterReload.png",
+            "outTextureWithLowGlobalMemoryRequest.png",
+            "outTextureWithHighGlobalMemoryRequest.png",
+        ],
+        "TESTENV": "testenv/testHdStTextureHandleRegistry",
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStTextureObjectRegistry",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStTextureObjectRegistry --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "outTexture1FullRes.png",
+            "outTexture1LowRes.png",
+            "outTexture1Reloaded.png",
+            "outTexture2.png",
+            "outGrayscaleTexture.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStTextureObjectRegistry",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStTransition0",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStTransition --offscreen --outputFilePrefix testHdStTransition0 --repr hull -c draw,animate=/cube1,repr=smoothHull,draw,repr=hull,draw,refineLevel=1,repr=refined,draw,refineLevel=2,draw",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStTransition0_0.png",
+            "testHdStTransition0_1.png",
+            "testHdStTransition0_2.png",
+            "testHdStTransition0_3.png",
+            "testHdStTransition0_4.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStTransition",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStTransition1",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStTransition --offscreen --outputFilePrefix testHdStTransition1 --repr smoothHull -c draw,animate=/cube1,animate=/grid1,animate=/curve2,animate=/points3,repr=hull,draw",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStTransition1_0.png",
+            "testHdStTransition1_1.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStTransition",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStTransition2",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStTransition --offscreen --outputFilePrefix testHdStTransition2 --repr smoothHull -c draw,clipPlane=1:0:0:1,draw,clipPlane=-1:0:0:1,draw",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStTransition2_0.png",
+            "testHdStTransition2_1.png",
+            "testHdStTransition2_2.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStTransition",
+        "ENV": [
+            "HD_ENABLE_FORCE_QUADRANGULATE=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStTransitionRefinedCurves",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStTransition --offscreen --outputFilePrefix testHdStTransitionRefinedCurves0 --repr hull -c draw,repr=smoothHull,draw",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStTransitionRefinedCurves0_0.png",
+            "testHdStTransitionRefinedCurves0_1.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStTransitionRefinedCurves",
+        "ENV": [
+            "HD_ENABLE_REFINED_CURVES=1",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStSubResourceRegistry",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStSubResourceRegistry",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdStShaders",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStShaders --offscreen --outputFilePrefix testHdStShaders",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "testHdStShaders_0.png",
+            "testHdStShaders_1.png",
+            "testHdStShaders_2.png",
+            "testHdStShaders_3.png",
+            "testHdStShaders_4.png",
+            "testHdStShaders_5.png",
+            "testHdStShaders_6.png",
+            "testHdStShaders_7.png",
+            "testHdStShaders_8.png",
+            "testHdStShaders_9.png",
+            "testHdStShaders_10.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "3",
+        "PERCEPTUAL": True,
+        "TESTENV": "testenv/testHdStShaders",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdStBufferArray",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBufferArray",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "testHdStBufferArray-Run1-stdout.txt",
+        "DIFF_COMPARE": [
+            "testHdStBufferArray-Run1-stdout.txt",
+        ],
+        "TESTENV": "testenv/testHdStBufferArray",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HD_ENABLE_DOUBLE_MATRIX=1",
+            "HD_ENABLE_PACKED_NORMALS=0",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStBufferArrayInstancingDisabled",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStBufferArray",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "testHdStBufferArrayInstancingDisabled-Run1-stdout.txt",
+        "DIFF_COMPARE": [
+            "testHdStBufferArrayInstancingDisabled-Run1-stdout.txt",
+        ],
+        "TESTENV": "testenv/testHdStBufferArrayInstancingDisabled",
+        "ENV": [
+            "HDST_ENABLE_RESOURCE_INSTANCING=0",
+            "HD_ENABLE_DOUBLE_MATRIX=1",
+            "HD_ENABLE_PACKED_NORMALS=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStCodeGen_GL_Mesh_Indirect",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCodeGen --mesh",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "codegen_mesh_indirect.out",
+        "DIFF_COMPARE": [
+            "codegen_mesh_indirect.out",
+        ],
+        "TESTENV": "testenv/testHdStCodeGen_GL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HGI_ENABLE_VULKAN=0",
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "HGIGL_ENABLE_BINDLESS_TEXTURE=1",
+            "HGIGL_GLSL_VERSION=450",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStCodeGen_GL_Mesh_Indirect_SmoothNormals",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCodeGen --mesh --smoothNormals",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "codegen_mesh_indirect_smoothNormals.out",
+        "DIFF_COMPARE": [
+            "codegen_mesh_indirect_smoothNormals.out",
+        ],
+        "TESTENV": "testenv/testHdStCodeGen_GL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HGI_ENABLE_VULKAN=0",
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "HGIGL_ENABLE_BINDLESS_TEXTURE=1",
+            "HGIGL_GLSL_VERSION=450",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStCodeGen_GL_Mesh_Indirect_DoubleSided",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCodeGen --mesh --doubleSided",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "codegen_mesh_indirect_doubleSided.out",
+        "DIFF_COMPARE": [
+            "codegen_mesh_indirect_doubleSided.out",
+        ],
+        "TESTENV": "testenv/testHdStCodeGen_GL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HGI_ENABLE_VULKAN=0",
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "HGIGL_ENABLE_BINDLESS_TEXTURE=1",
+            "HGIGL_GLSL_VERSION=450",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStCodeGen_GL_Mesh_Indirect_FaceVarying",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCodeGen --mesh --faceVarying",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "codegen_mesh_indirect_faceVarying.out",
+        "DIFF_COMPARE": [
+            "codegen_mesh_indirect_faceVarying.out",
+        ],
+        "TESTENV": "testenv/testHdStCodeGen_GL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HGI_ENABLE_VULKAN=0",
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "HGIGL_ENABLE_BINDLESS_TEXTURE=1",
+            "HGIGL_GLSL_VERSION=450",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStCodeGen_GL_Mesh_Indirect_Instance",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCodeGen --mesh --instance",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "codegen_mesh_indirect_instance.out",
+        "DIFF_COMPARE": [
+            "codegen_mesh_indirect_instance.out",
+        ],
+        "TESTENV": "testenv/testHdStCodeGen_GL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HGI_ENABLE_VULKAN=0",
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "HGIGL_ENABLE_BINDLESS_TEXTURE=1",
+            "HGIGL_GLSL_VERSION=450",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStCodeGen_GL_Mesh_EdgeOnly",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCodeGen --mesh --edgeOnly",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "codegen_mesh_edgeonly.out",
+        "DIFF_COMPARE": [
+            "codegen_mesh_edgeonly.out",
+        ],
+        "TESTENV": "testenv/testHdStCodeGen_GL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HGI_ENABLE_VULKAN=0",
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "HGIGL_ENABLE_BINDLESS_TEXTURE=1",
+            "HGIGL_GLSL_VERSION=450",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStCodeGen_GL_Mesh_EdgeOnly_BlendWireframe",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCodeGen --mesh --edgeOnly --blendWireframe",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "codegen_mesh_edgeonly_blendwireframe.out",
+        "DIFF_COMPARE": [
+            "codegen_mesh_edgeonly_blendwireframe.out",
+        ],
+        "TESTENV": "testenv/testHdStCodeGen_GL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HGI_ENABLE_VULKAN=0",
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "HGIGL_ENABLE_BINDLESS_TEXTURE=1",
+            "HGIGL_GLSL_VERSION=450",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStCodeGen_GL_Curves_Indirect",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCodeGen --curves",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "codegen_curves_indirect.out",
+        "DIFF_COMPARE": [
+            "codegen_curves_indirect.out",
+        ],
+        "TESTENV": "testenv/testHdStCodeGen_GL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HGI_ENABLE_VULKAN=0",
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "HGIGL_ENABLE_BINDLESS_TEXTURE=1",
+            "HGIGL_GLSL_VERSION=450",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStCodeGen_GL_Points_Indirect",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStCodeGen --points",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "codegen_points_indirect.out",
+        "DIFF_COMPARE": [
+            "codegen_points_indirect.out",
+        ],
+        "TESTENV": "testenv/testHdStCodeGen_GL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HGI_ENABLE_VULKAN=0",
+            "HGIGL_ENABLE_BINDLESS_BUFFER=1",
+            "HGIGL_ENABLE_BINDLESS_TEXTURE=1",
+            "HGIGL_GLSL_VERSION=450",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStDrawBatching",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStDrawBatching",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "testHdStDrawBatching-Run1-stdout.txt",
+        "DIFF_COMPARE": [
+            "testHdStDrawBatching-Run1-stdout.txt",
+        ],
+        "TESTENV": "testenv/testHdStDrawBatching",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+            "HD_ENABLE_DOUBLE_MATRIX=1",
+            "HD_ENABLE_GPU_COUNT_VISIBLE_INSTANCES=1",
+            "HD_ENABLE_PACKED_NORMALS=0",
+            "HGI_ENABLE_VULKAN=0",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStGL",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStGL",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStGLSL_instanceTransform0",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStGLSL testHarness.glslfx instanceTransform0",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStGLSL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStGLSL_instanceTransform1",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStGLSL testHarness.glslfx instanceTransform1",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStGLSL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStGLSL_instanceTransform2",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStGLSL testHarness.glslfx instanceTransform2",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStGLSL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStGLSL_instanceTransform3",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStGLSL testHarness.glslfx instanceTransform3",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStGLSL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStGLSL_determinant",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStGLSL testHarness.glslfx determinant",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testHdStGLSL",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStHWFaceCulling",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStHWFaceCulling",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "testHdStHWFaceCulling-Run1-stdout.txt",
+        "DIFF_COMPARE": [
+            "testHdStHWFaceCulling-Run1-stdout.txt",
+        ],
+        "TESTENV": "testenv/testHdStHWFaceCulling",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStMeshTopology",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStMeshTopology",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdStPrimvars",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdStPrimvars",
+        "EXPECTED_RETURN_CODE": "0",
+        "STDOUT_REDIRECT": "testHdStPrimvars-Run1-stdout.txt",
+        "DIFF_COMPARE": [
+            "testHdStPrimvars-Run1-stdout.txt",
+        ],
+        "TESTENV": "testenv/testHdStPrimvars",
+        "ENV": [
+            "HDST_ENABLE_MATERIAL_PRIMVAR_FILTERING=0",
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)

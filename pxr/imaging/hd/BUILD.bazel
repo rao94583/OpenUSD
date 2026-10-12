@@ -1,0 +1,657 @@
+# Generated from pxr/imaging/hd/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library", "pxr_python_bin")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "hd",
+    libraries = [
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+        "//pxr/base/vt",
+        "//pxr/base/work",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/cameraUtil",
+        "//pxr/imaging/hf",
+        "//pxr/imaging/pxOsd",
+        "//pxr/usd/sdr",
+        "//vendor/onetbb:tbb",
+    ],
+    public_classes = [
+        "aov",
+        "backPlateSchema",
+        "basisCurves",
+        "basisCurvesSchema",
+        "basisCurvesTopology",
+        "basisCurvesTopologySchema",
+        "bprim",
+        "bufferArray",
+        "bufferArrayRange",
+        "bufferSource",
+        "bufferSpec",
+        "builtinMaterialSchema",
+        "cachingSceneIndex",
+        "camera",
+        "cameraSchema",
+        "capsuleSchema",
+        "categoriesSchema",
+        "changeTracker",
+        "collectionExpressionEvaluator",
+        "collectionPredicateLibrary",
+        "collectionSchema",
+        "collectionsSchema",
+        "command",
+        "concatenatedVectorDataSource",
+        "coneSchema",
+        "containerDataSourceEditor",
+        "containerSchema",
+        "coordSys",
+        "coordSysSchema",
+        "coordSysBindingSchema",
+        "cubeSchema",
+        "cylinderSchema",
+        "dataSource",
+        "dataSourceHash",
+        "dataSourceLegacyPrim",
+        "dataSourceLegacyTaskPrim",
+        "dataSourceLocator",
+        "dataSourceMaterialNetworkInterface",
+        "debugCodes",
+        "dependenciesSchema",
+        "dependencyForwardingSceneIndex",
+        "dependencySchema",
+        "dirtyBitsTranslator",
+        "dirtyList",
+        "displayFilterSchema",
+        "energyFilterSchema",
+        "drawingCoord",
+        "drawItem",
+        "engine",
+        "enums",
+        "extComputation",
+        "extComputationContext",
+        "extComputationContextInternal",
+        "extComputationCpuCallback",
+        "extComputationInputComputationSchema",
+        "extComputationOutputSchema",
+        "extComputationPrimvarSchema",
+        "extComputationPrimvarsSchema",
+        "extComputationSchema",
+        "extComputationUtils",
+        "extentSchema",
+        "field",
+        "filteringSceneIndex",
+        "flattenedDataSourceProvider",
+        "flattenedDataSourceProviders",
+        "flattenedOverlayDataSourceProvider",
+        "flattenedPrimvarsDataSourceProvider",
+        "flattenedPurposeDataSourceProvider",
+        "flattenedVisibilityDataSourceProvider",
+        "flattenedXformDataSourceProvider",
+        "flatteningSceneIndex",
+        "flatNormals",
+        "geomSubset",
+        "geomSubsetSchema",
+        "imageShader",
+        "imageShaderSchema",
+        "implicitSurface",
+        "instanceCategoriesSchema",
+        "instancedBySchema",
+        "instanceIndicesSchema",
+        "instanceProxySchema",
+        "instancer",
+        "instanceRegistry",
+        "instancerTopologySchema",
+        "instanceProxyViewSceneIndex",
+        "instancingAwareCollectionExpressionEvaluator",
+        "instanceSchema",
+        "integratorSchema",
+        "lazyContainerDataSource",
+        "legacyDisplayStyleSchema",
+        "legacyGeomSubsetSceneIndex",
+        "legacyPrimSceneIndex",
+        "legacyRenderControlInterface",
+        "legacyTaskFactory",
+        "legacyTaskSchema",
+        "lensDistortionSchema",
+        "light",
+        "lightSchema",
+        "mapContainerDataSource",
+        "material",
+        "materialBindingSchema",
+        "materialBindingsSchema",
+        "materialConnectionSchema",
+        "materialFilteringSceneIndexBase",
+        "materialInterfaceMappingSchema",
+        "materialInterfaceParameterSchema",
+        "materialInterfaceSchema",
+        "materialNetworkSchema",
+        "materialNetwork2Interface",
+        "materialNodeSchema",
+        "materialNodeParameterSchema",
+        "materialOverrideSchema",
+        "materialSchema",
+        "mergingSceneIndex",
+        "mesh",
+        "meshSchema",
+        "meshTopology",
+        "meshTopologySchema",
+        "meshUtil",
+        "noticeBatchingSceneIndex",
+        "nurbsCurvesSchema",
+        "nurbsPatchSchema",
+        "nurbsPatchTrimCurveSchema",
+        "overlayContainerDataSource",
+        "particleFieldSchema",
+        "perfLog",
+        "planeSchema",
+        "pluginRenderDelegateUniqueHandle",
+        "pluginRendererUniqueHandle",
+        "points",
+        "prefixingSceneIndex",
+        "primGather",
+        "primIdSchema",
+        "primOriginSchema",
+        "primTypeIndex",
+        "primvarSchema",
+        "primvarsSchema",
+        "purposeSchema",
+        "renderBuffer",
+        "renderBufferSchema",
+        "renderCapabilitiesSchema",
+        "renderDelegate",
+        "renderDelegateAdapterRenderer",
+        "renderDelegateInfo",
+        "renderer",
+        "rendererCreateArgsSchema",
+        "rendererPlugin",
+        "rendererPluginHandle",
+        "rendererPluginRegistry",
+        "renderIndex",
+        "renderIndexAdapterSceneIndex",
+        "renderPass",
+        "renderPassSchema",
+        "renderPassState",
+        "renderProductSchema",
+        "renderSettingDescriptorSchema",
+        "renderSettings",
+        "renderSettingsSchema",
+        "renderVarSchema",
+        "renderThread",
+        "repr",
+        "resourceRegistry",
+        "retainedDataSource",
+        "retainedSceneIndex",
+        "rprim",
+        "rprimCollection",
+        "rprimSharedData",
+        "sampleFilterSchema",
+        "sceneDelegate",
+        "sceneGlobalsSchema",
+        "sceneIndex",
+        "sceneIndexAdapterSceneDelegate",
+        "sceneIndexCreateArgsSchema",
+        "sceneIndexObserver",
+        "sceneIndexPlugin",
+        "sceneIndexPluginRegistry",
+        "sceneIndexPrimView",
+        "sceneIndexUtil",
+        "schema",
+        "selection",
+        "selectionSchema",
+        "selectionsSchema",
+        "skinningSettings",
+        "smoothNormals",
+        "sortedIds",
+        "sphereSchema",
+        "splitDiopterSchema",
+        "sprim",
+        "subdivisionTagsSchema",
+        "systemMessages",
+        "systemSchema",
+        "task",
+        "tetMeshSchema",
+        "tetMeshTopologySchema",
+        "timeSampleArray",
+        "tokens",
+        "topology",
+        "types",
+        "unitTestDelegate",
+        "unitTestHelper",
+        "unitTestNullRenderDelegate",
+        "unitTestNullRenderPass",
+        "utils",
+        "vectorSchema",
+        "vertexAdjacency",
+        "visibilitySchema",
+        "volume",
+        "volumeFieldBindingSchema",
+        "volumeFieldSchema",
+        "volumeSchema",
+        "vtBufferSource",
+        "xformSchema",
+    ],
+    public_headers = [
+        "api.h",
+        "cachingSampledDataSource.h",
+        "dataSourceTypeDefs.h",
+        "driver.h",
+        "invalidatableContainerDataSource.h",
+        "materialNetworkInterface.h",
+        "rendererCreateArgs.h",
+        "schemaTypeDefs.h",
+        "vectorSchemaTypeDefs.h",
+        "version.h",
+    ],
+    resource_files = [
+        "plugInfo.json",
+        "codegenTemplates/schemaClass.h",
+        "codegenTemplates/schemaClass.cpp",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)
+
+pxr_python_bin(
+    name = "hdGenSchema",
+    python_file = "hdGenSchema.py",
+)
+
+pxr_test_program(
+    name = "testHdBufferSourceEmptyVal",
+    srcs = [
+        "testenv/testHdBufferSourceEmptyVal.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/base/vt",
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdBufferSpec",
+    srcs = [
+        "testenv/testHdBufferSpec.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdCommand",
+    srcs = [
+        "testenv/testHdCommand.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdDataSourceLocator",
+    srcs = [
+        "testenv/testHdDataSourceLocator.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdDirtyBitsTranslator",
+    srcs = [
+        "testenv/testHdDirtyBitsTranslator.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdDirtyList",
+    srcs = [
+        "testenv/testHdDirtyList.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdExtCompDependencySort",
+    srcs = [
+        "testenv/testHdExtCompDependencySort.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdExtComputationUtils",
+    srcs = [
+        "testenv/testHdExtComputationUtils.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdPerfLog",
+    srcs = [
+        "testenv/testHdPerfLog.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdDataSource",
+    srcs = [
+        "testenv/testHdDataSource.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdMergingSceneIndex",
+    srcs = [
+        "testenv/testHdMergingSceneIndex.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdSceneIndex",
+    srcs = [
+        "testenv/testHdSceneIndex.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdSortedIds",
+    srcs = [
+        "testenv/testHdSortedIds.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdSortedIdsPerf",
+    srcs = [
+        "testenv/testHdSortedIdsPerf.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/base/tf",
+        "//pxr/base/arch",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdTimeSampleArray",
+    srcs = [
+        "testenv/testHdTimeSampleArray.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdTypes",
+    srcs = [
+        "testenv/testHdTypes.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdCollectionExpressionEvaluator",
+    srcs = [
+        "testenv/testHdCollectionExpressionEvaluator.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/usd/sdf",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testHdSortedIds": "testenv/testHdSortedIds",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testHdBufferSourceEmptyVal",
+        ":tests/testHdBufferSpec",
+        ":tests/testHdCommand",
+        ":tests/testHdDataSourceLocator",
+        ":tests/testHdDirtyBitsTranslator",
+        ":tests/testHdDirtyList",
+        ":tests/testHdExtCompDependencySort",
+        ":tests/testHdExtComputationUtils",
+        ":tests/testHdPerfLog",
+        ":tests/testHdDataSource",
+        ":tests/testHdMergingSceneIndex",
+        ":tests/testHdSceneIndex",
+        ":tests/testHdSortedIds",
+        ":tests/testHdSortedIdsPerf",
+        ":tests/testHdTimeSampleArray",
+        ":tests/testHdTypes",
+        ":tests/testHdCollectionExpressionEvaluator",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testHdBufferSourceEmptyVal",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdBufferSourceEmptyVal",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdBufferSpec",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdBufferSpec",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdCommand",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdCommand",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdDataSourceLocator",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdDataSourceLocator",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdDirtyBitsTranslator",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdDirtyBitsTranslator",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdDirtyList",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdDirtyList",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdExtCompDependencySort",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdExtCompDependencySort",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdExtComputationUtils",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdExtComputationUtils",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdPerfLog",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdPerfLog",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdDataSource",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdDataSource",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdMergingSceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdMergingSceneIndex",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdSceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdSceneIndex",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdSortedIds",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdSortedIds",
+        "TESTENV": "testenv/testHdSortedIds",
+        "DIFF_COMPARE": [
+            "testHdSortedId_populateTest.txt",
+            "testHdSortedId_singleInsertTest.txt",
+            "testHdSortedId_multiInsertTest.txt",
+            "testHdSortedId_removeOnlyElementTest.txt",
+            "testHdSortedId_removeRangeTest.txt",
+            "testHdSortedId_removeBatchTest.txt",
+            "testHdSortedId_removeSortedTest.txt",
+            "testHdSortedId_removeUnsortedTest.txt",
+            "testHdSortedId_removeAfterInsertNoSyncTest.txt",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdTimeSampleArray",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdTimeSampleArray",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdTypes",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdTypes",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdCollectionExpressionEvaluator",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdCollectionExpressionEvaluator",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)

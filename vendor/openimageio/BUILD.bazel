@@ -1,0 +1,266 @@
+# OpenImageIO, for its idiff tool, which compares images in tests (see
+# README.md). Mirrors src/libutil, src/libOpenImageIO and src/idiff
+# CMakeLists.txt for a static build with embedded plugins (EMBEDPLUGINS=ON)
+# for every format whose dependencies are vendored.
+
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel:cmake_configure_file.bzl", "cmake_configure_file")
+
+package(default_visibility = ["//visibility:public"])
+
+_VERSION = {
+    "PROJECT_VERSION_MAJOR": "3",
+    "PROJECT_VERSION_MINOR": "1",
+    "PROJECT_VERSION_PATCH": "8",
+    "PROJECT_VERSION_TWEAK": "0",
+    "PROJECT_VERSION_RELEASE_TYPE": "",
+    "PROJ_NAMESPACE": "OpenImageIO",
+    "PROJ_VERSION_NAMESPACE": "v3_1",
+    "CMAKE_CXX_STANDARD": "17",
+    "Imath_VERSION_MAJOR": "3",
+    "Imath_VERSION_MINOR": "1",
+}
+
+cmake_configure_file(
+    name = "oiioversion",
+    src = "src/include/OpenImageIO/oiioversion.h.in",
+    out = "src/include/OpenImageIO/oiioversion.h",
+    at_only = True,
+    values = _VERSION,
+)
+
+cmake_configure_file(
+    name = "buildopts",
+    src = "src/libOpenImageIO/buildopts.h.in",
+    out = "src/include/buildopts.h",
+    at_only = True,
+    values = {
+        "PLUGIN_SEARCH_PATH_NATIVE": "",
+        "CFP_ALL_BUILD_DEPS_FOUND": "fmt;Imath;libjpeg-turbo;OpenColorIO;OpenEXR;PNG;Robinmap;TIFF;ZLIB",
+    },
+)
+
+# OIIO_INTERNALIZE_FMT: fmt's headers as <OpenImageIO/detail/fmt/*.h>.
+_FMT_HEADERS = [
+    "core.h",
+    "format-inl.h",
+    "format.h",
+    "ostream.h",
+    "printf.h",
+    "std.h",
+    "chrono.h",
+]
+
+genrule(
+    name = "fmt_headers",
+    srcs = ["//vendor/fmt:include/fmt/" + h for h in _FMT_HEADERS],
+    outs = ["src/include/OpenImageIO/detail/fmt/" + h for h in _FMT_HEADERS],
+    cmd = "cp $(SRCS) $(RULEDIR)/src/include/OpenImageIO/detail/fmt/",
+)
+
+# Definitions CMake applies to everything (add_compile_definitions) and to
+# the libraries.
+_DEFINES = ["OIIO_INTERNAL=1"]
+
+cc_library(
+    name = "headers",
+    hdrs = glob([
+        "src/include/OpenImageIO/*.h",
+        "src/include/OpenImageIO/detail/*.h",
+        "src/include/OpenImageIO/detail/pugixml/*.hpp",
+    ]) + [
+        ":fmt_headers",
+        ":oiioversion",
+    ],
+    # Static build.
+    defines = ["OIIO_STATIC_DEFINE=1"],
+    includes = ["src/include"],
+    textual_hdrs = ["src/include/OpenImageIO/detail/pugixml/pugixml.cpp"],
+    deps = [
+        "//vendor/fmt",
+        "//vendor/imath",
+    ],
+)
+
+cc_library(
+    name = "util",
+    srcs = [
+        "src/libutil/" + f
+        for f in [
+            "argparse.cpp",
+            "benchmark.cpp",
+            "errorhandler.cpp",
+            "farmhash.cpp",
+            "filesystem.cpp",
+            "fmath.cpp",
+            "filter.cpp",
+            "hashes.cpp",
+            "paramlist.cpp",
+            "plugin.cpp",
+            "SHA1.cpp",
+            "strutil.cpp",
+            "sysutil.cpp",
+            "thread.cpp",
+            "timer.cpp",
+            "typedesc.cpp",
+            "ustring.cpp",
+            "xxhash.cpp",
+        ]
+    ] + glob(["src/libutil/*.h"]),
+    copts = ["-w"],
+    linkopts = ["-pthread"],
+    local_defines = _DEFINES + ["OpenImageIO_EXPORTS"],
+    deps = [
+        ":headers",
+        "//vendor/openexr",
+        "//vendor/robin-map",
+    ],
+)
+
+# Format plugins (src/*.imageio/CMakeLists.txt) whose dependencies are
+# vendored; the others are not registered by imageioplugin.cpp without
+# their USE_* definitions.
+_PLUGIN_SRCS = {
+    "bmp": ["bmpinput.cpp", "bmpoutput.cpp", "bmp_pvt.cpp"],
+    "cineon": [
+        "cineoninput.cpp",
+        "libcineon/Cineon.cpp",
+        "libcineon/OutStream.cpp",
+        "libcineon/Codec.cpp",
+        "libcineon/Reader.cpp",
+        "libcineon/CineonHeader.cpp",
+        "libcineon/ElementReadStream.cpp",
+        "libcineon/InStream.cpp",
+    ],
+    "dds": ["ddsinput.cpp"],
+    "dpx": [
+        "dpxinput.cpp",
+        "dpxoutput.cpp",
+        "libdpx/DPX.cpp",
+        "libdpx/OutStream.cpp",
+        "libdpx/RunLengthEncoding.cpp",
+        "libdpx/Codec.cpp",
+        "libdpx/Reader.cpp",
+        "libdpx/Writer.cpp",
+        "libdpx/DPXHeader.cpp",
+        "libdpx/ElementReadStream.cpp",
+        "libdpx/InStream.cpp",
+        "libdpx/DPXColorConverter.cpp",
+    ],
+    "fits": ["fitsinput.cpp", "fitsoutput.cpp", "fits_pvt.cpp"],
+    "hdr": ["hdrinput.cpp", "hdroutput.cpp"],
+    "ico": ["icoinput.cpp", "icooutput.cpp"],
+    "iff": ["iffinput.cpp", "iffoutput.cpp"],
+    "jpeg": ["jpeginput.cpp", "jpegoutput.cpp"],
+    "null": ["nullimageio.cpp"],
+    # OIIO_USE_EXR_C_API adds exrinput_c.cpp.
+    "openexr": ["exrinput.cpp", "exroutput.cpp", "exrinput_c.cpp"],
+    "png": ["pnginput.cpp", "pngoutput.cpp"],
+    "pnm": ["pnminput.cpp", "pnmoutput.cpp"],
+    "psd": ["psdinput.cpp"],
+    "rla": ["rlainput.cpp", "rlaoutput.cpp"],
+    "sgi": ["sgiinput.cpp", "sgioutput.cpp"],
+    "softimage": ["softimageinput.cpp", "softimage_pvt.cpp"],
+    "targa": ["targainput.cpp", "targaoutput.cpp"],
+    "term": ["termoutput.cpp"],
+    "tiff": ["tiffinput.cpp", "tiffoutput.cpp"],
+    "zfile": ["zfile.cpp"],
+}
+
+_PLUGIN_FILES = [
+    "src/%s.imageio/%s" % (plugin, f)
+    for plugin, files in _PLUGIN_SRCS.items()
+    for f in files
+] + glob([
+    "src/*.imageio/*.h",
+    "src/*.imageio/*/*.h",
+])
+
+cc_library(
+    name = "openimageio",
+    srcs = [
+        "src/libOpenImageIO/" + f
+        for f in [
+            "imagebufalgo.cpp",
+            "imagebufalgo_pixelmath.cpp",
+            "imagebufalgo_channels.cpp",
+            "imagebufalgo_compare.cpp",
+            "imagebufalgo_copy.cpp",
+            "imagebufalgo_deep.cpp",
+            "imagebufalgo_draw.cpp",
+            "imagebufalgo_addsub.cpp",
+            "imagebufalgo_muldiv.cpp",
+            "imagebufalgo_mad.cpp",
+            "imagebufalgo_minmaxchan.cpp",
+            "imagebufalgo_orient.cpp",
+            "imagebufalgo_xform.cpp",
+            "imagebufalgo_demosaic.cpp",
+            "imagebufalgo_yee.cpp",
+            "deepdata.cpp",
+            "exif.cpp",
+            "exif-canon.cpp",
+            "formatspec.cpp",
+            "icc.cpp",
+            "imagebuf.cpp",
+            "imageinput.cpp",
+            "imageio.cpp",
+            "imageioplugin.cpp",
+            "imageoutput.cpp",
+            "iptc.cpp",
+            "xmp.cpp",
+            "color_ocio.cpp",
+            "maketexture.cpp",
+            "bluenoise.cpp",
+            "printinfo.cpp",
+            "oiio_gpu.cpp",
+        ]
+    ] + [
+        "src/libtexture/" + f
+        for f in [
+            "texturesys.cpp",
+            "texture3d.cpp",
+            "environment.cpp",
+            "texoptions.cpp",
+            "imagecache.cpp",
+        ]
+    ] + glob([
+        "src/libOpenImageIO/*.h",
+        "src/libOpenImageIO/*.hh",
+        "src/libtexture/*.h",
+        "src/include/*.h",
+    ]) + _PLUGIN_FILES + [":buildopts"],
+    copts = ["-w"],
+    includes = ["src/include"],
+    local_defines = _DEFINES + [
+        "OpenImageIO_EXPORTS",
+        "EMBED_PLUGINS=1",
+        "OIIO_USE_EXR_C_API=1",
+        "OIIO_OPENEXR_CORE_DEFAULT=1",
+        'OIIO_FREETYPE_VERSION=\\"\\"',
+        'OIIO_PYTHON_VERSION=\\"\\"',
+        'OIIO_QT_VERSION=\\"\\"',
+        'OIIO_TBB_VERSION=\\"\\"',
+    ],
+    textual_hdrs = ["src/libOpenImageIO/bluenoise.inc"],
+    deps = [
+        ":headers",
+        ":util",
+        "//vendor/libjpeg-turbo",
+        "//vendor/libpng",
+        "//vendor/libtiff",
+        "//vendor/opencolorio",
+        "//vendor/openexr",
+        "//vendor/openexr:openexr_util",
+        "//vendor/robin-map",
+        "//vendor/zlib",
+    ],
+)
+
+cc_binary(
+    name = "idiff",
+    srcs = ["src/idiff/idiff.cpp"],
+    copts = ["-w"],
+    local_defines = _DEFINES,
+    deps = [":openimageio"],
+)

@@ -1,0 +1,13 @@
+# pystring, for OpenColorIO (see README.md).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "pystring",
+    srcs = ["pystring.cpp"],
+    hdrs = ["pystring.h"],
+    copts = ["-w"],
+    includes = ["."],
+)

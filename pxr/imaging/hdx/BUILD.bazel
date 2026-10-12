@@ -1,0 +1,667 @@
+# Generated from pxr/imaging/hdx/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "hdx",
+    libraries = [
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/base/gf",
+        "//pxr/base/work",
+        "//pxr/imaging/garch",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/pxOsd",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hgi",
+        "//pxr/imaging/hgiInterop",
+        "//pxr/imaging/cameraUtil",
+        "//pxr/usd/sdf",
+    ],
+    public_classes = [
+        "aovInputTask",
+        "boundingBoxTask",
+        "colorizeSelectionTask",
+        "colorChannelTask",
+        "colorCorrectionTask",
+        "drawTargetTask",
+        "effectsShader",
+        "freeCameraSceneDelegate",
+        "freeCameraPrimDataSource",
+        "fullscreenShader",
+        "hgiConversions",
+        "oitBufferAccessor",
+        "oitRenderTask",
+        "oitResolveTask",
+        "oitVolumeRenderTask",
+        "package",
+        "pickTask",
+        "pickFromRenderBufferTask",
+        "presentTask",
+        "renderTask",
+        "renderSetupTask",
+        "selectionSceneIndexObserver",
+        "selectionTask",
+        "selectionTracker",
+        "shadowTask",
+        "simpleLightTask",
+        "stormCheck",
+        "skydomeTask",
+        "task",
+        "taskController",
+        "taskControllerSceneIndex",
+        "tokens",
+        "types",
+        "visualizeAovTask",
+    ],
+    public_headers = [
+        "shadowMatrixComputation.h",
+        "version.h",
+        "api.h",
+    ],
+    private_classes = [
+        "debugCodes",
+        "unitTestDelegate",
+    ],
+    private_headers = [
+        "unitTestUtils.h",
+    ],
+    resource_files = [
+        "plugInfo.json",
+        "shaders/boundingBox.glslfx",
+        "shaders/colorChannel.glslfx",
+        "shaders/colorCorrection.glslfx",
+        "shaders/fullscreen.glslfx",
+        "shaders/oitResolveImageShader.glslfx",
+        "shaders/outline.glslfx",
+        "shaders/renderPass.glslfx",
+        "shaders/renderPassColorShader.glslfx",
+        "shaders/renderPassColorAndSelectionShader.glslfx",
+        "shaders/renderPassColorWithOccludedSelectionShader.glslfx",
+        "shaders/renderPassPickingShader.glslfx",
+        "shaders/renderPassOitShader.glslfx",
+        "shaders/renderPassOitOpaqueShader.glslfx",
+        "shaders/renderPassOitVolumeShader.glslfx",
+        "shaders/renderPassShadowShader.glslfx",
+        "shaders/selection.glslfx",
+        "shaders/skydome.glslfx",
+        "shaders/visualize.glslfx",
+        "textures/StinsonBeach.hdr",
+        "textures/StinsonBeach.tex",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxRenderTask",
+    srcs = [
+        "testenv/testHdxRenderTask.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxLightAndShadow",
+    srcs = [
+        "testenv/testHdxLightAndShadow.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxNoResourceBindings",
+    srcs = [
+        "testenv/testHdxNoResourceBindings.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxIdRender",
+    srcs = [
+        "testenv/testHdxIdRender.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxCameraAndLight",
+    srcs = [
+        "testenv/testHdxCameraAndLight.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxPickingWithReprAndRefineChanges",
+    srcs = [
+        "unitTestUtils.cpp",
+        "testenv/testHdxPickingWithReprAndRefineChanges.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxUnpickablesAsOccluders",
+    srcs = [
+        "unitTestUtils.cpp",
+        "testenv/testHdxUnpickablesAsOccluders.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxPickTarget",
+    srcs = [
+        "unitTestUtils.cpp",
+        "testenv/testHdxPickTarget.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxPickResolveMode",
+    srcs = [
+        "unitTestUtils.cpp",
+        "testenv/testHdxPickResolveMode.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxPresentTask",
+    srcs = [
+        "testenv/testHdxPresentTask.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxOitShaderRetention",
+    srcs = [
+        "testenv/testHdxOitShaderRetention.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxDrawTarget",
+    srcs = [
+        "testenv/testHdxDrawTarget.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxPickAndHighlight",
+    srcs = [
+        "unitTestUtils.cpp",
+        "testenv/testHdxPickAndHighlight.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hio",
+        "//pxr/usd/sdr",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdxPickTransparentOccluder",
+    srcs = [
+        "unitTestUtils.cpp",
+        "testenv/testHdxPickTransparentOccluder.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hio",
+        "//pxr/usd/sdr",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/glf",
+        "//pxr/imaging/garch",
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testHdxDrawTarget": "testenv/testHdxDrawTarget",
+        "testHdxLightAndShadow": "testenv/testHdxLightAndShadow",
+        "testHdxNoResourceBindings": "testenv/testHdxNoResourceBindings",
+        "testHdxPickAndHighlight": "testenv/testHdxPickAndHighlight",
+        "testHdxPickTarget": "testenv/testHdxPickTarget",
+        "testHdxPickingWithReprAndRefineChanges": "testenv/testHdxPickingWithReprAndRefineChanges",
+        "testHdxRenderTask": "testenv/testHdxRenderTask",
+        "testHdxUnpickablesAsOccluders": "testenv/testHdxUnpickablesAsOccluders",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testHdxRenderTask",
+        ":tests/testHdxLightAndShadow",
+        ":tests/testHdxNoResourceBindings",
+        ":tests/testHdxIdRender",
+        ":tests/testHdxCameraAndLight",
+        ":tests/testHdxPickingWithReprAndRefineChanges",
+        ":tests/testHdxUnpickablesAsOccluders",
+        ":tests/testHdxPickTarget",
+        ":tests/testHdxPickResolveMode",
+        ":tests/testHdxPresentTask",
+        ":tests/testHdxOitShaderRetention",
+        ":tests/testHdxDrawTarget",
+        ":tests/testHdxPickAndHighlight",
+        ":tests/testHdxPickTransparentOccluder",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testHdxCameraAndLight",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxCameraAndLight",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdxIdRender",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxIdRender --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdxIdRender_Refined",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxIdRender --offscreen --repr refined --refineLevel 2",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdxPickTarget",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxPickTarget --offscreen",
+        "TESTENV": "testenv/testHdxPickTarget",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "color1_unselected.png",
+            "color2_cube0_pick_face.png",
+            "color3_tet1_pick_faces.png",
+            "color4_tet0_pick_edge.png",
+            "color5_cube1_pick_edges.png",
+            "color6_cube1_pick_points.png",
+            "color7_cube1_pick_points_pick_through.png",
+            "color8_points_with_color.png",
+            "color9_cube0_wire_pick_face.png",
+            "color10_tet1_pick_prims.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "ENV": [
+            "TF_DEBUG=\"HDX_SELECTION_SETUP HD_SELECTION_UPDATE\"",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdxPickingWithReprAndRefineChanges",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxPickingWithReprAndRefineChanges --offscreen",
+        "TESTENV": "testenv/testHdxPickingWithReprAndRefineChanges",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "color1_unselected.png",
+            "color2_refine_wont_change_cube1.png",
+            "color3_repr_change_cube2.png",
+            "color4_repr_and_refine_change_cube1.png",
+            "color5_refine_change_cube2.png",
+            "color6_unselected.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdxRenderTask",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxRenderTask",
+        "TESTENV": "testenv/testHdxRenderTask",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "color1.png",
+            "color2.png",
+            "color3.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdxOitShaderRetention",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxOitShaderRetention",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "HDX_ENABLE_OIT=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdxUnpickablesAsOccluders",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxUnpickablesAsOccluders --offscreen",
+        "TESTENV": "testenv/testHdxUnpickablesAsOccluders",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "color1_unselected.png",
+            "color2_cube0_pickable.png",
+            "color3_cube0_unpickable.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdxNoResourceBindings",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxNoResourceBindings",
+        "TESTENV": "testenv/testHdxNoResourceBindings",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "color.png",
+        ],
+        "FAIL": "0.01",
+        "FAIL_PERCENT": "0.01",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdxPickAndHighlight",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxPickAndHighlight --offscreen",
+        "TESTENV": "testenv/testHdxPickAndHighlight",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "color1_unselected.png",
+            "color2_select.png",
+            "color3_select.png",
+            "color4_locate.png",
+            "color5_locate.png",
+            "color6_select_all_instances.png",
+            "color7_translucent_unselected.png",
+            "color8_translucent_locate.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testHdxPickTransparentOccluder",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxPickTransparentOccluder --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=\"HDX_SELECTION_SETUP HD_SELECTION_UPDATE\"",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdxPresentTask",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxPresentTask",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdxLightAndShadow",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxLightAndShadow",
+        "TESTENV": "testenv/testHdxLightAndShadow",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "color1.png",
+            "color2.png",
+            "color3.png",
+            "color4.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdxPickResolveMode",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxPickResolveMode --offscreen",
+        "EXPECTED_RETURN_CODE": "0",
+        "ENV": [
+            "TF_DEBUG=\"HDX_SELECTION_SETUP HD_SELECTION_UPDATE\"",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHdxDrawTarget",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdxDrawTarget",
+        "TESTENV": "testenv/testHdxDrawTarget",
+        "EXPECTED_RETURN_CODE": "0",
+        "IMAGE_DIFF_COMPARE": [
+            "color1.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "1",
+        "PERCEPTUAL": True,
+        "ENV": [
+            "TF_DEBUG=HD_SAFE_MODE",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)

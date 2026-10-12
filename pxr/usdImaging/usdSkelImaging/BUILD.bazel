@@ -1,0 +1,176 @@
+# Generated from pxr/usdImaging/usdSkelImaging/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "usdSkelImaging",
+    libraries = [
+        "//pxr/imaging/hio",
+        "//pxr/imaging/hd",
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdSkel",
+    ],
+    public_classes = [
+        "animationAdapter",
+        "animationSchema",
+        "bindingAPIAdapter",
+        "bindingSchema",
+        "blendShapeAdapter",
+        "blendShapeData",
+        "blendShapeSchema",
+        "dataSourceAnimationPrim",
+        "dataSourceBindingAPI",
+        "dataSourceBlendShapePrim",
+        "dataSourceResolvedExtComputationPrim",
+        "dataSourceResolvedPointsBasedPrim",
+        "dataSourceResolvedSkeletonPrim",
+        "dataSourceSkeletonPrim",
+        "extComputations",
+        "inbetweenShapeSchema",
+        "jointInfluencesData",
+        "package",
+        "pointsResolvingSceneIndex",
+        "resolvedSkeletonSchema",
+        "resolvingSceneIndexPlugin",
+        "skelData",
+        "skeletonResolvingSceneIndex",
+        "skeletonAdapter",
+        "skeletonSchema",
+        "skelGuideData",
+        "skelRootAdapter",
+        "tokens",
+        "utils",
+        "xformResolver",
+    ],
+    public_headers = [
+        "api.h",
+        "dataSourceUtils.h",
+    ],
+    private_classes = [
+        "dataSourcePrimvar",
+    ],
+    resource_files = [
+        "plugInfo.json",
+        "shaders/skinning.glslfx",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdSkelImagingChanges",
+    srcs = [
+        "testenv/testUsdSkelImagingChanges.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdShade",
+        "//pxr/usd/usdSkel",
+        "//pxr/usd/usd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/usdImaging/usdSkelImaging",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdSkelImagingComputations",
+    srcs = [
+        "testenv/testUsdSkelImagingComputations.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdShade",
+        "//pxr/usd/usdGeom",
+        "//pxr/usd/usdSkel",
+        "//pxr/usd/usd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+        "//pxr/base/arch",
+        "//pxr/usdImaging/usdSkelImaging",
+    ],
+)
+
+pxr_test_program(
+    name = "testUsdSkelImagingNiAggregationNonDescendantPaths",
+    srcs = [
+        "testenv/testUsdSkelImagingNiAggregationNonDescendantPaths.cpp",
+    ],
+    libraries = [
+        "//pxr/usdImaging/usdImaging",
+        "//pxr/usd/usdSkel",
+        "//pxr/usd/usd",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/hd",
+        "//pxr/base/tf",
+        "//pxr/usdImaging/usdSkelImaging",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testUsdSkelImagingChanges": "testenv/testUsdSkelImagingChanges",
+        "testUsdSkelImagingComputations": "testenv/testUsdSkelImagingComputations",
+        "testUsdSkelImagingNiAggregationNonDescendantPaths": "testenv/testUsdSkelImagingNiAggregationNonDescendantPaths",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testUsdSkelImagingChanges",
+        ":tests/testUsdSkelImagingComputations",
+        ":tests/testUsdSkelImagingNiAggregationNonDescendantPaths",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelImagingChanges",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdSkelImagingChanges",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdSkelImagingChanges",
+        "ENV": [
+            "TF_FATAL_VERIFY=0",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelImagingComputations",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdSkelImagingComputations",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdSkelImagingComputations",
+        "ENV": [
+            "TF_FATAL_VERIFY=0",
+            "USDSKELIMAGING_ENABLE_NORMAL_COMPUTATIONS=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testUsdSkelImagingNiAggregationNonDescendantPaths",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testUsdSkelImagingNiAggregationNonDescendantPaths",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/testUsdSkelImagingNiAggregationNonDescendantPaths",
+        "ENV": [
+            "TF_FATAL_VERIFY=0",
+            "USD_ASSIGN_PROTOTYPES_DETERMINISTICALLY=1",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)

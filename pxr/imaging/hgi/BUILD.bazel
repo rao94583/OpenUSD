@@ -1,0 +1,77 @@
+# Generated from pxr/imaging/hgi/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "hgi",
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/imaging/hio",
+    ],
+    public_classes = [
+        "attachmentDesc",
+        "blitCmds",
+        "buffer",
+        "capabilities",
+        "cmds",
+        "computeCmds",
+        "computeCmdsDesc",
+        "computePipeline",
+        "debugCodes",
+        "graphicsCmds",
+        "graphicsCmdsDesc",
+        "graphicsPipeline",
+        "hgi",
+        "indirectCommandEncoder",
+        "resourceBindings",
+        "sampler",
+        "shaderFunction",
+        "shaderFunctionDesc",
+        "shaderGenerator",
+        "shaderProgram",
+        "shaderSection",
+        "texture",
+        "tokens",
+        "types",
+        "unitTestHelper",
+    ],
+    public_headers = [
+        "api.h",
+        "blitCmdsOps.h",
+        "enums.h",
+        "handle.h",
+        "version.h",
+    ],
+)
+
+pxr_test_program(
+    name = "testHgiCommand",
+    srcs = [
+        "testenv/testHgiCommand.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hgi",
+        "//pxr/imaging/garch",
+        "//pxr/base/tf",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+    ] + select({
+        "@platforms//os:linux": [
+            ":tests/testHgiCommand",
+        ],
+        "//conditions:default": [],
+    }),
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)

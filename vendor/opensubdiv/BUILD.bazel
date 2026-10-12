@@ -1,0 +1,126 @@
+# OpenSubdiv, for pxOsd and hdSt (see README.md). Mirrors
+# opensubdiv/*/CMakeLists.txt as build_scripts/build_usd.py configures it
+# (no OpenMP, TBB, CUDA, OpenCL, DirectX, GLEW, GLFW or Ptex;
+# OSD_PATCH_SHADER_SOURCE_GLSL everywhere and OSD_PATCH_SHADER_SOURCE_MSL on
+# macOS). Of osdGPU, only the patch shader sources USD uses are built.
+#
+# Linked into //bazel/install:opensubdiv, a shared library like CMake's
+# libosdCPU/libosdGPU, so usd_ms and everything linking it share one copy.
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("@rules_python//python:py_binary.bzl", "py_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+_COPTS = [
+    "-w",
+    # build_scripts/build_usd.py builds dependencies in Release; OpenSubdiv's
+    # asserts fire on some valid USD test data (testUsdImagingGLGeomSubsets).
+    "-DNDEBUG",
+    # Kernel sources stringified into *.gen.h (osd_stringify in CMake).
+    "-iquote",
+    "$(GENDIR)/vendor/opensubdiv/opensubdiv/osd",
+]
+
+py_binary(
+    name = "stringify",
+    srcs = ["tools/stringify/stringify.py"],
+    visibility = ["//visibility:private"],
+)
+
+# osd_stringify: <kernel>.<ext> -> <kernel>.gen.h
+_KERNELS = [
+    "patchBasisTypes.h",
+    "patchBasis.h",
+    "glslPatchCommon.glsl",
+    "glslPatchCommonTess.glsl",
+    "glslPatchBoxSplineTriangle.glsl",
+    "glslPatchBSpline.glsl",
+    "glslPatchGregory.glsl",
+    "glslPatchGregoryBasis.glsl",
+    "glslPatchGregoryTriangle.glsl",
+    "glslPatchLegacy.glsl",
+    "mtlPatchCommon.metal",
+    "mtlPatchCommonTess.metal",
+    "mtlPatchBoxSplineTriangle.metal",
+    "mtlPatchBSpline.metal",
+    "mtlPatchGregory.metal",
+    "mtlPatchGregoryBasis.metal",
+    "mtlPatchGregoryTriangle.metal",
+    "mtlPatchLegacy.metal",
+]
+
+[
+    genrule(
+        name = "stringify_" + k.replace(".", "_"),
+        srcs = ["opensubdiv/osd/" + k],
+        outs = ["opensubdiv/osd/" + k.rpartition(".")[0] + ".gen.h"],
+        cmd = "$(execpath :stringify) $< $@",
+        tools = [":stringify"],
+    )
+    for k in _KERNELS
+]
+
+cc_library(
+    name = "kernels",
+    hdrs = [":stringify_" + k.replace(".", "_") for k in _KERNELS],
+    visibility = ["//visibility:private"],
+)
+
+_HDRS = glob([
+    "opensubdiv/*.h",
+    "opensubdiv/*/*.h",
+])
+
+cc_library(
+    name = "osd_cpu",
+    srcs = glob([
+        "opensubdiv/sdc/*.cpp",
+        "opensubdiv/vtr/*.cpp",
+        "opensubdiv/far/*.cpp",
+        "opensubdiv/bfr/*.cpp",
+    ]) + [
+        "opensubdiv/osd/cpuEvaluator.cpp",
+        "opensubdiv/osd/cpuKernel.cpp",
+        "opensubdiv/osd/cpuPatchTable.cpp",
+        "opensubdiv/osd/cpuVertexBuffer.cpp",
+        "opensubdiv/version.cpp",
+    ],
+    hdrs = _HDRS,
+    copts = _COPTS,
+    includes = ["."],
+    # Every object belongs in the shared library, as in CMake.
+    alwayslink = True,
+    local_defines = ['OPENSUBDIV_VERSION_STRING=\\"3.6.1\\"'],
+)
+
+objc_library(
+    name = "osd_gpu_metal",
+    non_arc_srcs = ["opensubdiv/osd/mtlPatchShaderSource.mm"],
+    hdrs = _HDRS,
+    copts = _COPTS,
+    includes = ["."],
+    # Every object belongs in the shared library, as in CMake.
+    alwayslink = True,
+    target_compatible_with = ["@platforms//os:macos"],
+    visibility = ["//visibility:private"],
+    deps = [":kernels"],
+)
+
+cc_library(
+    name = "osd_gpu",
+    srcs = ["opensubdiv/osd/glslPatchShaderSource.cpp"],
+    hdrs = _HDRS,
+    copts = _COPTS,
+    includes = ["."],
+    # Every object belongs in the shared library, as in CMake.
+    alwayslink = True,
+    deps = [
+        ":kernels",
+        ":osd_cpu",
+    ] + select({
+        "@platforms//os:macos": [":osd_gpu_metal"],
+        "//conditions:default": [],
+    }),
+)

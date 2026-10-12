@@ -1,0 +1,94 @@
+# expat, for OpenColorIO (see README.md). Mirrors CMakeLists.txt with default
+# options.
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel:cmake_configure_file.bzl", "cmake_configure_file")
+
+package(default_visibility = ["//visibility:public"])
+
+_VALUES = {
+    "BYTEORDER": "1234",
+    "HAVE_DLFCN_H": "ON",
+    "HAVE_FCNTL_H": "ON",
+    "HAVE_GETPAGESIZE": "ON",
+    "HAVE_INTTYPES_H": "ON",
+    "HAVE_MEMORY_H": "ON",
+    "HAVE_MMAP": "ON",
+    "HAVE_STDINT_H": "ON",
+    "HAVE_STDLIB_H": "ON",
+    "HAVE_STRINGS_H": "ON",
+    "HAVE_STRING_H": "ON",
+    "HAVE_SYS_STAT_H": "ON",
+    "HAVE_SYS_TYPES_H": "ON",
+    "HAVE_UNISTD_H": "ON",
+    "STDC_HEADERS": "ON",
+    "PACKAGE_NAME": "expat",
+    "PACKAGE_BUGREPORT": "https://github.com/libexpat/libexpat/issues",
+    "PACKAGE_STRING": "expat 2.8.5",
+    "PACKAGE_TARNAME": "expat",
+    "PACKAGE_VERSION": "2.8.5",
+    "XML_CONTEXT_BYTES": "1024",
+    "XML_DTD": "ON",
+    "XML_GE": "1",
+    "XML_NS": "ON",
+}
+
+# Entropy sources found by ConfigureChecks.cmake.
+_ENTROPY = select({
+    "@platforms//os:macos": {
+        "HAVE_ARC4RANDOM": "ON",
+        "HAVE_ARC4RANDOM_BUF": "ON",
+        "HAVE_GETENTROPY": "ON",
+    },
+    "//conditions:default": {
+        "HAVE_GETENTROPY": "ON",
+        "HAVE_GETRANDOM": "ON",
+        "HAVE_SYSCALL_GETRANDOM": "ON",
+    },
+})
+
+cmake_configure_file(
+    name = "expat_config",
+    src = "expat_config.h.cmake",
+    out = "config/expat_config.h",
+    values = _VALUES | _ENTROPY,
+)
+
+cc_library(
+    name = "expat",
+    srcs = [
+        "lib/xmlparse.c",
+        "lib/xmlrole.c",
+        "lib/xmltok.c",
+    ] + select({
+        "@platforms//os:macos": [
+            "lib/random_arc4random.c",
+            "lib/random_arc4random_buf.c",
+            "lib/random_getentropy.c",
+        ],
+        "//conditions:default": [
+            "lib/random_getentropy.c",
+            "lib/random_getrandom.c",
+        ],
+    }) + glob(
+        ["lib/*.h"],
+        exclude = [
+            "lib/expat.h",
+            "lib/expat_external.h",
+        ],
+    ) + [":expat_config"],
+    hdrs = [
+        "lib/expat.h",
+        "lib/expat_external.h",
+    ],
+    copts = ["-w"],
+    includes = ["lib"],
+    # CMake defines XML_STATIC for static builds.
+    defines = ["XML_STATIC"],
+    # xmltok.c includes these.
+    textual_hdrs = [
+        "lib/xcsinc.c",
+        "lib/xmltok_impl.c",
+        "lib/xmltok_ns.c",
+    ],
+)

@@ -1,0 +1,144 @@
+# Generated from pxr/imaging/hgiGL/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "hgiGL",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/imaging/garch",
+        "//pxr/imaging/hf",
+        "//pxr/imaging/hgi",
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+    ],
+    public_classes = [
+        "blitCmds",
+        "buffer",
+        "capabilities",
+        "computeCmds",
+        "computePipeline",
+        "contextArena",
+        "debugCodes",
+        "device",
+        "garbageCollector",
+        "graphicsCmds",
+        "graphicsPipeline",
+        "hgi",
+        "ops",
+        "resourceBindings",
+        "sampler",
+        "shaderFunction",
+        "shaderProgram",
+        "texture",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    private_classes = [
+        "conversions",
+        "diagnostic",
+        "scopedStateHolder",
+        "shaderGenerator",
+        "shaderSection",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+)
+
+pxr_test_program(
+    name = "testHgiGL",
+    srcs = [
+        "testenv/testHgiGL.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hgiGL",
+        "//pxr/imaging/hgi",
+        "//pxr/imaging/hio",
+        "//pxr/base/tf",
+        "//pxr/base/gf",
+        "//pxr/imaging/garch",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testHgiGL": "testenv/testHgiGL",
+        "testHgiGLCommand": "testenv/testHgiGLCommand",
+    },
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+    ] + select({
+        "@platforms//os:linux": [
+            ":tests/testHgiGL",
+            ":test_files",
+        ],
+        "//conditions:default": [],
+    }),
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHgiGL",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHgiGL",
+        "TESTENV": "testenv/testHgiGL",
+        "DIFF_COMPARE": [
+            "graphicsCmdsDescCache.txt",
+        ],
+        "IMAGE_DIFF_COMPARE": [
+            "graphicsCmdsClear.png",
+            "srgba.png",
+            "copyTextureToBuffer.png",
+            "copyBufferToTexture.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "0.001",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)
+
+pxr_test(
+    name = "testHgiGLCommand",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHgiCommand --write testHgiGLCommand_triangle.png",
+        "TESTENV": "testenv/testHgiGLCommand",
+        "IMAGE_DIFF_COMPARE": [
+            "testHgiGLCommand_triangle.png",
+        ],
+        "FAIL": "1",
+        "FAIL_PERCENT": "0.001",
+        "PERCEPTUAL": True,
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+        "//pxr/imaging/hgi:test_tree",
+    ],
+    image_diff_tool = "//vendor/openimageio:idiff",
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+)

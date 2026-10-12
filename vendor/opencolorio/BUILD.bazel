@@ -1,0 +1,121 @@
+# OpenColorIO, for OpenImageIO (see README.md). Mirrors
+# src/OpenColorIO/CMakeLists.txt for a static library with OCIO_USE_SIMD=OFF
+# (no sse2neon on arm64 and no per-file AVX flags on x86; scalar code paths
+# give the same results).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("//bazel:cmake_configure_file.bzl", "cmake_configure_file")
+
+package(default_visibility = ["//visibility:public"])
+
+_VERSION = {
+    "OpenColorIO_VERSION": "2.4.2",
+    "OpenColorIO_VERSION_MAJOR": "2",
+    "OpenColorIO_VERSION_MINOR": "4",
+    "OpenColorIO_VERSION_PATCH": "2",
+    "OpenColorIO_VERSION_RELEASE_TYPE": "",
+    "OCIO_NAMESPACE": "OpenColorIO_v2_4",
+}
+
+cmake_configure_file(
+    name = "abi_header",
+    src = "include/OpenColorIO/OpenColorABI.h.in",
+    out = "include/OpenColorIO/OpenColorABI.h",
+    at_only = True,
+    values = _VERSION,
+)
+
+cmake_configure_file(
+    name = "cpuinfo_config",
+    src = "src/OpenColorIO/CPUInfoConfig.h.in",
+    out = "src/OpenColorIO/CPUInfoConfig.h",
+    values = select({
+        "@platforms//cpu:x86_64": {"OCIO_ARCH_X86": "ON"},
+        "//conditions:default": {},
+    }),
+)
+
+py_binary(
+    name = "embed_builtin_configs",
+    srcs = ["embed_builtin_configs.py"],
+    visibility = ["//visibility:private"],
+)
+
+# builtinconfigs/CG.cpp.in and Studio.cpp.in with the configs embedded.
+_CONFIGS = glob(["src/OpenColorIO/builtinconfigs/configs/*.ocio"])
+
+[
+    genrule(
+        name = "builtin_" + name,
+        srcs = ["src/OpenColorIO/builtinconfigs/%s.cpp.in" % name] + _CONFIGS,
+        outs = ["generated_include/%s.cpp" % name],
+        cmd = "$(execpath :embed_builtin_configs) $(location src/OpenColorIO/builtinconfigs/%s.cpp.in) $@ %s" % (
+            name,
+            " ".join(["$(location %s)" % c for c in _CONFIGS]),
+        ),
+        tools = [":embed_builtin_configs"],
+    )
+    for name in ["CG", "Studio"]
+]
+
+cc_library(
+    name = "headers",
+    hdrs = glob(["include/OpenColorIO/*.h"]) + [":abi_header"],
+    includes = ["include"],
+    # Static library (BUILD_SHARED_LIBS=OFF).
+    defines = ["OpenColorIO_SKIP_IMPORTS"],
+)
+
+cc_library(
+    name = "opencolorio",
+    srcs = glob(
+        [
+            "src/OpenColorIO/**/*.cpp",
+            "src/OpenColorIO/**/*.h",
+            "src/utils/*.h",
+            "ext/sampleicc/src/include/*.h",
+            "ext/xxHash/src/include/*.h",
+        ],
+        # Included by SystemMonitor.cpp on its platform.
+        exclude = [
+            "src/OpenColorIO/SystemMonitor_macos.cpp",
+            "src/OpenColorIO/SystemMonitor_windows.cpp",
+        ],
+    ) + [":cpuinfo_config"],
+    copts = ["-w"],
+    includes = [
+        "ext/sampleicc/src/include",
+        "ext/xxHash/src/include",
+        "generated_include",
+        "include/OpenColorIO",
+        "src",
+        "src/OpenColorIO",
+    ],
+    linkopts = select({
+        "@platforms//os:macos": [
+            "-framework",
+            "ColorSync",
+            "-framework",
+            "CoreFoundation",
+            "-framework",
+            "CoreGraphics",
+            "-framework",
+            "IOKit",
+        ],
+        "//conditions:default": [],
+    }),
+    textual_hdrs = [
+        "src/OpenColorIO/SystemMonitor_macos.cpp",
+        ":builtin_CG",
+        ":builtin_Studio",
+    ],
+    deps = [
+        ":headers",
+        "//vendor/expat",
+        "//vendor/imath",
+        "//vendor/minizip-ng",
+        "//vendor/pystring",
+        "//vendor/yaml-cpp",
+    ],
+)

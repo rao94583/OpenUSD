@@ -1,0 +1,190 @@
+# OpenEXR, for OpenImageIO (see README.md). Structure adapted from the
+# BUILD.bazel shipped with OpenEXR; config headers are generated from the
+# upstream templates with the values cmake/CMakeLists.txt and
+# cmake/OpenEXRSetup.cmake would produce.
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel:cmake_configure_file.bzl", "cmake_configure_file")
+
+package(default_visibility = ["//visibility:public"])
+
+config_setting(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+_NAMESPACES = {
+    "IEX_INTERNAL_NAMESPACE": "Iex_3_3",
+    "IEX_NAMESPACE": "Iex",
+    "IEX_NAMESPACE_CUSTOM": "0",
+    "ILMTHREAD_INTERNAL_NAMESPACE": "IlmThread_3_3",
+    "ILMTHREAD_NAMESPACE": "IlmThread",
+    "ILMTHREAD_NAMESPACE_CUSTOM": "0",
+    "OPENEXR_IMF_NAMESPACE": "Imf",
+    "OPENEXR_INTERNAL_IMF_NAMESPACE": "Imf_3_3",
+    "OPENEXR_NAMESPACE_CUSTOM": "0",
+}
+
+# Results of the checks in cmake/CMakeLists.txt.
+_PLATFORM = select({
+    "@platforms//os:macos": {
+        "OPENEXR_IMF_HAVE_DARWIN": "ON",
+    },
+    ":linux_x86_64": {
+        "OPENEXR_IMF_HAVE_LINUX_PROCFS": "ON",
+        "OPENEXR_IMF_HAVE_GCC_INLINE_ASM_AVX": "ON",
+        "HAVE_UCONTEXT_H": "ON",
+        "IEX_HAVE_CONTROL_REGISTER_SUPPORT": "ON",
+        "ILMTHREAD_HAVE_POSIX_SEMAPHORES": "ON",
+    },
+    "//conditions:default": {
+        "OPENEXR_IMF_HAVE_LINUX_PROCFS": "ON",
+        "HAVE_UCONTEXT_H": "ON",
+        "ILMTHREAD_HAVE_POSIX_SEMAPHORES": "ON",
+    },
+})
+
+_VALUES = _NAMESPACES | {
+    "OPENEXR_VERSION": "3.3.6",
+    "OPENEXR_VERSION_MAJOR": "3",
+    "OPENEXR_VERSION_MINOR": "3",
+    "OPENEXR_VERSION_PATCH": "6",
+    # CMakeLists.txt's default, even in release tarballs.
+    "OPENEXR_VERSION_RELEASE_TYPE": "-dev",
+    "OPENEXR_PACKAGE_NAME": "OpenEXR 3.3.6-dev",
+    "OPENEXR_LIB_VERSION": "32.3.3.6",
+    "OPENEXR_ENABLE_API_VISIBILITY": "ON",
+    "OPENEXR_IMF_HAVE_COMPLETE_IOMANIP": "ON",
+    "ILMTHREAD_THREADING_ENABLED": "ON",
+    # The check's test program does not include <unistd.h>, so it fails.
+    "OPENEXR_IMF_HAVE_SYSCONF_NPROCESSORS_ONLN": "OFF",
+}
+
+[
+    cmake_configure_file(
+        name = name,
+        src = "cmake/%s.h.in" % name,
+        out = "config/OpenEXR/%s.h" % name,
+        values = _VALUES | _PLATFORM,
+    )
+    for name in [
+        "IexConfig",
+        "IexConfigInternal",
+        "IlmThreadConfig",
+        "OpenEXRConfig",
+        "OpenEXRConfigInternal",
+    ]
+]
+
+cc_library(
+    name = "config",
+    hdrs = [
+        ":IexConfig",
+        ":IexConfigInternal",
+        ":IlmThreadConfig",
+        ":OpenEXRConfig",
+        ":OpenEXRConfigInternal",
+    ],
+    # Dependents include both <OpenEXR/OpenEXRConfig.h> and <OpenEXRConfig.h>.
+    includes = [
+        "config",
+        "config/OpenEXR",
+    ],
+)
+
+_COPTS = ["-w"]
+
+cc_library(
+    name = "iex",
+    srcs = glob(["src/lib/Iex/*.cpp"]),
+    hdrs = glob(["src/lib/Iex/*.h"]),
+    copts = _COPTS,
+    includes = ["src/lib/Iex"],
+    deps = [":config"],
+)
+
+cc_library(
+    name = "ilmthread",
+    srcs = glob(["src/lib/IlmThread/*.cpp"]),
+    hdrs = glob(["src/lib/IlmThread/*.h"]),
+    copts = _COPTS,
+    includes = ["src/lib/IlmThread"],
+    linkopts = ["-pthread"],
+    deps = [":iex"],
+)
+
+cc_library(
+    name = "openexr_core",
+    srcs = glob(["src/lib/OpenEXRCore/*.c"]),
+    hdrs = glob(["src/lib/OpenEXRCore/*.h"]),
+    copts = _COPTS,
+    includes = ["src/lib/OpenEXRCore"],
+    linkopts = ["-pthread"],
+    deps = [
+        ":config",
+        "//vendor/imath",
+        "//vendor/libdeflate",
+    ],
+)
+
+cc_library(
+    name = "openexr",
+    srcs = glob(
+        ["src/lib/OpenEXR/*.cpp"],
+        # Programs that generate the lookup tables checked in as headers.
+        exclude = [
+            "src/lib/OpenEXR/b44ExpLogTable.cpp",
+            "src/lib/OpenEXR/dwaLookups.cpp",
+        ],
+    ),
+    hdrs = glob(["src/lib/OpenEXR/*.h"]),
+    copts = _COPTS,
+    # Dependents include both <OpenEXR/ImfX.h> and <ImfX.h>.
+    includes = [
+        "src/lib",
+        "src/lib/OpenEXR",
+    ],
+    deps = [
+        ":iex",
+        ":ilmthread",
+        ":install_layout",
+        ":openexr_core",
+        "//vendor/imath",
+    ],
+)
+
+# The install layout, where the headers of all OpenEXR libraries live in
+# include/OpenEXR/ (dependents include e.g. <OpenEXR/IexThrowErrnoExc.h>).
+_INSTALLED_HEADERS = glob([
+    "src/lib/Iex/*.h",
+    "src/lib/IlmThread/*.h",
+    "src/lib/OpenEXR/*.h",
+    "src/lib/OpenEXRCore/*.h",
+    "src/lib/OpenEXRUtil/*.h",
+])
+
+genrule(
+    name = "installed_headers",
+    srcs = _INSTALLED_HEADERS,
+    outs = ["include/OpenEXR/" + h.split("/")[-1] for h in _INSTALLED_HEADERS],
+    cmd = "cp $(SRCS) $(RULEDIR)/include/OpenEXR/",
+)
+
+cc_library(
+    name = "install_layout",
+    hdrs = [":installed_headers"],
+    includes = ["include"],
+    deps = [":config"],
+)
+
+cc_library(
+    name = "openexr_util",
+    srcs = glob(["src/lib/OpenEXRUtil/*.cpp"]),
+    hdrs = glob(["src/lib/OpenEXRUtil/*.h"]),
+    copts = _COPTS,
+    includes = ["src/lib/OpenEXRUtil"],
+    deps = [":openexr"],
+)

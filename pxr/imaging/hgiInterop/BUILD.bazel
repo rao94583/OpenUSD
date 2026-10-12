@@ -1,0 +1,48 @@
+# Generated from pxr/imaging/hgiInterop/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "hgiInterop",
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/imaging/hgi",
+        "//pxr/base/vt",
+        "//pxr/imaging/garch",
+    ],
+    public_headers = [
+        "api.h",
+        "hgiInterop.h",
+    ],
+    private_headers = [
+        "opengl.h",
+    ],
+    cppfiles = [
+        "hgiInterop.cpp",
+        "opengl.cpp",
+    ],
+    per_os = {
+        "macos": {
+            "libraries": [
+                "//pxr/imaging/hgiMetal",
+            ],
+            "private_headers": [
+                "metal.h",
+            ],
+            "cppfiles": [
+                "metal.mm",
+            ],
+            "copts": [
+                "-x",
+                "objective-c++",
+            ],
+            "linkopts": [
+                "-framework",
+                "Foundation",
+                "-framework",
+                "CoreVideo",
+            ],
+        },
+    },
+)

@@ -35,13 +35,6 @@ cc_library(
         _X86_64: ["-mwaitpkg"],
         "//conditions:default": [],
     }),
-    defines = select({
-        _X86_64: ["__TBB_NO_IMPLICIT_LINKAGE"],
-        "//conditions:default": ["USE_PTHREAD"],
-    }) + select({
-        "@platforms//os:macos": ["_XOPEN_SOURCE"],
-        "//conditions:default": [],
-    }),
     includes = ["include"],
     linkopts = select({
         "@platforms//os:linux": [
@@ -51,8 +44,16 @@ cc_library(
         ],
         "//conditions:default": ["-pthread"],
     }),
+    # Build-only definitions: they must not reach dependents (e.g.
+    # _XOPEN_SOURCE hides non-POSIX APIs such as pthread_setname_np).
     local_defines = ["__TBB_BUILD"] + select({
-        _X86_64: ["__TBB_USE_ITT_NOTIFY"],
+        _X86_64: [
+            "__TBB_USE_ITT_NOTIFY",
+            "__TBB_NO_IMPLICIT_LINKAGE",
+        ],
+        "//conditions:default": ["USE_PTHREAD"],
+    }) + select({
+        "@platforms//os:macos": ["_XOPEN_SOURCE"],
         "//conditions:default": [],
     }),
     textual_hdrs = select({

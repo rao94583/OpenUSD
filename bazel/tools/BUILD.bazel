@@ -1,2 +1,12 @@
+load("@rules_python//python:py_binary.bzl", "py_binary")
+
 # Runs one pxr_register_test (see //bazel:pxr_test.bzl).
 exports_files(["pxr_test_runner.py"])
+
+# configure_file() for vendored dependencies (see
+# //bazel:cmake_configure_file.bzl).
+py_binary(
+    name = "cmake_configure_file",
+    srcs = ["cmake_configure_file.py"],
+    visibility = ["//visibility:public"],
+)

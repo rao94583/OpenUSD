@@ -1,0 +1,11 @@
+# robin-map, header-only, for OpenImageIO (see README.md).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "robin-map",
+    hdrs = glob(["include/tsl/*.h"]),
+    includes = ["include"],
+)

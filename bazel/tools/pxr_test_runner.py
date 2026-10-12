@@ -93,7 +93,7 @@ def _writable_copy(src, dest):
             os.chmod(path, os.stat(path).st_mode | 0o200)
 
 
-def _wrapper_arguments(name, a, python_path, testenv_copy):
+def _wrapper_arguments(name, a, python_path, testenv_copy, image_diff_dir):
     """testWrapper.py arguments, in the order pxr_register_test adds them."""
     args = ["--verbose"]
     for key, flag in [
@@ -118,8 +118,24 @@ def _wrapper_arguments(name, a, python_path, testenv_copy):
 
     for f in a.get("DIFF_COMPARE", []):
         args.append("--diff-compare=" + f)
-    # IMAGE_DIFF_COMPARE needs IMAGE_DIFF_TOOL, which this build does not
-    # configure; CMake then skips image comparisons too.
+    # IMAGE_DIFF_COMPARE runs only with IMAGE_DIFF_TOOL (idiff).
+    if a.get("IMAGE_DIFF_COMPARE") and image_diff_dir:
+        for f in a["IMAGE_DIFF_COMPARE"]:
+            args.append("--image-diff-compare=" + f)
+        for key, flag in [
+            ("WARN", "--warn"),
+            ("WARN_PERCENT", "--warnpercent"),
+            ("HARD_WARN", "--hardwarn"),
+            ("FAIL", "--fail"),
+            ("FAIL_PERCENT", "--failpercent"),
+            ("HARD_FAIL", "--hardfail"),
+        ]:
+            if a.get(key):
+                args.append("%s=%s" % (flag, a[key]))
+        if a.get("PERCEPTUAL"):
+            args.append("--perceptual")
+        # So testWrapper.py finds idiff on PATH.
+        args.append("--post-path=" + image_diff_dir)
     if a.get("DIFF_COMPARE") or a.get("IMAGE_DIFF_COMPARE"):
         args.append("--baseline-dir=%s/baseline" % testenv_dir)
         args.append("--failures-dir=<build>/Testing/Failed-Diffs/"
@@ -195,8 +211,17 @@ def main():
         _writable_copy(src, dest)
         return dest
 
+    image_diff_dir = None
+    if spec.get("image_diff_tool"):
+        image_diff_dir = os.path.join(tmp, "image_diff")
+        os.makedirs(image_diff_dir, exist_ok=True)
+        link = os.path.join(image_diff_dir, "idiff")
+        if not os.path.exists(link):
+            os.symlink(os.path.join(root, spec["image_diff_tool"]), link)
+
     args = [substitute(arg) for arg in _wrapper_arguments(
-        spec["name"], spec["arguments"], python_path, testenv_copy)]
+        spec["name"], spec["arguments"], python_path, testenv_copy,
+        image_diff_dir)]
 
     wrapper = os.path.join(root, "cmake/macros/testWrapper.py")
     env = dict(os.environ, TMPDIR=tmp)

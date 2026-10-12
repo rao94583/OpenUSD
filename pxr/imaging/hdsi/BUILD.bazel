@@ -1,0 +1,192 @@
+# Generated from pxr/imaging/hdsi/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "hdsi",
+    libraries = [
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+        "//pxr/base/vt",
+        "//pxr/base/work",
+        "//pxr/usd/sdf",
+        "//pxr/imaging/cameraUtil",
+        "//pxr/usd/usdShade",
+        "//pxr/usd/usdVol",
+        "//pxr/imaging/geomUtil",
+        "//pxr/imaging/hf",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/pxOsd",
+        "//vendor/onetbb:tbb",
+    ],
+    public_classes = [
+        "applicationRenderSettingsSceneIndex",
+        "backPlateSceneIndex",
+        "computeSceneIndexDiff",
+        "coordSysPrimSceneIndex",
+        "debuggingSceneIndex",
+        "debuggingSceneIndexPlugin",
+        "domeLightCameraVisibilitySceneIndex",
+        "extComputationDependencySceneIndex",
+        "extComputationPrimvarPruningSceneIndex",
+        "implicitSurfaceSceneIndex",
+        "legacyDisplayStyleOverrideSceneIndex",
+        "lightLinkingSceneIndex",
+        "locatorCachingSceneIndex",
+        "materialBindingResolvingSceneIndex",
+        "materialOverrideResolvingSceneIndex",
+        "materialPrimvarTransferSceneIndex",
+        "materialRenderContextFilteringSceneIndex",
+        "nodeIdentifierResolvingSceneIndex",
+        "nurbsApproximatingSceneIndex",
+        "particleFieldConversionSceneIndex",
+        "prefixPathPruningSceneIndex",
+        "pinnedCurveExpandingSceneIndex",
+        "primIdSceneIndex",
+        "primIdSceneIndexPlugin",
+        "primManagingSceneIndexObserver",
+        "primTypeAndPathPruningSceneIndex",
+        "primTypeNoticeBatchingSceneIndex",
+        "primTypePruningSceneIndex",
+        "renderPassPruneSceneIndex",
+        "renderSettingsFilteringSceneIndex",
+        "sceneGlobalsSceneIndex",
+        "sceneMaterialPruningSceneIndex",
+        "switchingSceneIndex",
+        "tetMeshConversionSceneIndex",
+        "unboundMaterialPruningSceneIndex",
+        "utils",
+        "velocityMotionResolvingSceneIndex",
+    ],
+    public_headers = [
+        "api.h",
+        "version.h",
+    ],
+    resource_files = [
+        "plugInfo.json",
+        "shaders/unlitShader.glslfx",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdsiComputeSceneIndexDiff",
+    srcs = [
+        "testenv/testHdsiComputeSceneIndexDiff.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdsi",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdsiPinnedCurveExpandingSceneIndex",
+    srcs = [
+        "testenv/testHdsiPinnedCurveExpandingSceneIndex.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdsi",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdsiSwitchingSceneIndex",
+    srcs = [
+        "testenv/testHdsiSwitchingSceneIndex.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdsi",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdsiPrefixPathPruningSceneIndex",
+    srcs = [
+        "testenv/testHdsiPrefixPathPruningSceneIndex.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdsi",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdsiPrimIdSceneIndex",
+    srcs = [
+        "testenv/testHdsiPrimIdSceneIndex.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdsi",
+        "//pxr/base/tf",
+    ],
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testHdsiComputeSceneIndexDiff",
+        ":tests/testHdsiPinnedCurveExpandingSceneIndex",
+        ":tests/testHdsiSwitchingSceneIndex",
+        ":tests/testHdsiPrefixPathPruningSceneIndex",
+        ":tests/testHdsiPrimIdSceneIndex",
+    ],
+)
+
+pxr_test(
+    name = "testHdsiComputeSceneIndexDiff",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdsiComputeSceneIndexDiff",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdsiPinnedCurveExpandingSceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdsiPinnedCurveExpandingSceneIndex",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdsiSwitchingSceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdsiSwitchingSceneIndex",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdsiPrefixPathPruningSceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdsiPrefixPathPruningSceneIndex",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)
+
+pxr_test(
+    name = "testHdsiPrimIdSceneIndex",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHdsiPrimIdSceneIndex",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)

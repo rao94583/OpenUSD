@@ -1,0 +1,140 @@
+# libtiff, for OpenImageIO (see README.md). Mirrors libtiff/CMakeLists.txt
+# with default options and the codecs a build with zlib and libjpeg-turbo
+# finds (as in build_scripts/build_usd.py, where libdeflate is not found).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel:cmake_configure_file.bzl", "cmake_configure_file")
+
+package(default_visibility = ["//visibility:public"])
+
+_VALUES = {
+    "CCITT_SUPPORT": "ON",
+    "PACKBITS_SUPPORT": "ON",
+    "LZW_SUPPORT": "ON",
+    "THUNDER_SUPPORT": "ON",
+    "NEXT_SUPPORT": "ON",
+    "LOGLUV_SUPPORT": "ON",
+    "MDI_SUPPORT": "ON",
+    "ZIP_SUPPORT": "ON",
+    "PIXARLOG_SUPPORT": "ON",
+    "JPEG_SUPPORT": "ON",
+    "OJPEG_SUPPORT": "ON",
+    # libjpeg-turbo >= 3 provides 8- and 12-bit modes in one library.
+    "HAVE_JPEGTURBO_DUAL_MODE_8_12": "ON",
+    "STRIPCHOP_DEFAULT": "ON",
+    "STRIP_SIZE_DEFAULT": "8192",
+    "TIFF_MAX_DIR_COUNT": "1048576",
+    "SUBIFD_SUPPORT": "ON",
+    "DEFAULT_EXTRASAMPLE_AS_ALPHA": "ON",
+    "CHECK_JPEG_YCBCR_SUBSAMPLING": "ON",
+    "CXX_SUPPORT": "ON",
+    "HAVE_ASSERT_H": "ON",
+    "HAVE_DECL_OPTARG": "ON",
+    "HAVE_FCNTL_H": "ON",
+    "HAVE_FSEEKO": "ON",
+    "HAVE_GETOPT": "ON",
+    # cmake/ProcessorChecks.cmake sets this unconditionally.
+    "HAVE_IEEEFP": "ON",
+    "HAVE_MMAP": "ON",
+    "HAVE_STRINGS_H": "ON",
+    "HAVE_SYS_TYPES_H": "ON",
+    "HAVE_UNISTD_H": "ON",
+    "HOST_BIG_ENDIAN": "0",
+    "SIZEOF_SIZE_T": "8",
+    "TIFF_INT8_T": "int8_t",
+    "TIFF_UINT8_T": "uint8_t",
+    "TIFF_INT16_T": "int16_t",
+    "TIFF_UINT16_T": "uint16_t",
+    "TIFF_INT32_T": "int32_t",
+    "TIFF_UINT32_T": "uint32_t",
+    "TIFF_INT64_T": "int64_t",
+    "TIFF_UINT64_T": "uint64_t",
+    "TIFF_SSIZE_T": "int64_t",
+    "PACKAGE_NAME": "LibTIFF Software",
+    "PACKAGE_TARNAME": "tiff",
+    "PACKAGE_BUGREPORT": "tiff@lists.osgeo.org",
+    "PACKAGE_URL": "",
+}
+
+[
+    cmake_configure_file(
+        name = name,
+        src = "libtiff/%s.h.cmake.in" % name,
+        out = "config/%s.h" % name,
+        values = _VALUES,
+    )
+    for name in ["tif_config", "tiffconf"]
+]
+
+_PUBLIC_HDRS = [
+    "libtiff/tiff.h",
+    "libtiff/tiffio.h",
+    "libtiff/tiffvers.h",
+    ":tiffconf",
+]
+
+_PRIVATE_HDRS = glob(
+    ["libtiff/*.h"],
+    exclude = _PUBLIC_HDRS,
+) + [":tif_config"]
+
+# CMake defines TIFF_DISABLE_DEPRECATED (tiff-deprecated is OFF) and
+# TIFF_DO_NOT_USE_NON_EXT_ALLOC_FUNCTIONS for the library.
+_DEFINES = [
+    "TIFF_DISABLE_DEPRECATED",
+    "TIFF_DO_NOT_USE_NON_EXT_ALLOC_FUNCTIONS",
+]
+
+_DEPS = [
+    "//vendor/libjpeg-turbo",
+    "//vendor/zlib",
+]
+
+# tif_open.c and tif_unix.c may use the non-"Ext" allocation functions.
+cc_library(
+    name = "alloc",
+    srcs = [
+        "libtiff/tif_open.c",
+        "libtiff/tif_unix.c",
+    ] + _PRIVATE_HDRS,
+    hdrs = _PUBLIC_HDRS,
+    copts = ["-w"],
+    includes = [
+        "config",
+        "libtiff",
+    ],
+    local_defines = _DEFINES + ["ALLOW_TIFF_NON_EXT_ALLOC_FUNCTIONS"],
+    visibility = ["//visibility:private"],
+    deps = _DEPS,
+)
+
+cc_library(
+    name = "libtiff",
+    srcs = glob(
+        ["libtiff/tif_*.c"],
+        exclude = [
+            "libtiff/tif_open.c",
+            "libtiff/tif_unix.c",
+        ],
+    ) + _PRIVATE_HDRS,
+    hdrs = _PUBLIC_HDRS,
+    copts = ["-w"],
+    includes = [
+        "config",
+        "libtiff",
+    ],
+    local_defines = _DEFINES,
+    # tif_jpeg_12.c compiles tif_jpeg.c again in 12-bit mode.
+    textual_hdrs = ["libtiff/tif_jpeg.c"],
+    deps = _DEPS + [":alloc"],
+)
+
+# The C++ stream API (tiffxx).
+cc_library(
+    name = "libtiffxx",
+    srcs = ["libtiff/tif_stream.cxx"] + _PRIVATE_HDRS,
+    hdrs = ["libtiff/tiffio.hxx"],
+    copts = ["-w"],
+    local_defines = _DEFINES,
+    deps = [":libtiff"],
+)

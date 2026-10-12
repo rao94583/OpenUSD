@@ -5,6 +5,7 @@ load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_library", "pxr_test_program",
 
 pxr_library(
     name = "arch",
+    include_current_dir = False,
     public_classes = [
         "align",
         "attributes",
@@ -83,6 +84,7 @@ pxr_test_library(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -93,6 +95,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -103,6 +106,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -113,6 +117,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -124,6 +129,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -134,6 +140,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -144,6 +151,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -154,6 +162,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -164,6 +173,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -174,6 +184,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -184,6 +195,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -195,6 +207,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -205,6 +218,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -215,6 +229,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -225,6 +240,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -235,6 +251,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -245,6 +262,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -255,6 +273,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/arch",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_tree(

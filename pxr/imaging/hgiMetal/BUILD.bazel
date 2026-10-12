@@ -1,0 +1,72 @@
+# Generated from pxr/imaging/hgiMetal/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "hgiMetal",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/imaging/hgi",
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+    ],
+    public_headers = [
+        "api.h",
+        "blitCmds.h",
+        "buffer.h",
+        "capabilities.h",
+        "computeCmds.h",
+        "computePipeline.h",
+        "diagnostic.h",
+        "graphicsCmds.h",
+        "graphicsPipeline.h",
+        "hgi.h",
+        "indirectCommandEncoder.h",
+        "resourceBindings.h",
+        "sampler.h",
+        "shaderFunction.h",
+        "shaderProgram.h",
+        "stepFunctions.h",
+        "texture.h",
+    ],
+    private_headers = [
+        "conversions.h",
+        "shaderGenerator.h",
+        "shaderSection.h",
+    ],
+    cppfiles = [
+        "blitCmds.mm",
+        "buffer.mm",
+        "capabilities.mm",
+        "computePipeline.mm",
+        "computeCmds.mm",
+        "conversions.mm",
+        "diagnostic.mm",
+        "graphicsCmds.mm",
+        "graphicsPipeline.mm",
+        "hgi.mm",
+        "indirectCommandEncoder.mm",
+        "resourceBindings.mm",
+        "sampler.mm",
+        "shaderFunction.mm",
+        "shaderGenerator.mm",
+        "shaderProgram.mm",
+        "shaderSection.mm",
+        "stepFunctions.mm",
+        "texture.mm",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    linkopts = [
+        "-framework",
+        "Foundation",
+        "-framework",
+        "Metal",
+        "-framework",
+        "AppKit",
+    ],
+    target_compatible_with = [
+        "@platforms//os:macos",
+    ],
+)

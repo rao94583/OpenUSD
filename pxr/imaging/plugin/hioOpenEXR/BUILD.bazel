@@ -1,0 +1,66 @@
+# Generated from pxr/imaging/plugin/hioOpenEXR/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "hioOpenEXR",
+    plugin = True,
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/base/arch",
+        "//pxr/base/gf",
+        "//pxr/imaging/hio",
+        "//pxr/base/tf",
+    ],
+    private_headers = [
+        "OpenEXR/openexr-c.h",
+        "OpenEXR/OpenEXRCoreUnity.h",
+    ],
+    cppfiles = [
+        "OpenEXR/openexr-c.c",
+        "OpenEXRImage.cpp",
+        "OpenEXR/OpenEXRCore/internal_ht_common.cpp",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+)
+
+pxr_test_program(
+    name = "testHioOpenEXR",
+    srcs = [
+        "testenv/testHioOpenEXR.cpp",
+    ],
+    libraries = [
+        "//pxr/imaging/hio",
+        "//pxr/imaging/plugin/hioOpenEXR",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testHioOpenEXR": "testenv/testHioOpenEXR",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testHioOpenEXR",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testHioOpenEXR",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testHioOpenEXR",
+        "TESTENV": "testenv/testHioOpenEXR",
+        "EXPECTED_RETURN_CODE": "0",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)

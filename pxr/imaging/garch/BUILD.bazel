@@ -1,0 +1,60 @@
+# Generated from pxr/imaging/garch/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "garch",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/tf",
+    ],
+    public_classes = [
+        "glApi",
+        "glDebugWindow",
+        "glPlatformDebugContext",
+    ],
+    public_headers = [
+        "api.h",
+        "gl.h",
+        "glPlatformContext.h",
+        "khrplatform.h",
+    ],
+    per_os = {
+        "macos": {
+            "public_headers": [
+                "glPlatformContextDarwin.h",
+            ],
+            "private_headers": [
+                "glPlatformDebugWindowDarwin.h",
+            ],
+            "cppfiles": [
+                "glPlatformContextDarwin.mm",
+                "glPlatformDebugWindowDarwin.mm",
+            ],
+            "linkopts": [
+                "-framework",
+                "Foundation",
+                "-framework",
+                "AppKit",
+                "-framework",
+                "OpenGL",
+            ],
+        },
+        "linux": {
+            "public_headers": [
+                "glPlatformContextGLX.h",
+            ],
+            "private_headers": [
+                "glPlatformDebugWindowGLX.h",
+            ],
+            "cppfiles": [
+                "glPlatformContextGLX.cpp",
+                "glPlatformDebugWindowGLX.cpp",
+            ],
+            "linkopts": [
+                "-lX11",
+                "-lGL",
+            ],
+        },
+    },
+)

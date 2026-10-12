@@ -5,6 +5,7 @@ load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_library", "
 
 pxr_library(
     name = "tf",
+    include_current_dir = False,
     libraries = [
         "//pxr/base/arch",
         "//vendor/onetbb:tbb",
@@ -256,6 +257,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -266,6 +268,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -276,6 +279,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -286,6 +290,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -296,6 +301,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -306,6 +312,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -316,6 +323,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_library(
@@ -326,6 +334,7 @@ pxr_test_library(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_library(
@@ -336,6 +345,7 @@ pxr_test_library(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -346,6 +356,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -356,6 +367,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -421,6 +433,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_files(

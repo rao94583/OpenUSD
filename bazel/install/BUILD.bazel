@@ -22,6 +22,20 @@ cc_shared_library(
     deps = ["//vendor/onetbb:tbb"],
 )
 
+# OpenSubdiv as its own shared library, as in CMake builds (libosdCPU and
+# libosdGPU combined).
+cc_shared_library(
+    name = "opensubdiv",
+    shared_lib_name = select({
+        "@platforms//os:macos": "lib/libopensubdiv.dylib",
+        "//conditions:default": "lib/libopensubdiv.so",
+    }),
+    deps = [
+        "//vendor/opensubdiv:osd_cpu",
+        "//vendor/opensubdiv:osd_gpu",
+    ],
+)
+
 # The monolithic library (CMake's PXR_BUILD_MONOLITHIC usd_ms): every pxr
 # library, so that Python extensions and programs share one copy of each
 # registry.
@@ -32,7 +46,10 @@ cc_shared_library(
         "//conditions:default": "lib/libusd_ms.so",
     }),
     deps = PXR_LIBRARIES,
-    dynamic_deps = [":tbb"],
+    dynamic_deps = [
+        ":opensubdiv",
+        ":tbb",
+    ],
     exports_filter = ["//pxr:__subpackages__"],
     user_link_flags = PXR_PY_SHARED_LINKOPTS,
 )
@@ -49,6 +66,7 @@ pxr_python_package(
     dynamic_deps = [
         ":usd_ms",
         ":tbb",
+        ":opensubdiv",
     ],
     runtime = [":resources"],
 )

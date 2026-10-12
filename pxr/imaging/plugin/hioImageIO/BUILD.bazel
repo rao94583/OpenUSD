@@ -1,0 +1,34 @@
+# Generated from pxr/imaging/plugin/hioImageIO/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "hioImageIO",
+    plugin = True,
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/base/arch",
+        "//pxr/base/gf",
+        "//pxr/imaging/hio",
+        "//pxr/base/tf",
+    ],
+    cppfiles = [
+        "imageIOImage.mm",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    linkopts = [
+        "-framework",
+        "Foundation",
+        "-framework",
+        "CoreGraphics",
+        "-framework",
+        "Foundation",
+        "-framework",
+        "ImageIO",
+    ],
+    target_compatible_with = [
+        "@platforms//os:macos",
+    ],
+)

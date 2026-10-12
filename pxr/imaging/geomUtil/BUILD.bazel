@@ -1,0 +1,87 @@
+# Generated from pxr/imaging/geomUtil/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "geomUtil",
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/imaging/pxOsd",
+    ],
+    public_classes = [
+        "capsuleMeshGenerator",
+        "coneMeshGenerator",
+        "cuboidMeshGenerator",
+        "cylinderMeshGenerator",
+        "diskMeshGenerator",
+        "meshGeneratorBase",
+        "planeMeshGenerator",
+        "sphereMeshGenerator",
+        "tokens",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapCapsuleMeshGenerator.cpp",
+        "wrapConeMeshGenerator.cpp",
+        "wrapCuboidMeshGenerator.cpp",
+        "wrapCylinderMeshGenerator.cpp",
+        "wrapDiskMeshGenerator.cpp",
+        "wrapPlaneMeshGenerator.cpp",
+        "wrapSphereMeshGenerator.cpp",
+        "wrapTokens.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+)
+
+pxr_test_program(
+    name = "testMeshGenerators",
+    srcs = [
+        "testenv/testMeshGenerators.cpp",
+    ],
+    libraries = [
+        "//pxr/base/gf",
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/imaging/geomUtil",
+        "//pxr/imaging/pxOsd",
+    ],
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "testMeshGenerators": "testenv/testMeshGenerators",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testMeshGenerators",
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testMeshGenerators",
+    arguments = {
+        "COMMAND": "<prefix>/tests/testMeshGenerators",
+        "TESTENV": "testenv/testMeshGenerators",
+        "DIFF_COMPARE": [
+            "generatedMeshes_closed.txt",
+            "generatedMeshes_open.txt",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+)

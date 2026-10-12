@@ -5,6 +5,7 @@ load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_program", "
 
 pxr_library(
     name = "gf",
+    include_current_dir = False,
     libraries = [
         "//pxr/base/arch",
         "//pxr/base/tf",
@@ -165,6 +166,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/gf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -175,6 +177,7 @@ pxr_test_program(
     libraries = [
         "//pxr/base/gf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_program(
@@ -186,6 +189,7 @@ pxr_test_program(
         "//pxr/base/gf",
         "//pxr/base/tf",
     ],
+    include_current_dir = False,
 )
 
 pxr_test_files(

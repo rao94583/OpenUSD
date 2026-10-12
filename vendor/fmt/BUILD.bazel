@@ -1,0 +1,17 @@
+# {fmt}, header-only, for OpenImageIO (see README.md).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+# OpenImageIO includes these as <OpenImageIO/detail/fmt/...> (its CMake
+# option OIIO_INTERNALIZE_FMT copies them there); //vendor/openimageio does
+# the same copy. Exported for that.
+exports_files(glob(["include/fmt/*.h"]))
+
+cc_library(
+    name = "fmt",
+    hdrs = glob(["include/fmt/*.h"]),
+    defines = ["FMT_HEADER_ONLY=1"],
+    includes = ["include"],
+)

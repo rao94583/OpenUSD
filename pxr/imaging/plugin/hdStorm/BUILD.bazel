@@ -1,0 +1,28 @@
+# Generated from pxr/imaging/plugin/hdStorm/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "hdStorm",
+    plugin = True,
+    libraries = [
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+        "//pxr/base/vt",
+        "//pxr/base/work",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdSt",
+        "//vendor/opensubdiv:osd_cpu",
+        "//vendor/opensubdiv:osd_gpu",
+    ],
+    private_classes = [
+        "rendererPlugin",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

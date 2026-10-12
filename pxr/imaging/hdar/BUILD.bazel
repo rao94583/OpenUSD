@@ -1,0 +1,20 @@
+# Generated from pxr/imaging/hdar/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "hdar",
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/usd/ar",
+    ],
+    public_classes = [
+        "systemSchema",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

@@ -21,7 +21,13 @@ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("@rules_python//python:py_test.bzl", "py_test")
-load("//bazel:pxr_library.bzl", "PXR_COPTS", "PXR_DYNAMIC_DEPS", "PXR_LINKOPTS")
+load(
+    "//bazel:pxr_library.bzl",
+    "PXR_COPTS",
+    "PXR_DYNAMIC_DEPS",
+    "PXR_LINKOPTS",
+    "include_current_dir_copts",
+)
 load("//bazel:pxr_python.bzl", "PXR_PY_SHARED_LINKOPTS")
 
 _SHARED_SUFFIX = select({
@@ -29,7 +35,7 @@ _SHARED_SUFFIX = select({
     "//conditions:default": ".so",
 })
 
-def _files_next_to(name, srcs):
+def _files_next_to(name, srcs, target_compatible_with):
     """A library declaring the files next to srcs, which test sources include
     by relative path ("x.h", even "module_tail.cpp"), as textual headers."""
     dirs = {s.rpartition("/")[0]: None for s in srcs}
@@ -41,26 +47,42 @@ def _files_next_to(name, srcs):
         name = name,
         textual_hdrs = native.glob(patterns, exclude = srcs, allow_empty = True),
         testonly = True,
+        target_compatible_with = target_compatible_with,
     )
     return ":" + name
 
-def pxr_test_program(name, srcs, libraries = []):
+def pxr_test_program(
+        name,
+        srcs,
+        libraries = [],
+        include_current_dir = True,
+        target_compatible_with = None):
     """A test program installed as tests/<name> (pxr_build_test)."""
     cc_binary(
         name = "tests/" + name,
         srcs = srcs,
-        copts = PXR_COPTS,
+        copts = PXR_COPTS + (
+            include_current_dir_copts() if include_current_dir else []
+        ),
         linkopts = PXR_LINKOPTS,
-        deps = ["//pxr", _files_next_to("_testfiles_" + name, srcs)] +
+        deps = ["//pxr", _files_next_to("_testfiles_" + name, srcs, target_compatible_with)] +
                libraries + [
             # Executables link libpython, as in CMake.
             "@rules_python//python/cc:current_py_cc_libs",
         ],
         dynamic_deps = PXR_DYNAMIC_DEPS,
         testonly = True,
+        target_compatible_with = target_compatible_with,
     )
 
-def pxr_test_library(name, srcs, libraries = [], prefix = "lib", suffix = None):
+def pxr_test_library(
+        name,
+        srcs,
+        libraries = [],
+        prefix = "lib",
+        suffix = None,
+        include_current_dir = True,
+        target_compatible_with = None):
     """A shared library installed as tests/lib/<prefix><name><suffix>.
 
     Test plugins (pxr_build_test_plugin) and boost::python's test extension
@@ -69,11 +91,14 @@ def pxr_test_library(name, srcs, libraries = [], prefix = "lib", suffix = None):
     cc_library(
         name = "_test_" + name,
         srcs = srcs,
-        copts = PXR_COPTS,
-        deps = ["//pxr", _files_next_to("_testfiles_" + name, srcs)] +
+        copts = PXR_COPTS + (
+            include_current_dir_copts() if include_current_dir else []
+        ),
+        deps = ["//pxr", _files_next_to("_testfiles_" + name, srcs, target_compatible_with)] +
                libraries,
         alwayslink = True,
         testonly = True,
+        target_compatible_with = target_compatible_with,
     )
     cc_shared_library(
         name = "_testlib_" + name,
@@ -83,6 +108,7 @@ def pxr_test_library(name, srcs, libraries = [], prefix = "lib", suffix = None):
         dynamic_deps = PXR_DYNAMIC_DEPS,
         user_link_flags = PXR_PY_SHARED_LINKOPTS,
         testonly = True,
+        target_compatible_with = target_compatible_with,
     )
 
 def _test_files_impl(ctx):
@@ -159,7 +185,13 @@ _test_files = rule(
     },
 )
 
-def pxr_test_files(name, files = {}, testenvs = {}, plug_infos = {}, library_paths = {}):
+def pxr_test_files(
+        name,
+        files = {},
+        testenvs = {},
+        plug_infos = {},
+        library_paths = {},
+        target_compatible_with = None):
     """Scripts, test modules, plugInfo files and testenvs under tests/."""
     srcs = list(files.values()) + list(plug_infos.values())
     for src_dir in testenvs.values():
@@ -173,15 +205,17 @@ def pxr_test_files(name, files = {}, testenvs = {}, plug_infos = {}, library_pat
         shared_suffix = _SHARED_SUFFIX,
         srcs = {s: None for s in srcs}.keys(),
         testonly = True,
+        target_compatible_with = target_compatible_with,
     )
 
-def pxr_test_tree(name, srcs):
+def pxr_test_tree(name, srcs, target_compatible_with = None):
     """Everything this package installs under tests/."""
     native.filegroup(
         name = name,
         srcs = srcs,
         testonly = True,
         visibility = ["//visibility:public"],
+        target_compatible_with = target_compatible_with,
     )
 
 def _test_spec_impl(ctx):
@@ -200,6 +234,10 @@ def _test_spec_impl(ctx):
             name: target.files.to_list()[0].short_path
             for target, name in ctx.attr.python_tools.items()
         },
+        "image_diff_tool": (
+            ctx.attr.image_diff_tool[DefaultInfo].files_to_run.executable.short_path
+            if ctx.attr.image_diff_tool else None
+        ),
     }
     out = ctx.actions.declare_file(ctx.label.name + ".json")
     ctx.actions.write(out, json.encode_indent(spec))
@@ -213,6 +251,7 @@ _test_spec = rule(
         "test_trees": attr.label_list(),
         "tools": attr.label_keyed_string_dict(cfg = "target"),
         "python_tools": attr.label_keyed_string_dict(allow_files = True),
+        "image_diff_tool": attr.label(cfg = "target", executable = True),
     },
 )
 
@@ -222,6 +261,8 @@ def pxr_test(
         test_trees,
         tools = {},
         python_tools = {},
+        image_diff_tool = None,
+        excluded = None,
         tags = [],
         size = "medium",
         target_compatible_with = []):
@@ -237,6 +278,10 @@ def pxr_test(
       tools: C++ programs available as <prefix>/bin/<name>.
       python_tools: Python programs' sources, installed as
         <prefix>/bin/<name> with their shebang rewritten, as CMake does.
+      image_diff_tool: idiff, for IMAGE_DIFF_COMPARE (IMAGE_DIFF_TOOL in
+        CMake).
+      excluded: why this test cannot pass in this build; it is then tagged
+        manual (skipped by `bazel test //...`, runnable by label).
       tags: test tags.
       size: test size.
       target_compatible_with: for tests CMake registers on some OSes only.
@@ -248,9 +293,12 @@ def pxr_test(
         test_trees = test_trees,
         tools = tools,
         python_tools = python_tools,
+        image_diff_tool = image_diff_tool,
         testonly = True,
         target_compatible_with = target_compatible_with,
     )
+    if excluded:
+        tags = tags + ["manual"]
     py_test(
         name = name,
         srcs = ["//bazel/tools:pxr_test_runner.py"],
@@ -260,7 +308,9 @@ def pxr_test(
             ":%s_spec" % name,
             "//cmake/macros:testWrapper.py",
             "//bazel/install:python",
-        ] + test_trees + tools.keys() + python_tools.keys(),
+        ] + test_trees + tools.keys() + python_tools.keys() + (
+            [image_diff_tool] if image_diff_tool else []
+        ),
         deps = ["//vendor/jinja2"],
         tags = tags,
         size = size,

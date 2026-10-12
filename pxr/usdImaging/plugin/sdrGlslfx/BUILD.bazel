@@ -1,0 +1,22 @@
+# Generated from pxr/usdImaging/plugin/sdrGlslfx/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "sdrGlslfx",
+    plugin = True,
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/usd/sdr",
+        "//pxr/imaging/hio",
+    ],
+    private_classes = [
+        "parserPlugin",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

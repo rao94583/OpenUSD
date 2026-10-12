@@ -1,0 +1,53 @@
+# Generated from pxr/imaging/glf/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "glf",
+    libraries = [
+        "//pxr/usd/ar",
+        "//pxr/base/arch",
+        "//pxr/imaging/garch",
+        "//pxr/base/gf",
+        "//pxr/imaging/hf",
+        "//pxr/imaging/hio",
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+        "//pxr/usd/sdf",
+    ],
+    public_classes = [
+        "contextCaps",
+        "diagnostic",
+        "glContext",
+        "glRawContext",
+        "info",
+        "simpleLight",
+        "simpleLightingContext",
+        "simpleMaterial",
+        "simpleShadowArray",
+        "testGLContext",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    private_classes = [
+        "debugCodes",
+        "glContextRegistry",
+    ],
+    pymodule_cppfiles = [
+        "module.cpp",
+        "wrapDiagnostic.cpp",
+        "wrapSimpleLight.cpp",
+        "wrapSimpleMaterial.cpp",
+    ],
+    pymodule_files = [
+        "__init__.py",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)

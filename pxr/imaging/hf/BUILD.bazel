@@ -1,0 +1,25 @@
+# Generated from pxr/imaging/hf/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "hf",
+    libraries = [
+        "//pxr/base/plug",
+        "//pxr/base/tf",
+        "//pxr/base/trace",
+    ],
+    public_classes = [
+        "pluginBase",
+        "pluginRegistry",
+    ],
+    public_headers = [
+        "api.h",
+        "diagnostic.h",
+        "pluginDesc.h",
+        "perfLog.h",
+    ],
+    private_classes = [
+        "pluginEntry",
+    ],
+)

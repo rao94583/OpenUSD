@@ -1,0 +1,45 @@
+# minizip-ng, for OpenColorIO (see README.md). Built as OpenColorIO's
+# Installminizip-ng.cmake builds it: static, zlib only (MZ_ZLIB=ON; no
+# compat layer, encryption, signing, bzip2, lzma, zstd, libcompression or
+# iconv).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "minizip-ng",
+    srcs = [
+        "mz_crypt.c",
+        "mz_os.c",
+        "mz_os_posix.c",
+        "mz_strm.c",
+        "mz_strm_buf.c",
+        "mz_strm_mem.c",
+        "mz_strm_os_posix.c",
+        "mz_strm_split.c",
+        "mz_strm_zlib.c",
+        "mz_zip.c",
+        "mz_zip_rw.c",
+    ],
+    hdrs = glob(["mz*.h"]),
+    copts = ["-w"],
+    includes = ["."],
+    # STDLIB_DEF and MINIZIP_DEF from CMakeLists.txt for these options.
+    local_defines = [
+        "HAVE_STDINT_H",
+        "HAVE_INTTYPES_H",
+        "_POSIX_C_SOURCE=200112L",
+        "HAVE_ZLIB",
+        "ZLIB_COMPAT",
+        "MZ_ZIP_NO_CRYPTO",
+        "MZ_ZIP_NO_ENCRYPTION",
+    ] + select({
+        "@platforms//os:linux": [
+            "__USE_LARGEFILE64",
+            "_LARGEFILE64_SOURCE",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = ["//vendor/zlib"],
+)

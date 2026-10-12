@@ -20,10 +20,11 @@ load("//bazel:pxr_install.bzl", "pxr_resources")
 load("//bazel:pxr_python.bzl", "pxr_module_deps_cpp")
 
 # Shared libraries everything else links against: the monolithic library and
-# oneTBB, which pxr headers use directly.
+# the vendored libraries pxr headers use directly (oneTBB, OpenSubdiv).
 PXR_DYNAMIC_DEPS = [
     "//bazel/install:usd_ms",
     "//bazel/install:tbb",
+    "//bazel/install:opensubdiv",
 ]
 _RESOURCES = "//bazel/install:resources"
 
@@ -51,13 +52,14 @@ PXR_LINKOPTS = select({
     "//conditions:default": ["-pthread"],
 })
 
-def pxr_configure_file(name, src, out, substitutions):
+def pxr_configure_file(name, src, out, substitutions, target_compatible_with = None):
     """configure_file() of a header: replaces @VAR@ placeholders in src."""
     expand_template(
         name = name,
         out = out,
         substitutions = substitutions,
         template = src,
+        target_compatible_with = target_compatible_with,
     )
 
 _PYTHON_DEPS = [
@@ -89,6 +91,25 @@ _PER_OS_FIELDS = [
     "linkopts",
 ]
 
+def _includable_files(srcs, include_current_dir):
+    """Files sources may include without CMake listing them.
+
+    With CMAKE_INCLUDE_CURRENT_DIR any header in the package can be included
+    (e.g. hioAvif's bundled config/aom_config.h); sources in subdirectories
+    may include other files there (e.g. hioOpenEXR's unity build of
+    OpenEXR/OpenEXRCore/*.c).
+    """
+    patterns = []
+    if include_current_dir:
+        patterns += ["**/*." + ext for ext in ("h", "hpp", "inl", "inc")]
+    dirs = {s.rpartition("/")[0]: None for s in srcs if "/" in s}
+    patterns += [
+        d + "/**/*." + ext
+        for d in dirs
+        for ext in ("c", "cpp", "h", "hpp", "inl", "inc")
+    ]
+    return native.glob(patterns, exclude = srcs, allow_empty = True)
+
 def _unique(values):
     return {v: None for v in values}.keys()
 
@@ -117,9 +138,16 @@ def _per_os_select(per_os, field, transform = None):
     branches["//conditions:default"] = []
     return select(branches)
 
+def include_current_dir_copts():
+    """CMAKE_INCLUDE_CURRENT_DIR: the package's source and output
+    directories on the include path (ProjectDefaults.cmake turns it on)."""
+    package = native.package_name()
+    return ["-I" + package, "-I$(BINDIR)/" + package]
+
 def pxr_library(
         name,
         plugin = False,
+        include_current_dir = True,
         libraries = [],
         public_classes = [],
         python_public_classes = [],
@@ -142,11 +170,15 @@ def pxr_library(
         pymodule_local_defines = [],
         generated_headers = [],
         per_os = {},
+        target_compatible_with = None,
         visibility = ["//visibility:public"]):
     """Declares a USD library.
 
     Args:
       name: library name, also PXR_PACKAGE (e.g. "tf").
+      include_current_dir: CMAKE_INCLUDE_CURRENT_DIR in the CMakeLists.txt;
+        arch, tf and gf turn it off (they have headers named like system
+        headers).
       plugin: True for pxr_plugin(). Core plugins are linked into the
         monolithic library like other libraries (OBJECT_PLUGIN); only their
         resources go elsewhere (plugin/usd instead of lib/usd).
@@ -172,6 +204,7 @@ def pxr_library(
       local_defines: private definitions of the library.
       pymodule_local_defines: private definitions of the Python extension.
       generated_headers: labels of headers made by pxr_configure_file.
+      target_compatible_with: for libraries CMake builds on some OSes only.
       per_os: platform-specific additions, the equivalent of CMake's
         if(APPLE)/if(WIN32) blocks. Maps "macos" or "linux" to a dict with
         any of the keys libraries, public_headers, private_headers, cppfiles,
@@ -227,7 +260,9 @@ def pxr_library(
         ["//pxr"] + libraries + (_PYTHON_DEPS if uses_python else []) +
         _per_os_select(per_os, "libraries")
     )
-    copts = PXR_COPTS + copts + _per_os_select(per_os, "copts")
+    copts = PXR_COPTS + copts + _per_os_select(per_os, "copts") + (
+        include_current_dir_copts() if include_current_dir else []
+    )
     linkopts = PXR_LINKOPTS + linkopts + _per_os_select(per_os, "linkopts")
 
     mfb_defines = [
@@ -255,25 +290,31 @@ def pxr_library(
                 for lib in libraries
                 if lib.startswith("//pxr/")
             ],
+            target_compatible_with = target_compatible_with,
         )
         cc_srcs = cc_srcs + [":" + name + "_module_deps"]
 
     # Objective-C++ sources (cc_library does not accept .mm) go into a
     # companion objc_library. It only exists on macOS, the only OS where
-    # pxr has Objective-C++ code.
+    # pxr has Objective-C++ code: the sources are either listed under
+    # per_os["macos"] or the whole library is macOS-only.
+    macos_only = target_compatible_with == ["@platforms//os:macos"]
     if objc_srcs or any(os_objc_srcs.values()):
-        if objc_srcs or [os for os, v in os_objc_srcs.items() if v and os != "macos"]:
+        if (objc_srcs and not macos_only) or [os for os, v in os_objc_srcs.items() if v and os != "macos"]:
             fail("pxr_library(%s): Objective-C++ sources must be listed under per_os[\"macos\"]" % name)
         objc_name = name + "_objc"
         objc_library(
             name = objc_name,
-            non_arc_srcs = os_objc_srcs["macos"],
+            non_arc_srcs = objc_srcs + os_objc_srcs.get("macos", []),
             hdrs = hdrs,
             # objc_library has no local_defines; pass them as flags.
             copts = copts + ["-D" + d for d in defines + library_defines],
+            # A library whose code is all Objective-C++ (hgiMetal) links
+            # through this target only.
+            linkopts = linkopts,
             deps = deps,
             alwayslink = True,
-            target_compatible_with = ["@platforms//os:macos"],
+            target_compatible_with = target_compatible_with or ["@platforms//os:macos"],
             visibility = ["//visibility:private"],
         )
         deps = deps + select({
@@ -284,6 +325,10 @@ def pxr_library(
     cc_library(
         name = name,
         srcs = cc_srcs,
+        textual_hdrs = _includable_files(
+            [s for s in srcs if not s.startswith(":")],
+            include_current_dir,
+        ),
         hdrs = hdrs,
         copts = copts,
         linkopts = linkopts,
@@ -292,6 +337,7 @@ def pxr_library(
         deps = deps,
         alwayslink = True,
         visibility = visibility,
+        target_compatible_with = target_compatible_with,
     )
 
     # Objects of the _<name> Python extension module. //bazel/python links
@@ -309,12 +355,14 @@ def pxr_library(
             deps = [":" + name] + _PYTHON_DEPS,
             alwayslink = True,
             visibility = visibility,
+            target_compatible_with = target_compatible_with,
         )
     if pymodule_files:
         native.filegroup(
             name = name + "_pyfiles",
             srcs = pymodule_files,
             visibility = visibility,
+            target_compatible_with = target_compatible_with,
         )
 
     if resource_files:
@@ -325,9 +373,10 @@ def pxr_library(
             entries = resource_files,
             srcs = {e.split(":")[0]: None for e in resource_files}.keys(),
             visibility = visibility,
+            target_compatible_with = target_compatible_with,
         )
 
-def pxr_cpp_bin(name, libraries = []):
+def pxr_cpp_bin(name, libraries = [], target_compatible_with = None):
     """A C++ program, like pxr_cpp_bin() in Public.cmake: <name>.cpp.
 
     pxr libraries come from the monolithic library; the program links
@@ -336,7 +385,7 @@ def pxr_cpp_bin(name, libraries = []):
     cc_binary(
         name = name,
         srcs = [name + ".cpp"],
-        copts = PXR_COPTS,
+        copts = PXR_COPTS + include_current_dir_copts(),
         linkopts = PXR_LINKOPTS,
         deps = ["//pxr"] + libraries + [
             "@rules_python//python/cc:current_py_cc_libs",
@@ -344,9 +393,10 @@ def pxr_cpp_bin(name, libraries = []):
         dynamic_deps = PXR_DYNAMIC_DEPS,
         data = [_RESOURCES],
         visibility = ["//visibility:public"],
+        target_compatible_with = target_compatible_with,
     )
 
-def pxr_python_bin(name, python_file):
+def pxr_python_bin(name, python_file, target_compatible_with = None):
     """A Python program, like pxr_python_bin() in Public.cmake.
 
     Programs run with the Python packages CMake looks for (Jinja2, for the
@@ -363,4 +413,5 @@ def pxr_python_bin(name, python_file):
             "//vendor/jinja2",
         ],
         visibility = ["//visibility:public"],
+        target_compatible_with = target_compatible_with,
     )

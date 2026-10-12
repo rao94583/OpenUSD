@@ -1,0 +1,73 @@
+# libpng, for OpenImageIO (see README.md). Mirrors CMakeLists.txt with its
+# default options, including hardware optimizations (NEON on arm64, SSE2 on
+# x86_64).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+# CMake generates pnglibconf.h from pnglibconf.dfa; for the default
+# configuration that is scripts/pnglibconf.h.prebuilt.
+genrule(
+    name = "pnglibconf",
+    srcs = ["scripts/pnglibconf.h.prebuilt"],
+    outs = ["pnglibconf.h"],
+    cmd = "cp $< $@",
+)
+
+cc_library(
+    name = "libpng",
+    srcs = glob(
+        [
+            "png*.c",
+            "pngpriv.h",
+            "pngdebug.h",
+            "pnginfo.h",
+            "pngstruct.h",
+        ],
+    ) + select({
+        "@platforms//cpu:aarch64": glob(["arm/*.c"]),
+        "@platforms//cpu:x86_64": glob(["intel/*.c"]),
+        "//conditions:default": [],
+    }),
+    hdrs = [
+        "png.h",
+        "pngconf.h",
+        ":pnglibconf",
+    ],
+    copts = ["-w"],
+    includes = ["."],
+    local_defines = select({
+        "@platforms//cpu:aarch64": ["PNG_ARM_NEON_OPT=2"],
+        "@platforms//cpu:x86_64": ["PNG_INTEL_SSE_OPT=1"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":install_layout",
+        "//vendor/zlib",
+    ],
+)
+
+# The install layout also has the headers in include/libpng16/ (dependents
+# include e.g. <libpng16/png.h>).
+genrule(
+    name = "installed_headers",
+    srcs = [
+        "png.h",
+        "pngconf.h",
+        ":pnglibconf",
+    ],
+    outs = [
+        "include/libpng16/png.h",
+        "include/libpng16/pngconf.h",
+        "include/libpng16/pnglibconf.h",
+    ],
+    cmd = "cp $(SRCS) $(RULEDIR)/include/libpng16/",
+)
+
+cc_library(
+    name = "install_layout",
+    hdrs = [":installed_headers"],
+    includes = ["include"],
+    visibility = ["//visibility:private"],
+)

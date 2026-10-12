@@ -1,0 +1,26 @@
+# Generated from pxr/imaging/hdGp/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+
+pxr_library(
+    name = "hdGp",
+    libraries = [
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hf",
+        "//vendor/onetbb:tbb",
+    ],
+    public_classes = [
+        "generativeProcedural",
+        "generativeProceduralPlugin",
+        "generativeProceduralPluginRegistry",
+        "generativeProceduralFilteringSceneIndex",
+        "generativeProceduralResolvingSceneIndex",
+        "sceneIndexPlugin",
+    ],
+    public_headers = [
+        "api.h",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+)

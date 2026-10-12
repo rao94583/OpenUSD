@@ -1,0 +1,228 @@
+# Generated from pxr/usdImaging/bin/usdrecord/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_python_bin")
+load("//bazel:pxr_test.bzl", "pxr_test", "pxr_test_files", "pxr_test_tree")
+
+pxr_python_bin(
+    name = "usdrecord",
+    python_file = "usdrecord.py",
+)
+
+pxr_test_files(
+    name = "test_files",
+    testenvs = {
+        "RecordTest": "testenv/RecordTest",
+        "SmallObjectTest": "testenv/SmallObjectTest",
+    },
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":test_files",
+    ],
+)
+
+pxr_test(
+    name = "testUsdRecordSingleFrame",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord AnimCube.usda AnimCube.1.png",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCube.1.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
+)
+
+pxr_test(
+    name = "testUsdRecordMultipleFrames",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord AnimCube.usda AnimCube.#.png --frames 1,5,10",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCube.1.png",
+            "AnimCube.5.png",
+            "AnimCube.10.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
+)
+
+pxr_test(
+    name = "testUsdRecordSessionLayer",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord --sessionLayer overrideDisplayColor.usda AnimCube.usda AnimCube_overrides.1.png",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCube_overrides.1.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
+)
+
+pxr_test(
+    name = "testUsdRecordSmallObject",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord --enableDomeLightVisibility test.usda out.png",
+        "IMAGE_DIFF_COMPARE": [
+            "out.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/SmallObjectTest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
+)
+
+pxr_test(
+    name = "testUsdRecordSingleFrame_SceneIndex",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord AnimCube.usda AnimCube.1.png",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCube.1.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
+)
+
+pxr_test(
+    name = "testUsdRecordMultipleFrames_SceneIndex",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord AnimCube.usda AnimCube.#.png --frames 1,5,10",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCube.1.png",
+            "AnimCube.5.png",
+            "AnimCube.10.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
+)
+
+pxr_test(
+    name = "testUsdRecordSessionLayer_SceneIndex",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord --sessionLayer overrideDisplayColor.usda AnimCube.usda AnimCube_overrides.1.png",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCube_overrides.1.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
+)
+
+pxr_test(
+    name = "testUsdRecordSmallObject_SceneIndex",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord --enableDomeLightVisibility test.usda out.png",
+        "IMAGE_DIFF_COMPARE": [
+            "out.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/SmallObjectTest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+    excluded = "needs PySide for an OpenGL context (usdview's dependencies, deferred)",
+)

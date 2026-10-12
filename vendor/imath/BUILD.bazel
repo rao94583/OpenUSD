@@ -1,0 +1,42 @@
+# Imath, for OpenEXR, OpenColorIO and OpenImageIO (see README.md).
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel:cmake_configure_file.bzl", "cmake_configure_file")
+
+package(default_visibility = ["//visibility:public"])
+
+# Values from config/ImathSetup.cmake and CMakeLists.txt defaults.
+cmake_configure_file(
+    name = "imath_config",
+    src = "config/ImathConfig.h.in",
+    out = "src/Imath/ImathConfig.h",
+    values = {
+        "IMATH_HALF_USE_LOOKUP_TABLE": "ON",
+        "IMATH_HAVE_LARGE_STACK": "OFF",
+        "IMATH_NAMESPACE_CUSTOM": "0",
+        "IMATH_INTERNAL_NAMESPACE": "Imath_3_1",
+        "IMATH_NAMESPACE": "Imath",
+        "IMATH_VERSION": "3.1.12",
+        "IMATH_PACKAGE_NAME": "Imath 3.1.12",
+        "Imath_VERSION_MAJOR": "3",
+        "Imath_VERSION_MINOR": "1",
+        "Imath_VERSION_PATCH": "12",
+        "IMATH_VERSION_RELEASE_TYPE": "",
+        "IMATH_LIB_VERSION": "29.11.0",
+        "IMATH_USE_NOEXCEPT": "ON",
+        # Static library: no visibility attributes needed.
+        "IMATH_ENABLE_API_VISIBILITY": "OFF",
+    },
+)
+
+cc_library(
+    name = "imath",
+    srcs = glob(["src/Imath/*.cpp"]),
+    hdrs = glob(["src/Imath/*.h"]) + [":imath_config"],
+    copts = ["-w"],
+    # Both <Imath/half.h> and <half.h> styles are used by dependents.
+    includes = [
+        "src",
+        "src/Imath",
+    ],
+)
