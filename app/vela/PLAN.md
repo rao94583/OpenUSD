@@ -8,8 +8,8 @@ querying scenes in plain English, with skills for the USD Python API and for
 driving the app.
 
 This document records the decisions made so far, the architecture and the
-phases. Phase 1 implementation has started; see [README.md](README.md)
-for build and runtime verification instructions.
+phases. Phases 1 and 2 are done; see [README.md](README.md) for building,
+using and testing the app.
 
 ## Decisions
 
@@ -181,6 +181,40 @@ The test also confirms the native executable loads the runtime's `libusd_ms`.
 Finder double-click dispatch and the visible window still require a manual
 smoke check. In-process Python and the live document API remain in Phase 6.
 Release signing/notarization and the other Phase 0 decisions remain open.
+
+## Phase 2 progress
+
+Done. Code: `core/free_camera.*` (plain C++, Maya camera math ported from
+usdview's `freeCamera.py`), `viewport/renderer.*` (`UsdImagingGLEngine` on
+an app-owned `HgiMetal`, presentation disabled, the color AOV drawn into a
+`CAMetalLayer` drawable by a small Metal pass), `viewport/viewport_view.*`
+(input, picking with `TestIntersection`, selection highlight) and
+`document.mm` (window, timeline).
+
+- `free_camera_test`: orientation for Y- and Z-up, tumble stays upright and
+  on the sphere, tracking keeps the point under the cursor, dolly, framing
+  fits rotated bounds, clipping range, scene camera round trip, drag modes.
+- `snapshot_test`: Vela's images match usdrecord's for 7 views. 6 are
+  bit-identical; niSpheres differs on under 0.07% of edge pixels, as much as
+  usdrecord differs from itself on that scene.
+- Frame rate (Apple M5 Pro): 22,500 distinct meshes, 23M triangles, a full
+  tumble at 2400x1544 in the window: 33 fps (30 ms per frame); 35 fps
+  offscreen at 1920x1080. First image 1.8 s after open. Small scenes run at
+  the display's refresh rate.
+
+Notes for later phases:
+
+- The view schedules its own renders (a display link on macOS 14+, a main
+  queue dispatch on 13): AppKit never calls `updateLayer` for a
+  `CAMetalLayer` backing layer. No frames are drawn while the display
+  sleeps.
+- Looking through scene cameras in the window (and detaching to a free
+  camera, already in `FreeCamera::FromGfCamera`) is left for the camera menu
+  in Phase 5. Orthographic free cameras are not implemented yet.
+- Framing fits the bounds' sphere to the vertical field of view; very tall,
+  narrow windows can crop wide scenes horizontally.
+- The F/A and arrow keys are handled by the view and window controller for
+  now; Phase 3 moves them to the action registry with the menus.
 
 ## Testing
 

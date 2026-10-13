@@ -1,5 +1,7 @@
 load("@rules_apple//apple:macos.bzl", "macos_application")
 load("@rules_cc//cc:cc_import.bzl", "cc_import")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("@rules_python//python:py_binary.bzl", "py_binary")
 load("@rules_python//python:py_test.bzl", "py_test")
@@ -7,7 +9,14 @@ load(":bundle.bzl", "usd_headers", "vela_runtime", "vela_archive")
 
 usd_headers(
     name = "usd_headers",
-    deps = ["//pxr/usd/usd", "//pxr/base/plug"],
+    deps = [
+        "//pxr/base/plug",
+        "//pxr/imaging/hgiMetal",
+        "//pxr/imaging/hio",
+        "//pxr/usd/usd",
+        "//pxr/usd/usdGeom",
+        "//pxr/usdImaging/usdImagingGL",
+    ],
 )
 
 cc_import(
@@ -15,12 +24,43 @@ cc_import(
     shared_library = "//bazel/install:usd_ms",
 )
 
+# Plain C++ with no AppKit: camera math (and, from Phase 3, the document).
+cc_library(
+    name = "core",
+    srcs = ["core/free_camera.cpp"],
+    hdrs = ["core/free_camera.h"],
+    deps = [
+        ":usd_headers",
+        ":usd_shared",
+        "@rules_python//python/cc:current_py_cc_libs",
+    ],
+)
+
+cc_test(
+    name = "free_camera_test",
+    srcs = ["core/free_camera_test.cpp"],
+    deps = [":core"],
+)
+
 objc_library(
     name = "frontend",
-    srcs = ["main.mm"],
+    srcs = [
+        "document.h",
+        "document.mm",
+        "main.mm",
+        "viewport/renderer.h",
+        "viewport/renderer.mm",
+        "viewport/viewport_view.h",
+        "viewport/viewport_view.mm",
+    ],
     copts = ["-fobjc-arc"],
-    sdk_frameworks = ["AppKit"],
+    sdk_frameworks = [
+        "AppKit",
+        "Metal",
+        "QuartzCore",
+    ],
     deps = [
+        ":core",
         ":usd_headers",
         ":usd_shared",
         "@rules_python//python/cc:current_py_cc_libs",
@@ -54,4 +94,53 @@ py_test(
     args = ["$(location :archive)"],
     data = [":archive"],
     tags = ["requires-darwin"],
+)
+
+# Scenes in the packages' public test trees, as runfiles paths.
+SNAPSHOT_SCENES = [
+    "pxr/usdImaging/bin/usdrecord/tests/ctest/RecordTest/AnimCube.usda",
+    "pxr/usdImaging/usdImagingGL/tests/ctest/testUsdImagingGLNativeImplicits/niSpheres.usda",
+    "pxr/usdImaging/usdImagingGL/tests/ctest/testUsdImagingGLPreviewSurface/testPreviewSurfaceDomeLight.usda",
+    "pxr/usdImaging/usdImagingGL/tests/ctest/testUsdImagingGLPreviewSurface/testPreviewSurfaceNormalMap.usda",
+    "pxr/usdImaging/usdImagingGL/tests/ctest/testUsdImagingGLPreviewSurface/testPreviewSurfaceTexture.usda",
+]
+
+# Phase 2: the viewport's image matches usdrecord's for the same view.
+py_test(
+    name = "snapshot_test",
+    srcs = ["test_snapshot.py"],
+    main = "test_snapshot.py",
+    args = [
+        "$(rootpath :archive)",
+        "$(rootpath //pxr/usdImaging/bin/usdrecord)",
+        "$(rootpath //vendor/openimageio:idiff)",
+    ] + SNAPSHOT_SCENES,
+    data = [
+        "snapshot_camera.py",
+        ":archive",
+        "//pxr/usdImaging/bin/usdrecord",
+        "//pxr/usdImaging/bin/usdrecord:test_tree",
+        "//pxr/usdImaging/usdImagingGL:test_tree",
+        "//vendor/openimageio:idiff",
+    ],
+    tags = ["requires-darwin"],
+)
+
+# Phase 2: interactive frame rate on a large scene. Manual, since it depends
+# on the machine: bazel test //app/vela:benchmark_test --test_output=all
+py_test(
+    name = "benchmark_test",
+    size = "large",
+    srcs = ["test_benchmark.py"],
+    main = "test_benchmark.py",
+    args = ["$(rootpath :archive)"],
+    data = [
+        "make_large_scene.py",
+        ":archive",
+    ],
+    tags = [
+        "exclusive",
+        "manual",
+        "requires-darwin",
+    ],
 )

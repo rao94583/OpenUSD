@@ -1,14 +1,57 @@
 # Vela
 
-Phase 1 native macOS document viewer. Requires macOS 13+, Xcode and the
-repository's Bazel toolchain. It opens `.usd`, `.usda`, `.usdc` and `.usdz`
-and displays the number of active, loaded, defined prims (USD's default
-traversal). File → Open and Finder document opening use `NSDocument`.
+Native macOS USD viewer (Phase 2: viewport). Requires macOS 13+, Xcode and
+the repository's Bazel toolchain. It opens `.usd`, `.usda`, `.usdc` and
+`.usdz` through `NSDocument` (File → Open, Finder) and shows the stage in a
+Storm viewport rendered with Metal.
 
 ```sh
 bazel build //app/vela:archive
-bazel test //app/vela:bundle_smoke_test
+bazel test //app/vela:all                  # camera math, bundle, snapshots
+bazel test //app/vela:benchmark_test --test_output=all   # manual
 ```
+
+## Viewport
+
+Navigation matches Autodesk Maya:
+
+| Input | Action |
+|---|---|
+| Option + left drag | Tumble around the center of interest |
+| Option + middle drag, or Option + Command + left drag | Track |
+| Option + right drag, or Option + left + middle drag | Dolly |
+| Scroll wheel, pinch | Dolly |
+| Option + two-finger drag | Track |
+| Click, Shift-click | Select, toggle selection |
+| F / A | Frame selection / frame all |
+| ← / → / Space | Previous frame / next frame / play |
+
+The timeline bar (play, frame slider) appears for stages with an authored
+time code range. The status line shows the prim count, the selection and
+the last frame's time.
+
+Rendering matches usdrecord's defaults (camera light, sRGB color correction,
+default and proxy purposes), with usdview's grey background and visible dome
+light textures in the window. The free camera's clipping planes are fitted
+to the stage bounds.
+
+## Command line
+
+```sh
+Vela --check-document FILE          # print the prim count
+Vela --snapshot FILE OUT.png [--camera PATH] [--frame T] [--width W] [--height H]
+Vela --benchmark FILE [--frames N] [--width W] [--height H]   # offscreen
+Vela --benchmark FILE --window [--frames N]                   # on screen
+```
+
+`--snapshot` writes exactly what the viewport draws; with `--camera` it
+sizes the image as usdrecord does. `snapshot_test` renders the same views
+with usdrecord and compares them with `idiff`: AnimCube at three frames, a
+natively instanced scene and three UsdPreviewSurface scenes (textures,
+normal maps, dome light). `make_large_scene.py` writes the benchmark scene:
+22,500 distinct meshes, 23M triangles.
+
+## Bundle
 
 Extract `bazel-bin/app/vela/archive.zip` with Archive Utility or `ditto -x -k`,
 then open `Vela.app`. The app can be moved independently of the checkout.
