@@ -7,7 +7,7 @@ Storm viewport rendered with Metal.
 
 ```sh
 bazel build //app/vela:archive
-bazel test //app/vela:all                  # camera math, bundle, snapshots
+bazel test //app/vela:all                  # core, menus, bundle, snapshots
 bazel test //app/vela:benchmark_test --test_output=all   # manual
 ```
 
@@ -35,10 +35,19 @@ default and proxy purposes), with usdview's grey background and visible dome
 light textures in the window. The free camera's clipping planes are fitted
 to the stage bounds.
 
+## Actions and undo
+
+Every menu item and shortcut runs a named action from the registry in
+`core/standard_actions.cpp`; `--describe-actions` lists them with their
+parameter schemas. Changes to the stage are undoable across all its
+layers (Edit → Undo, ⌘Z), one step per action.
+
 ## Command line
 
 ```sh
 Vela --check-document FILE          # print the prim count
+Vela --describe-actions             # the action registry, as JSON
+Vela --describe-menus               # the main menu, as text
 Vela --snapshot FILE OUT.png [--camera PATH] [--frame T] [--width W] [--height H]
 Vela --benchmark FILE [--frames N] [--width W] [--height H]   # offscreen
 Vela --benchmark FILE --window [--frames N]                   # on screen

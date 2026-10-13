@@ -5,8 +5,11 @@
 #include <cstring>
 #include <string>
 #import "document.h"
+#import "menus.h"
 #import "viewport/viewport_view.h"
+#include "app/vela/core/actions.h"
 #include "app/vela/core/free_camera.h"
+#include "pxr/base/js/json.h"
 #include "app/vela/viewport/renderer.h"
 #include "pxr/base/plug/registry.h"
 #include "pxr/usd/usdGeom/bboxCache.h"
@@ -25,9 +28,6 @@ PXR_NAMESPACE_USING_DIRECTIVE
 }
 @end
 
-static void AddMenuItem(NSMenu *menu, NSString *title, SEL action, NSString *key) {
-    [menu addItemWithTitle:title action:action keyEquivalent:key];
-}
 
 // Options shared by the command-line render modes.
 struct RenderOptions {
@@ -214,6 +214,8 @@ static void Usage() {
     fprintf(stderr,
         "Usage: Vela [FILE...]\n"
         "       Vela --check-document FILE\n"
+        "       Vela --describe-actions     # the action registry, as JSON\n"
+        "       Vela --describe-menus       # the main menu, as text\n"
         "       Vela --snapshot FILE OUTPUT.png [--camera PATH] [--frame TIME]\n"
         "                       [--width W] [--height H]\n"
         "       Vela --benchmark FILE [--frames N] [--frame TIME] [--width W] [--height H]\n"
@@ -227,6 +229,14 @@ int main(int argc, const char *argv[]) {
             [[runtime stringByAppendingPathComponent:@"lib/usd/plugInfo.json"] UTF8String]);
         PlugRegistry::GetInstance().RegisterPlugins(
             [[runtime stringByAppendingPathComponent:@"plugin/usd/plugInfo.json"] UTF8String]);
+        if (argc == 2 && strcmp(argv[1], "--describe-actions") == 0) {
+            printf("%s\n", JsWriteToString(vela::ActionRegistry::Get().Describe()).c_str());
+            return 0;
+        }
+        if (argc == 2 && strcmp(argv[1], "--describe-menus") == 0) {
+            printf("%s", VelaDescribeMenu(VelaBuildMainMenu()).UTF8String);
+            return 0;
+        }
         if (argc == 3 && strcmp(argv[1], "--check-document") == 0) {
             VelaDocument *document = [VelaDocument new];
             NSError *error = nil;
@@ -252,21 +262,7 @@ int main(int argc, const char *argv[]) {
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
         VelaDelegate *delegate = [VelaDelegate new];
         NSApp.delegate = delegate;
-        NSMenu *bar = [NSMenu new];
-        NSMenuItem *appItem = [NSMenuItem new];
-        NSMenu *app = [[NSMenu alloc] initWithTitle:@"Vela"];
-        AddMenuItem(app, @"Quit Vela", @selector(terminate:), @"q");
-        appItem.submenu = app; [bar addItem:appItem];
-        NSMenuItem *fileItem = [NSMenuItem new];
-        NSMenu *file = [[NSMenu alloc] initWithTitle:@"File"];
-        AddMenuItem(file, @"Open…", @selector(openDocument:), @"o");
-        AddMenuItem(file, @"Close", @selector(performClose:), @"w");
-        fileItem.submenu = file; [bar addItem:fileItem];
-        NSMenuItem *viewItem = [NSMenuItem new];
-        NSMenu *view = [[NSMenu alloc] initWithTitle:@"View"];
-        AddMenuItem(view, @"Frame Selected (F)", @selector(frameSelection), @"");
-        AddMenuItem(view, @"Frame All (A)", @selector(frameAll), @"");
-        viewItem.submenu = view; [bar addItem:viewItem];
+        NSMenu *bar = VelaBuildMainMenu();
         NSApp.mainMenu = bar;
         [NSDocumentController sharedDocumentController];
         [NSApp run];

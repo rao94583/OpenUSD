@@ -1,13 +1,10 @@
 #import "viewport_view.h"
 #import <QuartzCore/QuartzCore.h>
 
-#include "app/vela/core/free_camera.h"
+#include "app/vela/core/actions.h"
 #include "app/vela/viewport/renderer.h"
 
 #include "pxr/base/gf/frustum.h"
-#include "pxr/usd/usdGeom/bboxCache.h"
-#include "pxr/usd/usdGeom/metrics.h"
-#include "pxr/usd/usdGeom/tokens.h"
 
 #include <algorithm>
 #include <chrono>
@@ -32,16 +29,12 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
 @end
 
 @implementation VelaViewportView {
-    UsdStageRefPtr _stage;
+    std::shared_ptr<vela::Document> _document;
+    int _observer;
     std::unique_ptr<vela::Renderer> _renderer;
-    vela::FreeCamera _camera;
-    SdfPathVector _selection;
     vela::CameraDrag _drag;
     BOOL _dragged;
     double _frameMilliseconds;
-    GfBBox3d _stageBounds;
-    UsdTimeCode _stageBoundsTime;
-    BOOL _stageBoundsValid;
     // Renders are requested by input and changes, and run at most once per
     // display refresh (macOS 14+) or main loop pass (macOS 13).
     BOOL _needsRender;
@@ -55,19 +48,36 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     void (^_benchmarkCompletion)(double seconds);
 }
 
-- (instancetype)initWithStage:(UsdStageRefPtr)stage {
+- (instancetype)initWithDocument:(std::shared_ptr<vela::Document>)document {
     if (!(self = [super initWithFrame:NSMakeRect(0, 0, 800, 600)])) {
         return nil;
     }
-    _stage = stage;
+    _document = std::move(document);
     _renderer = std::make_unique<vela::Renderer>();
-    _renderer->SetStage(stage);
-    _camera = vela::FreeCamera(UsdGeomGetStageUpAxis(stage) == UsdGeomTokens->z);
-    _time = stage->HasAuthoredTimeCodeRange()
-        ? UsdTimeCode(stage->GetStartTimeCode()) : UsdTimeCode::EarliestTime();
+    _renderer->SetStage(_document->GetStage());
+    __weak VelaViewportView *weakSelf = self;
+    _observer = _document->AddObserver([weakSelf](unsigned changes) {
+        [weakSelf documentChanged:changes];
+    });
     self.wantsLayer = YES;
-    [self frameAll];
     return self;
+}
+
+- (void)dealloc {
+    _document->RemoveObserver(_observer);
+}
+
+- (void)documentChanged:(unsigned)changes {
+    using D = vela::Document;
+    if (changes & D::Selection) {
+        _renderer->SetSelection(_document->GetSelection());
+    }
+    if (changes & (D::StageContent | D::Selection | D::Time | D::Camera)) {
+        [self requestRender];
+    }
+    if (changes & D::Selection) {
+        [self reportStatus];
+    }
 }
 
 - (CALayer *)makeBackingLayer {
@@ -143,40 +153,10 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     [self requestRender];
 }
 
-- (void)setTime:(UsdTimeCode)time {
-    _time = time;
-    [self requestRender];
-    [self reportStatus];
-}
-
-- (SdfPathVector)selection { return _selection; }
-
 #pragma mark Camera
-
-- (GfBBox3d)boundsOf:(const SdfPathVector &)paths {
-    UsdGeomBBoxCache cache(_time, {UsdGeomTokens->default_, UsdGeomTokens->proxy},
-                           /* useExtentsHint = */ true);
-    GfBBox3d bounds;
-    for (const SdfPath &path : paths) {
-        if (UsdPrim prim = _stage->GetPrimAtPath(path)) {
-            bounds = GfBBox3d::Combine(bounds, cache.ComputeWorldBound(prim));
-        }
-    }
-    return bounds;
-}
 
 - (double)backingScale {
     return self.window ? self.window.backingScaleFactor : 1.0;
-}
-
-// The stage's bounds, for clipping planes and frame all, cached per time.
-- (GfBBox3d)stageBounds {
-    if (!_stageBoundsValid || _stageBoundsTime != _time) {
-        _stageBounds = [self boundsOf:{SdfPath::AbsoluteRootPath()}];
-        _stageBoundsTime = _time;
-        _stageBoundsValid = YES;
-    }
-    return _stageBounds;
 }
 
 - (GfVec2i)pixelSize {
@@ -186,22 +166,8 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
 
 - (GfCamera)gfCamera {
     const GfVec2i size = [self pixelSize];
-    return _camera.ComputeGfCamera(double(size[0]) / size[1],
-                                   [self stageBounds]);
-}
-
-- (void)frameAll {
-    _camera.Frame([self stageBounds]);
-    [self requestRender];
-}
-
-- (void)frameSelection {
-    if (_selection.empty()) {
-        [self frameAll];
-        return;
-    }
-    _camera.Frame([self boundsOf:_selection]);
-    [self requestRender];
+    return _document->GetCamera().ComputeGfCamera(double(size[0]) / size[1],
+                                                  _document->GetStageBounds());
 }
 
 #pragma mark Drawing
@@ -216,11 +182,11 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     }
     const auto start = std::chrono::steady_clock::now();
     if (_benchmarkRemaining > 0) {
-        _camera.Tumble(360.0 / _benchmarkFrames, 0.0);
+        _document->GetCamera().Tumble(360.0 / _benchmarkFrames, 0.0);
     }
     vela::View view;
     view.camera = [self gfCamera];
-    view.time = _time;
+    view.time = _document->GetTime();
     view.size = size;
     view.clearColor = BackgroundColor;
     id<MTLCommandBuffer> commandBuffer = [_renderer->GetQueue() commandBuffer];
@@ -267,11 +233,12 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     if (!self.statusChanged) {
         return;
     }
+    const SdfPathVector &paths = _document->GetSelection();
     NSString *selection = @"No selection";
-    if (_selection.size() == 1) {
-        selection = @(_selection.front().GetText());
-    } else if (!_selection.empty()) {
-        selection = [NSString stringWithFormat:@"%zu prims selected", _selection.size()];
+    if (paths.size() == 1) {
+        selection = @(paths.front().GetText());
+    } else if (!paths.empty()) {
+        selection = [NSString stringWithFormat:@"%zu prims selected", paths.size()];
     }
     self.statusChanged([NSString stringWithFormat:@"%@    %.1f ms",
                         selection, _frameMilliseconds]);
@@ -289,21 +256,15 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     const GfFrustum frustum =
         [self gfCamera].GetFrustum().ComputeNarrowedFrustum(point, pickSize);
     SdfPath hit;
-    const bool found = _renderer->Pick(frustum, _time, &hit, nullptr);
-    if (!extend) {
-        _selection.clear();
+    if (!_renderer->Pick(frustum, _document->GetTime(), &hit, nullptr) && extend) {
+        return;
     }
-    if (found) {
-        auto existing = std::find(_selection.begin(), _selection.end(), hit);
-        if (existing != _selection.end()) {
-            _selection.erase(existing);
-        } else {
-            _selection.push_back(hit);
-        }
-    }
-    _renderer->SetSelection(_selection);
-    [self requestRender];
-    [self reportStatus];
+    JsArray paths;
+    if (!hit.IsEmpty()) paths.push_back(JsValue(hit.GetString()));
+    vela::ActionRegistry::Get().Run(*_document, "select", {
+        {"paths", JsValue(paths)},
+        {"mode", JsValue(extend ? "toggle" : "replace")},
+    });
 }
 
 #pragma mark Mouse and trackpad
@@ -323,9 +284,9 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     }
     // Drag in backing pixels, y down, as the camera math expects.
     const double scale = [self backingScale];
-    _camera.Drag(_drag, event.deltaX * scale, event.deltaY * scale,
-                 [self pixelSize][1]);
-    [self requestRender];
+    _document->GetCamera().Drag(_drag, event.deltaX * scale, event.deltaY * scale,
+                                [self pixelSize][1]);
+    _document->CameraChanged();
 }
 
 - (void)mouseDown:(NSEvent *)event { [self beginDrag:event]; }
@@ -364,35 +325,20 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
         (event.modifierFlags & NSEventModifierFlagOption)) {
         // Option + two-finger drag tracks; the content follows the fingers.
         const double scale = [self backingScale];
-        _camera.Drag(vela::CameraDrag::Track, event.scrollingDeltaX * scale,
-                     event.scrollingDeltaY * scale, [self pixelSize][1]);
+        _document->GetCamera().Drag(vela::CameraDrag::Track, event.scrollingDeltaX * scale,
+                                    event.scrollingDeltaY * scale, [self pixelSize][1]);
     } else {
         // A wheel notch dollies by about 12%, as in usdview.
         const double step = event.hasPreciseScrollingDeltas
             ? event.scrollingDeltaY * 0.01 : event.scrollingDeltaY * 0.12;
-        _camera.Dolly(1.0 - std::clamp(step, -0.5, 0.5));
+        _document->GetCamera().Dolly(1.0 - std::clamp(step, -0.5, 0.5));
     }
-    [self requestRender];
+    _document->CameraChanged();
 }
 
 - (void)magnifyWithEvent:(NSEvent *)event {
-    _camera.Dolly(1.0 / std::max(0.1, 1.0 + event.magnification));
-    [self requestRender];
-}
-
-#pragma mark Keyboard
-
-- (void)keyDown:(NSEvent *)event {
-    const NSEventModifierFlags flags = event.modifierFlags &
-        (NSEventModifierFlagCommand | NSEventModifierFlagControl | NSEventModifierFlagOption);
-    NSString *key = event.charactersIgnoringModifiers.lowercaseString;
-    if (!flags && [key isEqualToString:@"f"]) {
-        [self frameSelection];
-    } else if (!flags && [key isEqualToString:@"a"]) {
-        [self frameAll];
-    } else {
-        [super keyDown:event];
-    }
+    _document->GetCamera().Dolly(1.0 / std::max(0.1, 1.0 + event.magnification));
+    _document->CameraChanged();
 }
 
 @end

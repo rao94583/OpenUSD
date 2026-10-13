@@ -27,8 +27,20 @@ cc_import(
 # Plain C++ with no AppKit: camera math (and, from Phase 3, the document).
 cc_library(
     name = "core",
-    srcs = ["core/free_camera.cpp"],
-    hdrs = ["core/free_camera.h"],
+    srcs = [
+        "core/actions.cpp",
+        "core/document.cpp",
+        "core/free_camera.cpp",
+        "core/standard_actions.cpp",
+        "core/undo.cpp",
+    ],
+    hdrs = [
+        "core/actions.h",
+        "core/document.h",
+        "core/free_camera.h",
+        "core/undo.h",
+    ],
+    copts = ["-std=c++20"],
     deps = [
         ":usd_headers",
         ":usd_shared",
@@ -42,12 +54,31 @@ cc_test(
     deps = [":core"],
 )
 
+# Core tests that open stages: USD's plugin resources come from the install
+# tree in runfiles (see core/test_support.h).
+[cc_test(
+    name = name,
+    srcs = [
+        "core/%s.cpp" % name,
+        "core/test_support.h",
+    ],
+    copts = ["-std=c++20"],
+    data = ["//bazel/install:resources"],
+    deps = [":core"],
+) for name in [
+    "actions_test",
+    "document_test",
+    "undo_test",
+]]
+
 objc_library(
     name = "frontend",
     srcs = [
         "document.h",
         "document.mm",
         "main.mm",
+        "menus.h",
+        "menus.mm",
         "viewport/renderer.h",
         "viewport/renderer.mm",
         "viewport/viewport_view.h",
@@ -92,6 +123,16 @@ py_test(
     srcs = ["test_bundle.py"],
     main = "test_bundle.py",
     args = ["$(location :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
+)
+
+# Phase 3: menus are built from the action registry.
+py_test(
+    name = "menus_test",
+    srcs = ["test_menus.py"],
+    main = "test_menus.py",
+    args = ["$(rootpath :archive)"],
     data = [":archive"],
     tags = ["requires-darwin"],
 )

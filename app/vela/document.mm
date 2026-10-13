@@ -1,5 +1,8 @@
 #import "document.h"
+#import "menus.h"
 #import "viewport/viewport_view.h"
+
+#include "app/vela/core/actions.h"
 
 #include "pxr/usd/usd/primRange.h"
 
@@ -8,15 +11,17 @@
 PXR_NAMESPACE_USING_DIRECTIVE
 
 // The viewport above a timeline: play, a frame slider and the status line.
-// Left and right arrows step frames and space plays, when no control has
-// claimed the keys first.
+// Everything goes through the action registry; the controller observes the
+// document to stay in sync.
 @interface VelaWindowController : NSWindowController <NSWindowDelegate>
-- (instancetype)initWithStage:(UsdStageRefPtr)stage primCount:(size_t)count;
+- (instancetype)initWithDocument:(std::shared_ptr<vela::Document>)document
+                       primCount:(size_t)count;
 @property (nonatomic, readonly) VelaViewportView *viewport;
 @end
 
 @implementation VelaWindowController {
-    UsdStageRefPtr _stage;
+    std::shared_ptr<vela::Document> _document;
+    int _observer;
     size_t _primCount;
     VelaViewportView *_viewport;
     NSSlider *_slider;
@@ -24,10 +29,10 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSTextField *_statusLabel;
     NSButton *_playButton;
     NSTimer *_timer;
-    double _start, _end;
 }
 
-- (instancetype)initWithStage:(UsdStageRefPtr)stage primCount:(size_t)count {
+- (instancetype)initWithDocument:(std::shared_ptr<vela::Document>)document
+                       primCount:(size_t)count {
     NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 1200, 800)
         styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
                   NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable
@@ -35,18 +40,18 @@ PXR_NAMESPACE_USING_DIRECTIVE
     if (!(self = [super initWithWindow:window])) {
         return nil;
     }
-    _stage = stage;
+    _document = std::move(document);
     _primCount = count;
-    _start = stage->GetStartTimeCode();
-    _end = stage->GetEndTimeCode();
-    const bool animated = stage->HasAuthoredTimeCodeRange() && _end > _start;
+    const bool animated = _document->IsAnimated();
 
-    _viewport = [[VelaViewportView alloc] initWithStage:stage];
+    _viewport = [[VelaViewportView alloc] initWithDocument:_document];
     _playButton = [NSButton buttonWithImage:
         [NSImage imageWithSystemSymbolName:@"play.fill" accessibilityDescription:@"Play"]
         target:self action:@selector(togglePlayback:)];
     _playButton.bezelStyle = NSBezelStyleTexturedRounded;
-    _slider = [NSSlider sliderWithValue:_start minValue:_start maxValue:_end
+    _slider = [NSSlider sliderWithValue:_document->GetStartTime()
+                               minValue:_document->GetStartTime()
+                               maxValue:_document->GetEndTime()
                                  target:self action:@selector(sliderMoved:)];
     _slider.continuous = YES;
     _frameLabel = [NSTextField labelWithString:@""];
@@ -78,6 +83,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
                     forOrientation:NSLayoutConstraintOrientationVertical];
     window.contentView = content;
     window.initialFirstResponder = _viewport;
+    window.delegate = self;
     [window center];
 
     __weak VelaWindowController *weakSelf = self;
@@ -88,107 +94,123 @@ PXR_NAMESPACE_USING_DIRECTIVE
                 @"%zu prims    %@", strongSelf->_primCount, status];
         }
     };
+    _observer = _document->AddObserver([weakSelf](unsigned changes) {
+        [weakSelf documentChanged:changes];
+    });
     [self showTime];
     return self;
 }
 
+- (void)dealloc {
+    _document->RemoveObserver(_observer);
+    [_timer invalidate];
+}
+
 - (VelaViewportView *)viewport { return _viewport; }
 
-- (void)setTime:(double)time {
-    _viewport.time = UsdTimeCode(time);
-    [self showTime];
+- (void)run:(const char *)action params:(const JsObject &)params {
+    vela::ActionResult result =
+        vela::ActionRegistry::Get().Run(*_document, action, params);
+    if (!result.ok) {
+        NSLog(@"%s", result.error.c_str());
+    }
+}
+
+- (void)documentChanged:(unsigned)changes {
+    if (changes & vela::Document::Time) {
+        [self showTime];
+    }
+    if (changes & vela::Document::Playback) {
+        [self showPlayback];
+    }
 }
 
 - (void)showTime {
-    const UsdTimeCode time = _viewport.time;
+    const UsdTimeCode time = _document->GetTime();
     if (time.IsNumeric()) {
         _slider.doubleValue = time.GetValue();
         _frameLabel.stringValue = [NSString stringWithFormat:@"%g / %g",
-                                   time.GetValue(), _end];
+                                   time.GetValue(), _document->GetEndTime()];
     }
+}
+
+- (void)showPlayback {
+    const bool playing = _document->IsPlaying();
+    [_timer invalidate];
+    _timer = nil;
+    if (playing) {
+        __weak VelaWindowController *weakSelf = self;
+        _timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / _document->GetFramesPerSecond()
+                                                 repeats:YES
+                                                   block:^(NSTimer *) {
+            [weakSelf run:"next_frame" params:{}];
+        }];
+    }
+    _playButton.image = [NSImage imageWithSystemSymbolName:playing ? @"pause.fill" : @"play.fill"
+                                  accessibilityDescription:playing ? @"Pause" : @"Play"];
 }
 
 - (void)sliderMoved:(NSSlider *)slider {
-    [self setTime:std::round(slider.doubleValue)];
-}
-
-- (void)stepBy:(double)frames {
-    if (_end <= _start || !_viewport.time.IsNumeric()) {
-        return;
-    }
-    double time = _viewport.time.GetValue() + frames;
-    if (time > _end) time = _start;
-    if (time < _start) time = _end;
-    [self setTime:time];
+    [self run:"set_time" params:{{"time", JsValue(std::round(slider.doubleValue))}}];
 }
 
 - (void)togglePlayback:(id)sender {
-    if (_timer) {
-        [_timer invalidate];
-        _timer = nil;
-    } else if (_end > _start) {
-        const double fps = _stage->GetFramesPerSecond() > 0 ? _stage->GetFramesPerSecond() : 24;
-        __weak VelaWindowController *weakSelf = self;
-        _timer = [NSTimer scheduledTimerWithTimeInterval:1.0 / fps repeats:YES
-                                                   block:^(NSTimer *) { [weakSelf stepBy:1]; }];
-    }
-    _playButton.image = [NSImage imageWithSystemSymbolName:_timer ? @"pause.fill" : @"play.fill"
-                                  accessibilityDescription:_timer ? @"Pause" : @"Play"];
+    [self run:"toggle_playback" params:{}];
 }
 
+// Shortcuts the menus did not take, e.g. while a menu is disabled.
 - (void)keyDown:(NSEvent *)event {
-    NSString *key = event.charactersIgnoringModifiers;
-    const unichar c = key.length ? [key characterAtIndex:0] : 0;
-    if (c == NSRightArrowFunctionKey) {
-        [self stepBy:1];
-    } else if (c == NSLeftArrowFunctionKey) {
-        [self stepBy:-1];
-    } else if (c == ' ') {
-        [self togglePlayback:nil];
-    } else {
+    if (!VelaRunShortcut(event, *_document)) {
         [super keyDown:event];
     }
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
-    [_timer invalidate];
-    _timer = nil;
+    _document->SetPlaying(false);
 }
 
 @end
 
 @implementation VelaDocument {
-    UsdStageRefPtr _stage;
+    std::shared_ptr<vela::Document> _core;
 }
 
 + (BOOL)autosavesInPlace { return NO; }
 
-- (UsdStageRefPtr)stage { return _stage; }
+- (instancetype)init {
+    if ((self = [super init])) {
+        // Undo is the core's, through the Edit menu's actions.
+        self.hasUndoManager = NO;
+    }
+    return self;
+}
+
+- (std::shared_ptr<vela::Document>)core { return _core; }
 
 - (VelaViewportView *)viewport {
     return ((VelaWindowController *)self.windowControllers.firstObject).viewport;
 }
 
 - (BOOL)readFromURL:(NSURL *)url ofType:(NSString *)type error:(NSError **)error {
-    _stage = UsdStage::Open(url.fileSystemRepresentation);
-    if (_stage) return YES;
+    std::string message;
+    _core = vela::Document::Open(url.fileSystemRepresentation, &message);
+    if (_core) return YES;
     if (error) *error = [NSError errorWithDomain:@"org.openusd.vela" code:1
         userInfo:@{NSLocalizedDescriptionKey:
-            [NSString stringWithFormat:@"Could not open USD stage: %@", url.lastPathComponent]}];
+            [NSString stringWithFormat:@"Could not open USD stage: %@", url.lastPathComponent],
+                   NSLocalizedFailureReasonErrorKey: @(message.c_str())}];
     return NO;
 }
 
 - (size_t)primCount {
     size_t count = 0;
-    if (_stage) for (const auto &prim : _stage->Traverse()) { (void)prim; ++count; }
+    if (_core) for (const auto &prim : _core->GetStage()->Traverse()) { (void)prim; ++count; }
     return count;
 }
 
 - (void)makeWindowControllers {
-    VelaWindowController *controller =
-        [[VelaWindowController alloc] initWithStage:_stage primCount:[self primCount]];
-    controller.window.delegate = controller;
-    [self addWindowController:controller];
+    [self addWindowController:[[VelaWindowController alloc] initWithDocument:_core
+                                                                   primCount:[self primCount]]];
 }
 
 @end

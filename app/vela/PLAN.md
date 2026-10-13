@@ -8,8 +8,8 @@ querying scenes in plain English, with skills for the USD Python API and for
 driving the app.
 
 This document records the decisions made so far, the architecture and the
-phases. Phases 1 and 2 are done; see [README.md](README.md) for building,
-using and testing the app.
+phases. Phases 1 and 2 are done and Phase 3 is implemented; see
+[README.md](README.md) for building, using and testing the app.
 
 ## Decisions
 
@@ -215,6 +215,56 @@ Notes for later phases:
   narrow windows can crop wide scenes horizontally.
 - The F/A and arrow keys are handled by the view and window controller for
   now; Phase 3 moves them to the action registry with the menus.
+
+## Phase 3 progress
+
+Implemented; interactive checks pending (the Mac slept before they could
+run). Code in `core/` (plain C++, no AppKit):
+
+- `undo.*`: `UndoStack` installs a recording `SdfLayerStateDelegateBase` on
+  each tracked layer. Each authoring primitive records its inverse (old
+  field, dictionary key or time sample; delete for create; the whole saved
+  subtree for delete; reverse move; pop for push). Inverses are applied
+  through the delegate, so undoing records the redo step. Groups nest; edits
+  outside a group form an implicit "Edit" step.
+- `document.*`: `vela::Document` owns the stage, selection, time, playback
+  state, free camera, edit target and undo stack, with change notifications
+  for views. It tracks every used layer, including ones added later.
+- `actions.*`, `standard_actions.cpp`: the registry. Parameters are JSON
+  (`pxr/base/js`) validated against a JSON-schema subset. `Describe()` is
+  the source for the vela-ui skill and MCP schemas. 14 actions: undo, redo,
+  select, clear_selection, set_edit_target, frame_selection, frame_all,
+  set_camera, toggle_playback, next/previous/first/last_frame, set_time.
+- The front end builds the Edit, View and Playback menus from the registry
+  (`menus.mm`); items validate and retitle from document state ("Undo
+  Rename", "Pause"). Shortcuts, the timeline and click-to-select run
+  actions. Camera drags edit the document's camera directly rather than
+  running an action per mouse move.
+
+Tests: `undo_test` (round trips compare every layer's text before and after:
+attribute values, time samples, creating and deleting subtrees with
+metadata, relationships and variants, rename and reparent, dictionaries,
+one step across root, sublayer and session layers, layer `Clear` and
+`TransferContent`, grouping and step sequences); `document_test`;
+`actions_test`; `menus_test` (the menu matches the registry). Breaking an
+inverse on purpose makes the round trips fail.
+
+Decisions and limits:
+
+- The core owns the undo stack, not `NSUndoManager`: Python, MCP and the
+  menus share one history, testable without AppKit. `NSDocument`'s undo
+  manager is off.
+- Plain-key shortcuts (F, A, Space, arrows) are menu key equivalents; their
+  items disable while a text field is first responder, so typing passes
+  through.
+- Layers whose data streams from disk (`.usdc`) don't report `Clear`,
+  `Reload` or `TransferContent` to the state delegate, so those can't be
+  undone on such layers. Edits to them otherwise undo normally.
+- Selection, time and camera changes are not undo steps.
+
+To check interactively: menus and their enabled states, F/A/Space/arrow
+keys in the viewport, click and Shift-click selection, the timeline and
+playback.
 
 ## Testing
 
