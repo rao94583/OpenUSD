@@ -27,6 +27,11 @@ python.toolchain(
     python_version = "3.11",
 )
 
+# No implicit __init__.py files in runfiles (deprecated in rules_python):
+# packages here ship their own __init__.py.
+rules_python_config = use_extension("@rules_python//python/extensions:config.bzl", "config")
+rules_python_config.explicit_init_py(default = True)
+
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip.parse(
     hub_name = "pypi",
