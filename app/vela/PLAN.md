@@ -383,6 +383,21 @@ smoke tests. GPU snapshots and manual UI checks are deferred while the
 display may sleep. Edits remain in-memory; saving/export and dirty-state
 handling are still pending.
 
+Phase 5, continued (2026-10-14): view settings (`core/view_settings.*`,
+`core/view_actions.cpp`), scene cameras (in `Document`), saving
+(`core/file_actions.cpp`, `VelaDocument`) and usdview's launch flags
+(`core/launch_options.*`); see [PHASE5.md](PHASE5.md). Actions with an
+enum parameter show as submenus with checkmarks (static choices, or
+dynamic ones such as the camera list); actions that write a file ask for
+it with a save panel. The background now uses usdview's linear Dark Grey
+(0.07), where Vela had 0.3. The inspector edits attribute values
+(`core/value_text.*`) and variant selections. Found and fixed in a window
+check: a selection made before the first frame (e.g. `--select`) was not
+highlighted, because the engine drops selections set before it populates
+the scene. Still pending: inspector editing for arrays and other types,
+HUD, bounding boxes, OCIO, render settings and AOVs, the validation panel
+and preferences.
+
 ## Testing
 
 - `cc_test` for the core: document, actions, undo, camera math

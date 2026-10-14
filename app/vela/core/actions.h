@@ -43,6 +43,12 @@ struct ActionResult {
     }
 };
 
+// One item of an action's submenu: the action run with fixed parameters.
+struct MenuChoice {
+    std::string title;
+    JsObject params;
+};
+
 struct Action {
     std::string name;         // stable identifier, e.g. "frame_selection"
     std::string title;        // menu title, e.g. "Frame Selected"
@@ -58,6 +64,16 @@ struct Action {
     std::string key;          // a character, or one of Keys
     unsigned modifiers = 0;   // Modifier bits
     bool separatorBefore = false;
+    // When set, the menu shows a submenu titled with the action's title, an
+    // item per choice, and a checkmark on chosen ones.
+    std::vector<MenuChoice> choices;
+    // Choices that depend on the document, e.g. its cameras; the menu asks
+    // each time it opens.
+    std::function<std::vector<MenuChoice>(const Document &)> dynamicChoices;
+    std::function<bool(const Document &, const JsObject &params)> chosen;
+    // When set, the menu item first asks for a file to write, with a save
+    // panel, and passes its path in this parameter.
+    std::string savePathParam;
 
     // Edits made by the handler become one undo step named after the
     // title. Actions that only change the view leave undo alone.

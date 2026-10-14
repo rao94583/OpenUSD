@@ -357,18 +357,87 @@ PXR_NAMESPACE_USING_DIRECTIVE
 - (NSView *)tableView:(NSTableView *)table viewForTableColumn:(NSTableColumn *)column row:(NSInteger)index {
     const auto &rows = [self rowsForTable:table];
     const auto &row = rows[index];
+    const bool valueColumn = [column.identifier isEqualToString:@"Value"];
+    // Variant selections are chosen from a pop-up.
+    if (valueColumn && table == _tables[4]) {
+        return [self variantPopUpForSet:row.name selection:row.value];
+    }
     const std::string *value = [column.identifier isEqualToString:@"Name"] ? &row.name :
         [column.identifier isEqualToString:@"Type"] ? &row.type :
-        [column.identifier isEqualToString:@"Value"] ? &row.value : &row.source;
-    NSTextField *label = [table makeViewWithIdentifier:column.identifier owner:self];
-    if (!label) { label = [NSTextField labelWithString:@""]; label.identifier = column.identifier; }
-    label.stringValue = @(value->c_str()); label.toolTip = label.stringValue;
+        valueColumn ? &row.value : &row.source;
+    // Editable attribute values: an editable field holding the full value.
+    std::string editText;
+    const bool editable = valueColumn && table == _tables[0] &&
+        _browser->EditableText([self inspectedPath], row.name, &editText);
+    NSString *identifier = editable ? @"EditableValue" : column.identifier;
+    NSTextField *label = [table makeViewWithIdentifier:identifier owner:self];
+    if (!label) {
+        label = [NSTextField labelWithString:@""];
+        label.identifier = identifier;
+        if (editable) {
+            label.editable = YES;
+            label.target = self;
+            label.action = @selector(valueEdited:);
+        }
+    }
+    label.stringValue = @((editable ? editText : *value).c_str());
+    label.toolTip = editable ? @"Edit the value; Return applies it" : label.stringValue;
     label.lineBreakMode = NSLineBreakByTruncatingMiddle;
     return label;
+}
+- (NSPopUpButton *)variantPopUpForSet:(const std::string &)set selection:(const std::string &)selection {
+    NSPopUpButton *popUp = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+    popUp.controlSize = NSControlSizeSmall;
+    popUp.bordered = NO;
+    [popUp addItemWithTitle:@"(none)"];
+    for (const std::string &variant : _browser->VariantChoices([self inspectedPath], set)) {
+        [popUp addItemWithTitle:@(variant.c_str())];
+    }
+    [popUp selectItemWithTitle:selection.empty() ? @"(none)" : @(selection.c_str())];
+    popUp.identifier = @(set.c_str());
+    popUp.target = self;
+    popUp.action = @selector(variantChosen:);
+    popUp.enabled = _document->GetEditTarget()->PermissionToEdit();
+    return popUp;
+}
+- (void)variantChosen:(NSPopUpButton *)popUp {
+    const std::string variant = popUp.indexOfSelectedItem == 0 ? "" : popUp.titleOfSelectedItem.UTF8String;
+    [self showResult:vela::ActionRegistry::Get().Run(*_document, "set_variant", {
+        {"path", JsValue([self inspectedPath].GetString())},
+        {"set", JsValue(std::string(popUp.identifier.UTF8String))},
+        {"variant", JsValue(variant)}})];
+}
+- (void)valueEdited:(NSTextField *)field {
+    NSTableView *table = _tables[0];
+    const NSInteger row = [table rowForView:field];
+    if (row < 0 || row >= (NSInteger)_rows[0].size()) return;
+    const std::string name = _rows[0][row].name;
+    std::string current;
+    // Return without a change does nothing.
+    if (_browser->EditableText([self inspectedPath], name, &current) &&
+        current == field.stringValue.UTF8String) return;
+    [self showResult:_browser->EditAttribute([self inspectedPath], name, field.stringValue.UTF8String)];
+    [self refreshProperties];
+}
+- (void)showResult:(const vela::ActionResult &)result {
+    if (result.ok) return;
+    NSAlert *alert = [NSAlert new];
+    alert.alertStyle = NSAlertStyleWarning;
+    alert.messageText = @(result.error.c_str());
+    NSWindow *window = _inspectorView.window;
+    if (window) [alert beginSheetModalForWindow:window completionHandler:nil];
+    else NSLog(@"%s", result.error.c_str());
 }
 - (void)openProperty:(NSTableView *)table {
     NSInteger row = table.clickedRow;
     if (row < 0 || row >= (NSInteger)_rows[0].size()) return;
+    // A double-click on an editable value edits it instead.
+    if (table.clickedColumn >= 0 &&
+        [table.tableColumns[table.clickedColumn].identifier isEqualToString:@"Value"] &&
+        _browser->EditableText([self inspectedPath], _rows[0][row].name, nullptr)) {
+        [table editColumn:table.clickedColumn row:row withEvent:nil select:YES];
+        return;
+    }
     [self inspectProperty:_rows[0][row].name show:YES];
 }
 - (void)inspectProperty:(const std::string &)property show:(BOOL)show {

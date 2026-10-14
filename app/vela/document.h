@@ -1,10 +1,17 @@
 #import <AppKit/AppKit.h>
 
 #include "app/vela/core/document.h"
+#include "app/vela/core/launch_options.h"
 
 #include <memory>
 
 @class VelaViewportView;
+
+// usdview's flags from the command line, for the document that opens their
+// file. Other documents open with the defaults.
+void VelaSetLaunchOptions(const vela::LaunchOptions &options);
+// When the app started, for --timing.
+void VelaSetLaunchTime(double seconds);
 
 // The AppKit document: opens files and owns the core document and window.
 @interface VelaDocument : NSDocument

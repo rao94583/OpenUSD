@@ -186,6 +186,15 @@ JsValue ActionRegistry::Describe() const {
             {"undoable", JsValue(action.undoable)},
         };
         if (!action.menu.empty()) entry["menu"] = JsValue(action.menu);
+        if (!action.choices.empty()) {
+            JsArray choices;
+            for (const MenuChoice &choice : action.choices) {
+                choices.push_back(JsValue(JsObject{
+                    {"title", JsValue(choice.title)},
+                    {"params", JsValue(choice.params)}}));
+            }
+            entry["choices"] = JsValue(choices);
+        }
         if (!action.key.empty()) {
             std::string shortcut;
             if (action.modifiers & ModifierControl) shortcut += "Control+";

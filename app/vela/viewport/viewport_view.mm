@@ -12,9 +12,6 @@
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
-// usdview's default dark grey background.
-static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
-
 // Forwards display link ticks without retaining the view.
 @interface VelaDisplayLinkTarget : NSObject
 @property (nonatomic, weak) VelaViewportView *view;
@@ -58,6 +55,8 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     _document = std::move(document);
     _renderer = std::make_unique<vela::Renderer>();
     _renderer->SetStage(_document->GetStage());
+    // The document may already have a selection, e.g. from --select.
+    _renderer->SetSelection(_document->GetSelection());
     __weak VelaViewportView *weakSelf = self;
     _observer = _document->AddObserver([weakSelf](unsigned changes) {
         [weakSelf documentChanged:changes];
@@ -76,7 +75,7 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
         _renderer->SetSelection(_document->GetSelection());
     }
     // Playback hides selection highlights while playing, as in usdview.
-    if (changes & (D::StageContent | D::Selection | D::Time | D::Camera | D::Playback)) {
+    if (changes & (D::StageContent | D::Selection | D::Time | D::Camera | D::Playback | D::Display)) {
         [self requestRender];
     }
     if (changes & D::Selection) {
@@ -170,13 +169,21 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
 
 - (GfCamera)gfCamera {
     const GfVec2i size = [self pixelSize];
-    return _document->GetCamera().ComputeGfCamera(double(size[0]) / size[1],
-                                                  _document->GetStageBounds());
+    return _document->ComputeViewGfCamera(double(size[0]) / size[1]);
 }
 
 #pragma mark Drawing
 
+- (void)setDrawsUnloadedAsBounds:(BOOL)bounds {
+    _renderer->SetStage(_document->GetStage(), bounds);
+    _renderer->SetSelection(_document->GetSelection());
+    [self requestRender];
+}
+
 - (void)render {
+    if (self.renderingDisabled) {
+        return;
+    }
     CAMetalLayer *layer = (CAMetalLayer *)self.layer;
     const GfVec2i size = [self pixelSize];
     layer.drawableSize = CGSizeMake(size[0], size[1]);
@@ -186,19 +193,28 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     }
     _document->SetViewportAspectRatio(double(size[0]) / size[1]);
     if (!_framedForSize) {
+        // Redo the opening framing for the viewport's shape: the selection
+        // if there is one, otherwise everything. A scene camera chosen at
+        // launch is kept.
         _framedForSize = YES;
-        _document->FrameAll();
+        if (_document->GetViewCamera().IsEmpty()) _document->FrameSelection();
     }
     const auto start = std::chrono::steady_clock::now();
     if (_benchmarkRemaining > 0) {
+        _document->DetachViewCamera();
         _document->GetCamera().Tumble(360.0 / _benchmarkFrames, 0.0);
     }
     vela::View view;
     view.camera = [self gfCamera];
     view.time = _document->GetTime();
     view.size = size;
-    view.clearColor = BackgroundColor;
-    view.highlight = !_document->IsPlaying();
+    view.settings = _document->GetViewSettings();
+    view.clearColor = vela::BackgroundColor(view.settings.background);
+    switch (view.settings.highlightMode) {
+    case vela::HighlightMode::Never: view.highlight = false; break;
+    case vela::HighlightMode::WhenPaused: view.highlight = !_document->IsPlaying(); break;
+    case vela::HighlightMode::Always: view.highlight = true; break;
+    }
     id<MTLCommandBuffer> commandBuffer = [_renderer->GetQueue() commandBuffer];
     if (!_renderer->Draw(view, drawable.texture, commandBuffer)) {
         return;
@@ -223,6 +239,13 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
             const double seconds = std::chrono::duration<double>(
                 std::chrono::steady_clock::now() - benchmarkStart).count();
             dispatch_async(dispatch_get_main_queue(), ^{ completion(seconds); });
+        }];
+    }
+    if (self.firstFrameDrawn) {
+        void (^firstFrame)(void) = self.firstFrameDrawn;
+        self.firstFrameDrawn = nil;
+        [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer>) {
+            dispatch_async(dispatch_get_main_queue(), firstFrame);
         }];
     }
     [commandBuffer presentDrawable:drawable];
@@ -266,7 +289,7 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     const GfFrustum frustum =
         [self gfCamera].GetFrustum().ComputeNarrowedFrustum(point, pickSize);
     SdfPath hit;
-    if (!_renderer->Pick(frustum, _document->GetTime(), &hit, nullptr) && extend) {
+    if (!_renderer->Pick(frustum, _document->GetTime(), _document->GetViewSettings(), &hit, nullptr) && extend) {
         return;
     }
     JsArray paths;
@@ -294,6 +317,8 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     }
     // Drag in backing pixels, y down, as the camera math expects.
     const double scale = [self backingScale];
+    // Navigating a scene camera moves a free copy of it.
+    _document->DetachViewCamera();
     _document->GetCamera().Drag(_drag, event.deltaX * scale, event.deltaY * scale,
                                 [self pixelSize][1]);
     _document->CameraChanged();
@@ -335,18 +360,24 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
         (event.modifierFlags & NSEventModifierFlagOption)) {
         // Option + two-finger drag tracks; the content follows the fingers.
         const double scale = [self backingScale];
+        // Navigating a scene camera moves a free copy of it.
+        _document->DetachViewCamera();
         _document->GetCamera().Drag(vela::CameraDrag::Track, event.scrollingDeltaX * scale,
                                     event.scrollingDeltaY * scale, [self pixelSize][1]);
     } else {
         // A wheel notch dollies by about 12%, as in usdview.
         const double step = event.hasPreciseScrollingDeltas
             ? event.scrollingDeltaY * 0.01 : event.scrollingDeltaY * 0.12;
+        // Navigating a scene camera moves a free copy of it.
+        _document->DetachViewCamera();
         _document->GetCamera().Dolly(1.0 - std::clamp(step, -0.5, 0.5));
     }
     _document->CameraChanged();
 }
 
 - (void)magnifyWithEvent:(NSEvent *)event {
+    // Navigating a scene camera moves a free copy of it.
+    _document->DetachViewCamera();
     _document->GetCamera().Dolly(1.0 / std::max(0.1, 1.0 + event.magnification));
     _document->CameraChanged();
 }

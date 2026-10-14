@@ -81,10 +81,24 @@ Edits currently change in-memory layers; saving/export and close prompts are
 pending. See [PHASE5.md](PHASE5.md) for the parity checklist and supported
 attribute types.
 
+## View settings, cameras and files
+
+View → Draw Mode, Complexity, Display (lights, materials, purposes,
+culling), Background and Selection Highlighting match usdview's view
+settings and defaults. View → Camera looks through a scene camera; any
+navigation detaches a free copy. File → Save writes edited layers in
+place; Export Flattened…, Export Session Layer… and Revert to Saved are
+also in the File menu.
+
+From a terminal, `Vela FILE` takes usdview's options (`--select`,
+`--camera`, `--mask`, `--unloaded`, `--sessionLayer`, `--ff/--lf/--cf`,
+`--complexity`, `--timing`, ...); `Vela --bogus` lists them.
+
 ## Command line
 
 ```sh
 Vela --check-document FILE          # print the prim count
+Vela --check-saving FILE PRIM       # edit and save through the document
 Vela --describe-actions             # the action registry, as JSON
 Vela --describe-menus               # the main menu, as text
 Vela --snapshot FILE OUT.png [--camera PATH] [--frame T] [--width W] [--height H]

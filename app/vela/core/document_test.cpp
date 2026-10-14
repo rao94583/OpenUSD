@@ -4,6 +4,9 @@
 #include "pxr/usd/sdf/primSpec.h"
 #include "pxr/usd/usd/editContext.h"
 #include "pxr/usd/usd/prim.h"
+#include "pxr/base/gf/frustum.h"
+#include "pxr/base/gf/range2d.h"
+#include "pxr/usd/usdGeom/camera.h"
 #include "pxr/usd/usdGeom/cube.h"
 #include "pxr/usd/usdGeom/metrics.h"
 #include "pxr/usd/usdGeom/xformCommonAPI.h"
@@ -161,6 +164,79 @@ void TestEditTarget() {
     CHECK(d.GetUndoStack().IsTracking(extra));
 }
 
+bool Near(const GfMatrix4d &a, const GfMatrix4d &b, double eps = 1e-6) {
+    for (int i = 0; i < 4; ++i)
+        for (int j = 0; j < 4; ++j)
+            if (std::abs(a[i][j] - b[i][j]) > eps) return false;
+    return true;
+}
+
+void TestSceneCameras() {
+    UsdStageRefPtr stage = MakeStage();
+    UsdGeomCamera shot = UsdGeomCamera::Define(stage, SdfPath("/Shot"));
+    // Moves from z = 10 to z = 20 over the time range, looking down -Z.
+    auto translate = shot.AddTranslateOp();
+    translate.Set(GfVec3d(0, 0, 10), UsdTimeCode(1));
+    translate.Set(GfVec3d(0, 0, 20), UsdTimeCode(10));
+    shot.CreateFocusDistanceAttr(VtValue(0.0f));
+    Document d(stage);
+    CHECK(d.GetSceneCameras() == SdfPathVector{SdfPath("/Shot")});
+    CHECK(d.GetViewCamera().IsEmpty());
+
+    std::string error;
+    CHECK(!d.SetViewCamera(SdfPath("/A"), &error));
+    CHECK(error == "No camera at /A");
+    unsigned seen = 0;
+    d.AddObserver([&](unsigned changes) { seen |= changes; });
+    CHECK(d.SetViewCamera(SdfPath("/Shot")));
+    CHECK(seen & Document::Camera);
+
+    // Through the scene camera, following its animation.
+    GfCamera camera = d.ComputeViewGfCamera(2.0);
+    CHECK(Near(camera.GetTransform(), shot.GetCamera(UsdTimeCode(1)).GetTransform()));
+    d.SetTime(UsdTimeCode(10));
+    camera = d.ComputeViewGfCamera(2.0);
+    CHECK(Near(camera.GetTransform(), shot.GetCamera(UsdTimeCode(10)).GetTransform()));
+    // Fitted to the viewport: the window has its aspect ratio and contains
+    // the camera's whole aperture.
+    const GfRange2d window = camera.GetFrustum().GetWindow();
+    CHECK(std::abs(window.GetSize()[0] / window.GetSize()[1] - 2.0) < 1e-6);
+    const GfCamera original = shot.GetCamera(UsdTimeCode(10));
+    CHECK(camera.GetHorizontalAperture() >= original.GetHorizontalAperture() - 1e-4);
+    CHECK(camera.GetVerticalAperture() >= original.GetVerticalAperture() - 1e-4);
+
+    // Detaching keeps the view and leaves the scene camera alone.
+    std::string before;
+    stage->GetRootLayer()->ExportToString(&before);
+    d.SetViewportAspectRatio(1.5);
+    const GfCamera through = d.ComputeViewGfCamera(1.5);
+    d.DetachViewCamera();
+    CHECK(d.GetViewCamera().IsEmpty());
+    const GfCamera detached = d.ComputeViewGfCamera(1.5);
+    CHECK(Near(detached.GetTransform(), through.GetTransform()));
+    CHECK(std::abs(detached.GetFieldOfView(GfCamera::FOVVertical) -
+                   through.GetFieldOfView(GfCamera::FOVVertical)) < 1e-3);
+    // With no focus distance, the center of interest is at the stage
+    // center's depth: z = 20 to the cubes' center plane at z = 0.
+    CHECK(std::abs(d.GetCamera().GetDistance() - 20.0) < 1e-6);
+    d.GetCamera().Tumble(30, 0);
+    d.CameraChanged();
+    std::string after;
+    stage->GetRootLayer()->ExportToString(&after);
+    CHECK(after == before);
+
+    // Framing detaches too.
+    d.SetViewCamera(SdfPath("/Shot"));
+    d.FrameAll();
+    CHECK(d.GetViewCamera().IsEmpty());
+
+    // Deleting the camera returns to the free camera.
+    d.SetViewCamera(SdfPath("/Shot"));
+    stage->RemovePrim(SdfPath("/Shot"));
+    CHECK(d.GetViewCamera().IsEmpty());
+    CHECK(d.GetSceneCameras().empty());
+}
+
 } // namespace
 
 int main() {
@@ -171,5 +247,6 @@ int main() {
     TestTime();
     TestFramingAndBounds();
     TestEditTarget();
+    TestSceneCameras();
     return test::Finish("document");
 }

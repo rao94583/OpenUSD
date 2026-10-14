@@ -222,6 +222,60 @@ void TestStandardActions() {
     CHECK(sawRedo);
 }
 
+void TestViewActions() {
+    ActionRegistry &registry = ActionRegistry::Get();
+    Document d(MakeStage());
+    std::string before;
+    d.GetStage()->GetRootLayer()->ExportToString(&before);
+    unsigned seen = 0;
+    d.AddObserver([&](unsigned changes) { seen |= changes; });
+    const ViewSettings defaults;
+    CHECK(d.GetViewSettings() == defaults);
+    CHECK(d.GetViewSettings().background == Background::DarkGrey);
+    CHECK(BackgroundColor(Background::DarkGrey)[0] < 0.1f);  // usdview's, linear
+
+    // Draw mode: choices, the chosen one, and an invalid name.
+    const Action &drawMode = *registry.Find("set_draw_mode");
+    CHECK(drawMode.choices.size() == DrawModeNames().size());
+    CHECK(drawMode.chosen(d, Params(R"({"mode": "shadedSmooth"})")));
+    CHECK(registry.Run(d, "set_draw_mode", Params(R"({"mode": "wireframe"})")).ok);
+    CHECK(d.GetViewSettings().drawMode == DrawMode::Wireframe);
+    CHECK(seen == Document::Display);
+    CHECK(drawMode.chosen(d, Params(R"({"mode": "wireframe"})")));
+    CHECK(!drawMode.chosen(d, Params(R"({"mode": "shadedSmooth"})")));
+    CHECK(!registry.Run(d, "set_draw_mode", Params(R"({"mode": "hidden"})")).ok);
+    CHECK(!IsShaded(DrawMode::Wireframe) && IsShaded(DrawMode::GeomSmooth));
+
+    // Options toggle, or take an explicit value.
+    CHECK(registry.Run(d, "set_view_option", Params(R"({"option": "guide"})")).ok);
+    CHECK(d.GetViewSettings().showGuides);
+    CHECK(registry.Find("set_view_option")->chosen(d, Params(R"({"option": "guide"})")));
+    CHECK(registry.Run(d, "set_view_option", Params(R"({"option": "guide"})")).ok);
+    CHECK(!d.GetViewSettings().showGuides);
+    CHECK(registry.Run(d, "set_view_option",
+                       Params(R"({"option": "cameraLight", "enabled": false})")).ok);
+    CHECK(!d.GetViewSettings().cameraLight);
+    CHECK(registry.Run(d, "set_view_option",
+                       Params(R"({"option": "cameraLight", "enabled": false})")).ok);
+    CHECK(!d.GetViewSettings().cameraLight);
+    CHECK(!registry.Run(d, "set_view_option", Params(R"({"option": "fog"})")).ok);
+
+    // Complexity, background and highlighting.
+    CHECK(registry.Run(d, "set_complexity", Params(R"({"level": "high"})")).ok);
+    CHECK(std::abs(d.GetViewSettings().complexity - 1.2) < 1e-9);
+    CHECK(registry.Find("set_complexity")->chosen(d, Params(R"({"level": "high"})")));
+    CHECK(registry.Run(d, "set_background", Params(R"({"color": "white"})")).ok);
+    CHECK(d.GetViewSettings().background == Background::White);
+    CHECK(registry.Run(d, "set_selection_highlighting", Params(R"({"mode": "always"})")).ok);
+    CHECK(d.GetViewSettings().highlightMode == HighlightMode::Always);
+
+    // View settings are not scene edits.
+    CHECK(!d.GetUndoStack().CanUndo());
+    std::string after;
+    d.GetStage()->GetRootLayer()->ExportToString(&after);
+    CHECK(after == before);
+}
+
 } // namespace
 
 int main() {
@@ -229,5 +283,6 @@ int main() {
     TestValidation();
     TestRegistry();
     TestStandardActions();
+    TestViewActions();
     return test::Finish("action");
 }

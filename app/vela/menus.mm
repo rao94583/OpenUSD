@@ -1,7 +1,12 @@
 #import "menus.h"
 #import "document.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #include "app/vela/core/actions.h"
+
+#include "pxr/base/js/json.h"
+
+PXR_NAMESPACE_USING_DIRECTIVE
 
 #include <set>
 #include <string>
@@ -41,6 +46,33 @@ bool IsTyping() {
     return [responder isKindOfClass:[NSText class]];
 }
 
+// Menu items carry an action name, or for submenu choices the name and
+// fixed parameters as JSON: @[name, params].
+std::string ActionName(id represented) {
+    if ([represented isKindOfClass:[NSArray class]]) represented = [represented firstObject];
+    return [represented UTF8String];
+}
+JsObject ActionParams(id represented) {
+    if (![represented isKindOfClass:[NSArray class]]) return {};
+    const JsValue value = JsParseString([[represented lastObject] UTF8String]);
+    return value.IsObject() ? value.GetJsObject() : JsObject();
+}
+
+// Errors from actions run from the menu show as an alert on the window.
+void ShowResult(const vela::ActionResult &result, NSWindow *window) {
+    if (result.ok) return;
+    NSAlert *alert = [NSAlert new];
+    alert.alertStyle = NSAlertStyleWarning;
+    const std::string &error = result.error;
+    const size_t newline = error.find('\n');
+    alert.messageText = @(error.substr(0, newline).c_str());
+    if (newline != std::string::npos) {
+        alert.informativeText = @(error.substr(newline + 1).c_str());
+    }
+    if (window) [alert beginSheetModalForWindow:window completionHandler:nil];
+    else [alert runModal];
+}
+
 bool IsPlainKey(const vela::Action &action) {
     return !(action.modifiers & (vela::ModifierCommand | vela::ModifierControl));
 }
@@ -48,7 +80,7 @@ bool IsPlainKey(const vela::Action &action) {
 } // namespace
 
 // Menu items carry the action name; this target runs and validates them.
-@interface VelaActionTarget : NSObject <NSMenuItemValidation>
+@interface VelaActionTarget : NSObject <NSMenuItemValidation, NSMenuDelegate>
 + (instancetype)shared;
 @end
 
@@ -59,22 +91,74 @@ bool IsPlainKey(const vela::Action &action) {
     return target;
 }
 
+// Items for one choice of an action.
+- (NSMenuItem *)itemForChoice:(const vela::MenuChoice &)choice
+                       action:(const vela::Action &)action {
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@(choice.title.c_str())
+        action:@selector(runAction:) keyEquivalent:@""];
+    item.target = self;
+    item.representedObject = @[@(action.name.c_str()),
+        @(JsWriteToString(JsValue(choice.params)).c_str())];
+    return item;
+}
+
+// Dynamic submenus are rebuilt from the current document as they open. The
+// parent item carries the action name.
+- (void)menuNeedsUpdate:(NSMenu *)menu {
+    [menu removeAllItems];
+    NSMenuItem *parent = nil;
+    for (NSMenuItem *item in menu.supermenu.itemArray) {
+        if (item.submenu == menu) parent = item;
+    }
+    const vela::Action *action = parent.representedObject
+        ? vela::ActionRegistry::Get().Find([parent.representedObject UTF8String]) : nullptr;
+    vela::Document *document = CurrentDocument();
+    if (!action || !action->dynamicChoices || !document) return;
+    for (const vela::MenuChoice &choice : action->dynamicChoices(*document)) {
+        [menu addItem:[self itemForChoice:choice action:*action]];
+    }
+}
+
 - (void)runAction:(NSMenuItem *)item {
     vela::Document *document = CurrentDocument();
-    if (!document) return;
-    vela::ActionResult result = vela::ActionRegistry::Get().Run(
-        *document, [item.representedObject UTF8String]);
-    if (!result.ok) {
-        NSLog(@"%s", result.error.c_str());
+    const vela::Action *action =
+        vela::ActionRegistry::Get().Find(ActionName(item.representedObject));
+    if (!document || !action) return;
+    JsObject params = ActionParams(item.representedObject);
+    NSWindow *window = NSApp.keyWindow ?: NSApp.mainWindow;
+    if (action->savePathParam.empty()) {
+        ShowResult(vela::ActionRegistry::Get().Run(*document, action->name, params), window);
+        return;
     }
+    // Ask for the file first.
+    NSSavePanel *panel = [NSSavePanel savePanel];
+    panel.title = @(action->title.c_str());
+    panel.allowedContentTypes = @[[UTType typeWithFilenameExtension:@"usda"],
+                                  [UTType typeWithFilenameExtension:@"usdc"],
+                                  [UTType typeWithFilenameExtension:@"usd"]];
+    panel.allowsOtherFileTypes = NO;
+    const std::string name = action->name, param = action->savePathParam;
+    [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
+        vela::Document *current = CurrentDocument();
+        if (response != NSModalResponseOK || !current) return;
+        JsObject withPath = params;
+        withPath[param] = JsValue(std::string(panel.URL.fileSystemRepresentation));
+        ShowResult(vela::ActionRegistry::Get().Run(*current, name, withPath), window);
+    }];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
     const vela::ActionRegistry &registry = vela::ActionRegistry::Get();
-    const vela::Action *action = registry.Find([item.representedObject UTF8String]);
+    const vela::Action *action = registry.Find(ActionName(item.representedObject));
     vela::Document *document = CurrentDocument();
     if (!action || !document) {
         return NO;
+    }
+    if ([item.representedObject isKindOfClass:[NSArray class]]) {
+        const bool chosen = action->chosen &&
+            action->chosen(*document, ActionParams(item.representedObject));
+        item.state = chosen ? NSControlStateValueOn : NSControlStateValueOff;
+        return registry.IsEnabled(*action, *document);
     }
     item.title = @(registry.GetTitle(*action, *document).c_str());
     if (IsPlainKey(*action) && IsTyping()) {
@@ -88,7 +172,12 @@ bool IsPlainKey(const vela::Action &action) {
 
 NSMenu *VelaBuildMainMenu() {
     NSMenu *bar = [NSMenu new];
+    // Returns the menu with this title, adding it if needed, so actions can
+    // add to the built-in menus.
     auto addMenu = [&](NSString *title) {
+        for (NSMenuItem *existing in bar.itemArray) {
+            if ([existing.submenu.title isEqualToString:title]) return existing.submenu;
+        }
         NSMenuItem *item = [NSMenuItem new];
         NSMenu *menu = [[NSMenu alloc] initWithTitle:title];
         item.submenu = menu;
@@ -116,6 +205,22 @@ NSMenu *VelaBuildMainMenu() {
             if (action.menu != first.menu) continue;
             if (action.separatorBefore && menu.numberOfItems) {
                 [menu addItem:[NSMenuItem separatorItem]];
+            }
+            if (!action.choices.empty() || action.dynamicChoices) {
+                // A submenu with an item per choice, built now or as it opens.
+                NSMenuItem *parent = [[NSMenuItem alloc] initWithTitle:@(action.title.c_str())
+                                                                action:nil keyEquivalent:@""];
+                NSMenu *submenu = [[NSMenu alloc] initWithTitle:@(action.title.c_str())];
+                for (const vela::MenuChoice &choice : action.choices) {
+                    [submenu addItem:[target itemForChoice:choice action:action]];
+                }
+                if (action.dynamicChoices) {
+                    parent.representedObject = @(action.name.c_str());
+                    submenu.delegate = target;
+                }
+                parent.submenu = submenu;
+                [menu addItem:parent];
+                continue;
             }
             NSMenuItem *item = [[NSMenuItem alloc]
                 initWithTitle:@(action.title.c_str())
@@ -163,6 +268,14 @@ NSString *VelaDescribeMenu(NSMenu *menu) {
             [text appendFormat:@"  %@", item.title];
             if (item.representedObject) {
                 [text appendFormat:@" [%@]", item.representedObject];
+            }
+            for (NSMenuItem *choice in item.submenu.itemArray) {
+                // Parameters on one line.
+                NSString *params = [[[choice.representedObject lastObject]
+                    componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet]
+                    componentsJoinedByString:@""];
+                [text appendFormat:@"\n    %@ {%@ %@}", choice.title,
+                    [choice.representedObject firstObject], params];
             }
             if (item.keyEquivalent.length) {
                 [text appendFormat:@" key=%@ mods=%lu", item.keyEquivalent,

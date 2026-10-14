@@ -13,24 +13,32 @@ undo step. Payload loading changes stage load rules, without layer edits.
 
 | Area | Status / remaining work |
 |---|---|
-| Attribute editing | Actions for existing bool, integer, float/double, string, token, asset, float/double/int vector attributes and arrays of these; default values and numeric time samples; clear a default or sample. Inspector editors pending. Half, quaternions, matrices, dictionaries and splines pending. |
-| Variants | Select or clear an existing variant selection with undo. Inspector controls pending. |
+| Attribute editing | Actions for bool, integer, float/double, string, token, asset and vector attributes and arrays of these, at the default or a time sample. The inspector edits non-array values in place (double-click or click a selected Value): text parsed by USD type, at the current frame for animated attributes, one undo step. Arrays, half, quaternions, matrices, dictionaries and splines are not editable in the inspector yet. |
+| Variants | Done: the Variants tab chooses or clears a selection from a pop-up (`set_variant`), one undo step. |
 | Load / unload | Actions for a prim/subtree and the selection; Prim menu. |
 | Activation | Actions for a prim and selection; Prim menu; undo across recomposition. |
 | Visibility | Inherited/invisible authoring at default or time sample; Hide/Show Selected menu. This does not make an invisible ancestor visible. |
-| Purposes | Authoring action for default/proxy/render/guide. View purpose toggles and bounds matching pending. |
+| Purposes | Authoring action for default/proxy/render/guide. View → Display shows proxy, render and guide purposes (`set_view_option`); snapshots match usdrecord's `--purposes`. Bounds that follow the shown purposes pending. |
 | Model draw modes | Author model:drawMode; default/inherited/origin/bounds/cards. Inspector controls and applyDrawMode editing pending. |
-| View draw modes | Points, wireframe, wireframe-on-surface, shaded flat/smooth, geometry-only/flat/smooth pending. |
-| Scene cameras | Camera chooser, time-varying camera parameters, detach on navigation; orthographic free cameras pending. |
+| View draw modes | Done: View → Draw Mode (`set_draw_mode`): points, wireframe, wireframe on surface, flat and smooth shaded, geom only/flat/smooth. usdview's hidden-surface wireframe (a two-pass GL trick) is not reproduced. |
+| Scene cameras | Done: View → Camera lists the stage's cameras (`set_view_camera`), fitted to the viewport as usdview does, following animation; navigating or framing detaches a free copy. The viewport's route matches usdrecord's images. Orthographic free cameras pending. |
 | Render settings / AOVs | Renderer choice, render-settings prim, renderer settings, AOV chooser and visualization pending. |
-| Lighting / material | Scene lights, scene materials, camera light, dome background, default material controls pending. |
+| Lighting / material | Done: View → Display toggles the camera light, usdview's default dome light, dome light textures, scene lights, scene materials and backface culling; lights apply to shaded draw modes, as in usdview. View → Background and Selection Highlighting as usdview's. Default material ambient/specular controls pending. |
 | HUD | Frame/render statistics, prim/geometry counts and toggles pending. |
 | Color management | OCIO display/view/look/colorspace, raw/sRGB, consistent presentation pending. |
 | Bounding boxes | World/selection bounds, oriented/aligned, visibility and purpose consistency pending. |
 | Validation | Validation panel, validators, severity, navigation to offending objects pending. |
 | Preferences | Persistence, reset, navigation/selection/display settings pending. |
-| Saving | Explicit save/export, dirty-state/close prompts and layer-stack saving policy pending. Authoring currently changes in-memory layers only. |
-| Launcher flags | `--select`, `--mask`, `--clearsettings`, `--config`, `--defaultsettings`, `--norender`, `--noplugins`, `--unloaded`, `--bboxStandin`, `--timing`, `--allow-async`, `--traceToFile`, `--traceFormat`, `--tracePython`, `--memstats`, `--dumpFirstImage`, `--viewportSize`, `--numThreads`, `--ff`, `--lf`, `--cf`, `--quitAfterStartup`, `--sessionLayer`, `--mute`, `--detachLayers`, `--detachLayersInclude`, `--detachLayersExclude`: audit and implement or document deliberate differences. Existing Vela snapshot/check/describe flags are distinct. |
+| Saving | Done: File → Save (⌘S) writes the layer stack's edited layers in place, except the session layer; Export Flattened…, Export Session Layer… and Revert to Saved. The window shows unsaved edits and closing asks to save. In-memory layers can only be exported. |
+| Launcher flags | Done: `--select`, `--camera` (path or name; default main_cam), `--mask`, `--unloaded`, `--sessionLayer`, `--mute`, `--complexity`, `--ff`/`--lf`/`--cf`, `--numThreads`, `--viewportSize`, `--norender`, `--bboxStandin`, `--timing`, `--quitAfterStartup`. Accepted and ignored until Vela has settings files: `--clearsettings`, `--defaultsettings`, `--config`, `--noplugins`. Rejected with a message: `--allow-async`, trace and memory statistics flags, `--dumpFirstImage` (use `--snapshot`), `--detachLayers*`. |
+
+Tests for the view settings, cameras, saving and launch options:
+`actions_test`, `document_test`, `file_actions_test`,
+`launch_options_test`, `saving_test` (through the AppKit document),
+`launch_test` (a real launch) and `snapshot_test`, which compares Vela's
+images with usdrecord's for purposes, complexity, the camera light, dome
+light visibility and the viewport's scene camera route, and checks that
+each draw mode changes the image.
 
 Headless tests in `core/editing_actions_test.cpp` adapt the authored
 visibility behavior from `testUsdviewInstancingEdits` and the parent/child

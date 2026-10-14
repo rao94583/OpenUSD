@@ -1,4 +1,5 @@
 #include "browser.h"
+#include "value_text.h"
 #include "pxr/base/tf/enum.h"
 #include "pxr/base/tf/stringUtils.h"
 #include "pxr/base/ts/spline.h"
@@ -319,6 +320,49 @@ InspectorRows Browser::Variants(const SdfPath &path) const {
     }
     return rows;
 }
+bool Browser::EditableText(const SdfPath &path, const std::string &attribute,
+                           std::string *text) const {
+    const auto prim = _document.GetStage()->GetPrimAtPath(path);
+    if (!prim || prim.IsInstanceProxy() || prim.IsInPrototype()) return false;
+    const auto attr = prim.GetAttribute(TfToken(attribute));
+    if (!attr || attr.HasSpline() || !IsTextEditable(attr.GetTypeName())) return false;
+    if (!_document.GetEditTarget()->PermissionToEdit()) return false;
+    VtValue value;
+    attr.Get(&value, _document.GetTime());
+    if (text) *text = FormatForEditing(value);
+    return true;
+}
+
+ActionResult Browser::EditAttribute(const SdfPath &path, const std::string &attribute,
+                                    const std::string &text) {
+    const auto prim = _document.GetStage()->GetPrimAtPath(path);
+    const auto attr = prim ? prim.GetAttribute(TfToken(attribute)) : UsdAttribute();
+    if (!attr || !EditableText(path, attribute, nullptr)) {
+        return ActionResult::Error(attribute + " cannot be edited here");
+    }
+    JsValue value;
+    std::string error;
+    if (!ParseEditedText(text, attr.GetTypeName(), &value, &error)) {
+        return ActionResult::Error(error);
+    }
+    JsObject params{{"path", JsValue(path.GetString())},
+                    {"attribute", JsValue(attribute)},
+                    {"value", value}};
+    // Animated attributes are edited at the current frame, as in usdview.
+    const UsdTimeCode time = _document.GetTime();
+    if (attr.GetNumTimeSamples() > 0 && time.IsNumeric()) {
+        params["time"] = JsValue(time.GetValue());
+    }
+    return ActionRegistry::Get().Run(_document, "set_attribute", params);
+}
+
+std::vector<std::string> Browser::VariantChoices(const SdfPath &path,
+                                                 const std::string &set) const {
+    const auto prim = _document.GetStage()->GetPrimAtPath(path);
+    if (!prim || !prim.GetVariantSets().HasVariantSet(set)) return {};
+    return prim.GetVariantSets().GetVariantSet(set).GetVariantNames();
+}
+
 InspectorRows Browser::PropertyDetails(const SdfPath &path, const std::string &property,
                                       size_t offset, size_t limit) const {
     limit = std::min(limit, size_t(256));

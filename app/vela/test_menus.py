@@ -17,10 +17,16 @@ with tempfile.TemporaryDirectory() as temp:
     menus = subprocess.check_output([vela, '--describe-menus'], text=True)
 
 items = {}
+choices = {}  # action name -> [(menu, title, params)]
 menu = None
 for line in menus.splitlines():
     if not line.startswith('  '):
         menu = line
+        continue
+    choice = re.match(r'    (.*) \{(\w+) (.*)\}$', line)
+    if choice:
+        choices.setdefault(choice[2], []).append(
+            (menu, choice[1], json.loads(choice[3])))
         continue
     match = re.match(r'  .* \[(\w+)\](?: key=(.) mods=(\d+))?$', line)
     if match:
@@ -33,6 +39,11 @@ for action in actions:
     if 'menu' not in action:
         assert name not in items, f'{name} is in a menu but names none'
         continue
+    if 'choices' in action:
+        # A submenu with an item per choice.
+        expected = [(action['menu'], c['title'], c['params']) for c in action['choices']]
+        assert choices.get(name) == expected, (name, choices.get(name))
+        continue
     assert name in items, f'{name} is missing from the {action["menu"]} menu'
     menu, key, mods = items[name]
     assert menu == action['menu'], (name, menu)
@@ -40,5 +51,6 @@ for action in actions:
         *modifiers, base = action['shortcut'].split('+')
         assert key == KEYS.get(base, base.lower()), (name, key)
         assert mods == sum(FLAGS[m] for m in modifiers), (name, mods)
-assert len(items) == sum('menu' in a for a in actions), 'unknown items in menus'
-print(f'{len(items)} menu items match {len(actions)} actions')
+assert len(items) + len(choices) == sum('menu' in a for a in actions), \
+    'unknown items in menus'
+print(f'{len(items)} menu items and {len(choices)} submenus match {len(actions)} actions')

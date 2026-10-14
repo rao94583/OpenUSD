@@ -1,6 +1,10 @@
 #include "document.h"
 
+#include "pxr/base/gf/frustum.h"
 #include "pxr/base/tf/errorMark.h"
+#include "pxr/imaging/cameraUtil/conformWindow.h"
+#include "pxr/usd/usd/primRange.h"
+#include "pxr/usd/usdGeom/camera.h"
 #include "pxr/usd/usdGeom/bboxCache.h"
 #include "pxr/usd/usdGeom/metrics.h"
 #include "pxr/usd/usdGeom/tokens.h"
@@ -85,6 +89,10 @@ void Document::_OnObjectsChanged(const UsdNotice::ObjectsChanged &notice,
         if (_stage->GetPrimAtPath(path)) selection.push_back(path);
     }
     unsigned changes = StageContent | Resync;
+    if (!_viewCamera.IsEmpty() && !UsdGeomCamera(_stage->GetPrimAtPath(_viewCamera))) {
+        _viewCamera = SdfPath();
+        changes |= Camera;
+    }
     if (selection != _selection) {
         _selection = selection;
         changes |= Selection;
@@ -114,12 +122,23 @@ void Document::SetSelection(const SdfPathVector &paths) {
 }
 
 bool Document::IsAnimated() const {
-    return _stage->HasAuthoredTimeCodeRange() &&
-        _stage->GetEndTimeCode() > _stage->GetStartTimeCode();
+    return (_hasPlaybackRange || _stage->HasAuthoredTimeCodeRange()) &&
+        GetEndTime() > GetStartTime();
 }
 
-double Document::GetStartTime() const { return _stage->GetStartTimeCode(); }
-double Document::GetEndTime() const { return _stage->GetEndTimeCode(); }
+double Document::GetStartTime() const {
+    return _hasPlaybackRange ? _playbackStart : _stage->GetStartTimeCode();
+}
+double Document::GetEndTime() const {
+    return _hasPlaybackRange ? _playbackEnd : _stage->GetEndTimeCode();
+}
+
+void Document::SetPlaybackRange(double start, double end) {
+    _hasPlaybackRange = true;
+    _playbackStart = start;
+    _playbackEnd = end;
+    _Notify(Time);
+}
 
 double Document::GetFramesPerSecond() const {
     const double fps = _stage->GetFramesPerSecond();
@@ -154,6 +173,74 @@ void Document::SetPlaying(bool playing) {
     }
 }
 
+bool Document::SetViewCamera(const SdfPath &path, std::string *error) {
+    if (!path.IsEmpty() && !UsdGeomCamera(_stage->GetPrimAtPath(path))) {
+        if (error) *error = "No camera at " + path.GetString();
+        return false;
+    }
+    if (path != _viewCamera) {
+        _viewCamera = path;
+        _Notify(Camera);
+    }
+    return true;
+}
+
+void Document::DetachViewCamera() {
+    if (_viewCamera.IsEmpty()) {
+        return;
+    }
+    const GfCamera camera = ComputeViewGfCamera(_aspectRatio);
+    // Without a focus distance, the center of interest goes at the depth of
+    // the stage's center.
+    const GfVec3d center = GetStageBounds().ComputeCentroid();
+    const GfFrustum frustum = camera.GetFrustum();
+    double distance = GfDot(center - frustum.GetPosition(), frustum.ComputeViewDirection());
+    if (!(distance > 0.0)) distance = 1.0;
+    _camera = FreeCamera::FromGfCamera(camera, _camera.IsZUp(), distance);
+    _viewCamera = SdfPath();
+    _Notify(Camera);
+}
+
+GfCamera Document::ComputeViewGfCamera(double aspectRatio) const {
+    if (UsdGeomCamera camera{_stage->GetPrimAtPath(_viewCamera)}) {
+        GfCamera result = camera.GetCamera(_time);
+        // Fit the camera's whole aperture inside the viewport.
+        CameraUtilConformWindow(&result, CameraUtilFit, aspectRatio > 0.0 ? aspectRatio : 1.0);
+        return result;
+    }
+    return _camera.ComputeGfCamera(aspectRatio, GetStageBounds());
+}
+
+SdfLayerHandleVector Document::GetLayersToSave() const {
+    SdfLayerHandleVector layers;
+    for (const SdfLayerHandle &layer : _stage->GetLayerStack(/* includeSessionLayers = */ false)) {
+        if (layer->IsDirty() && !layer->IsAnonymous()) layers.push_back(layer);
+    }
+    return layers;
+}
+
+bool Document::HasUnsavedEdits() const {
+    for (const SdfLayerHandle &layer : _stage->GetLayerStack(false)) {
+        if (layer->IsDirty()) return true;
+    }
+    return false;
+}
+
+SdfPathVector Document::GetSceneCameras() const {
+    SdfPathVector cameras;
+    for (const UsdPrim &prim : _stage->Traverse()) {
+        if (prim.IsA<UsdGeomCamera>()) cameras.push_back(prim.GetPath());
+    }
+    return cameras;
+}
+
+void Document::SetViewSettings(const ViewSettings &settings) {
+    if (!(settings == _viewSettings)) {
+        _viewSettings = settings;
+        _Notify(Display);
+    }
+}
+
 void Document::SetCamera(const FreeCamera &camera) {
     _camera = camera;
     _Notify(Camera);
@@ -184,12 +271,14 @@ const GfBBox3d &Document::GetStageBounds() const {
 }
 
 void Document::FrameAll() {
+    DetachViewCamera();
     if (_camera.Frame(GetStageBounds(), 1.1, _aspectRatio)) {
         _Notify(Camera);
     }
 }
 
 void Document::FrameSelection() {
+    DetachViewCamera();
     if (_selection.empty()) {
         FrameAll();
     } else if (_camera.Frame(ComputeBounds(_selection), 1.1, _aspectRatio)) {

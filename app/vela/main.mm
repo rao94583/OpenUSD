@@ -9,6 +9,7 @@
 #import "menus.h"
 #import "viewport/viewport_view.h"
 #include "app/vela/core/actions.h"
+#include "app/vela/core/document.h"
 #include "app/vela/core/free_camera.h"
 #include "pxr/base/js/json.h"
 #include "app/vela/viewport/renderer.h"
@@ -22,10 +23,25 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 @interface VelaDelegate : NSObject <NSApplicationDelegate>
 @end
-@implementation VelaDelegate
+@implementation VelaDelegate {
+    NSURL *_launchFile;
+}
+- (instancetype)initWithFile:(NSURL *)file {
+    if ((self = [super init])) _launchFile = file;
+    return self;
+}
 - (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender { return NO; }
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     [NSApp activateIgnoringOtherApps:YES];
+    if (_launchFile) {
+        [NSDocumentController.sharedDocumentController openDocumentWithContentsOfURL:_launchFile
+            display:YES completionHandler:^(NSDocument *document, BOOL, NSError *error) {
+            if (!document) {
+                fprintf(stderr, "%s\n", error.localizedDescription.UTF8String);
+                [NSApp terminate:nil];
+            }
+        }];
+    }
 }
 @end
 
@@ -40,18 +56,56 @@ struct RenderOptions {
     int height = 0;
     int frames = 240;
     bool window = false;
+    // Render through the camera as the viewport does (fitted, by matrices)
+    // rather than by Hydra camera path as usdrecord does.
+    bool viewCamera = false;
+    // usdrecord's defaults: no dome light textures in the background.
+    vela::ViewSettings settings = [] {
+        vela::ViewSettings s;
+        s.domeLightTexturesVisible = false;
+        return s;
+    }();
 };
+
+// usdrecord's --purposes: a comma-separated list of proxy, render, guide.
+static bool ParsePurposes(const std::string &list, vela::ViewSettings *settings) {
+    settings->showProxy = settings->showRender = settings->showGuides = false;
+    size_t start = 0;
+    while (start <= list.size()) {
+        const size_t end = std::min(list.find(',', start), list.size());
+        const std::string purpose = list.substr(start, end - start);
+        if (purpose == "proxy") settings->showProxy = true;
+        else if (purpose == "render") settings->showRender = true;
+        else if (purpose == "guide") settings->showGuides = true;
+        else if (!purpose.empty()) return false;
+        start = end + 1;
+    }
+    return true;
+}
 
 static bool ParseRenderOptions(int argc, const char *argv[], int first, RenderOptions *options) {
     for (int i = first; i < argc; ++i) {
         const std::string arg = argv[i];
         const bool hasValue = i + 1 < argc;
         if (arg == "--camera" && hasValue) options->camera = SdfPath(argv[++i]);
+        else if (arg == "--viewCamera" && hasValue) {
+            options->camera = SdfPath(argv[++i]);
+            options->viewCamera = true;
+        }
         else if (arg == "--frame" && hasValue) options->time = UsdTimeCode(std::atof(argv[++i]));
         else if (arg == "--width" && hasValue) options->width = std::atoi(argv[++i]);
         else if (arg == "--height" && hasValue) options->height = std::atoi(argv[++i]);
         else if (arg == "--frames" && hasValue) options->frames = std::atoi(argv[++i]);
         else if (arg == "--window") options->window = true;
+        // View settings, with usdrecord's flag names where it has them.
+        else if (arg == "--purposes" && hasValue) {
+            if (!ParsePurposes(argv[++i], &options->settings)) return false;
+        } else if (arg == "--complexity" && hasValue) {
+            if (!vela::ParseComplexity(argv[++i], &options->settings.complexity)) return false;
+        } else if (arg == "--drawMode" && hasValue) {
+            if (!vela::Parse(argv[++i], &options->settings.drawMode)) return false;
+        } else if (arg == "--disableCameraLight") options->settings.cameraLight = false;
+        else if (arg == "--enableDomeLightVisibility") options->settings.domeLightTexturesVisible = true;
         else if (arg.rfind("--", 0) == 0) return false;
         else if (options->scene.empty()) options->scene = arg;
         else if (options->output.empty()) options->output = arg;
@@ -66,7 +120,7 @@ static bool MakeView(const UsdStageRefPtr &stage, const RenderOptions &options,
                      vela::FreeCamera *freeCamera, vela::View *view) {
     view->time = options.time;
     // Snapshots match usdrecord's defaults.
-    view->domeLightsVisible = false;
+    view->settings = options.settings;
     UsdGeomBBoxCache cache(options.time, {UsdGeomTokens->default_, UsdGeomTokens->proxy}, true);
     const GfBBox3d bounds = cache.ComputeWorldBound(stage->GetPseudoRoot());
     if (!options.camera.IsEmpty()) {
@@ -79,7 +133,16 @@ static bool MakeView(const UsdStageRefPtr &stage, const RenderOptions &options,
         view->cameraPath = options.camera;
         float aspect = view->camera.GetAspectRatio();
         if (GfIsClose(aspect, 0.0f, 1e-4)) aspect = 1.0f;
-        view->size = GfVec2i(options.width, std::max(1, int(float(options.width) / aspect)));
+        const int height = options.height > 0 ? options.height
+                                              : std::max(1, int(float(options.width) / aspect));
+        view->size = GfVec2i(options.width, height);
+        if (options.viewCamera) {
+            vela::Document document(stage);
+            document.SetTime(options.time);
+            document.SetViewCamera(options.camera);
+            view->camera = document.ComputeViewGfCamera(double(options.width) / height);
+            view->cameraPath = SdfPath();
+        }
         return true;
     }
     const int height = options.height > 0 ? options.height : options.width * 9 / 16;
@@ -128,8 +191,8 @@ static int Benchmark(const RenderOptions &options) {
     MakeView(stage, freeOptions, &camera, &view);
     UsdGeomBBoxCache cache(options.time, {UsdGeomTokens->default_, UsdGeomTokens->proxy}, true);
     const GfBBox3d bounds = cache.ComputeWorldBound(stage->GetPseudoRoot());
-    view.clearColor = GfVec4f(0.3f, 0.3f, 0.3f, 1.0f);
-    view.domeLightsVisible = true;
+    view.settings = vela::ViewSettings();
+    view.clearColor = vela::BackgroundColor(view.settings.background);
 
     vela::Renderer renderer;
     renderer.SetStage(stage);
@@ -213,13 +276,16 @@ static int WindowBenchmark(const RenderOptions &options) {
 
 static void Usage() {
     fprintf(stderr,
-        "Usage: Vela [FILE...]\n"
+        "Usage: Vela [FILE] [usdview's options; see above]\n"
         "       Vela --check-document FILE\n"
+        "       Vela --check-saving FILE PRIM   # edit and save through the document\n"
         "       Vela --check-browser FILE    # read-only browsing smoke check\n"
         "       Vela --describe-actions     # the action registry, as JSON\n"
         "       Vela --describe-menus       # the main menu, as text\n"
-        "       Vela --snapshot FILE OUTPUT.png [--camera PATH] [--frame TIME]\n"
-        "                       [--width W] [--height H]\n"
+        "       Vela --snapshot FILE OUTPUT.png [--camera PATH | --viewCamera PATH] [--frame TIME]\n"
+        "                       [--width W] [--height H] [--purposes P[,P...]]\n"
+        "                       [--complexity low|medium|high|veryhigh] [--drawMode MODE]\n"
+        "                       [--disableCameraLight] [--enableDomeLightVisibility]\n"
         "       Vela --benchmark FILE [--frames N] [--frame TIME] [--width W] [--height H]\n"
         "       Vela --benchmark FILE --window [--frames N]\n");
 }
@@ -249,6 +315,35 @@ int main(int argc, const char *argv[]) {
             printf("Browser selection and inspector checks passed\n");
             return 0;
         }
+        if (argc == 4 && strcmp(argv[1], "--check-saving") == 0) {
+            // Edits FILE through a VelaDocument: hides PRIM and saves as the
+            // close prompt's Save does.
+            NSError *error = nil;
+            NSURL *url = [NSURL fileURLWithPath:@(argv[2])];
+            VelaDocument *document = [[VelaDocument alloc] initWithContentsOfURL:url
+                ofType:@"USD Scene" error:&error];
+            auto fail = [](const char *what) { fprintf(stderr, "%s\n", what); return 1; };
+            if (!document) return fail(error.localizedDescription.UTF8String);
+            if (document.documentEdited) return fail("edited before any edit");
+            auto &registry = vela::ActionRegistry::Get();
+            registry.Run(*document.core, "select", {{"paths", JsValue(JsArray{JsValue(argv[3])})}});
+            if (!registry.Run(*document.core, "hide_selection").ok) return fail("hide failed");
+            if (!document.documentEdited) return fail("not edited after an edit");
+            __block NSError *saveError = [NSError errorWithDomain:@"pending" code:0 userInfo:nil];
+            [document saveToURL:url ofType:@"USD Scene" forSaveOperation:NSSaveOperation
+              completionHandler:^(NSError *e) { saveError = e; }];
+            if (saveError) return fail(saveError.localizedDescription.UTF8String);
+            if (document.documentEdited) return fail("still edited after saving");
+            __block NSError *saveAsError = nil;
+            [document saveToURL:url ofType:@"USD Scene" forSaveOperation:NSSaveAsOperation
+              completionHandler:^(NSError *e) { saveAsError = e; }];
+            if (!saveAsError) return fail("Save As should be refused");
+            // Undo after saving makes the document edited again.
+            registry.Run(*document.core, "undo");
+            if (!document.documentEdited) return fail("not edited after undoing a saved edit");
+            printf("Saving checks passed\n");
+            return 0;
+        }
         if (argc == 3 && strcmp(argv[1], "--check-document") == 0) {
             VelaDocument *document = [VelaDocument new];
             NSError *error = nil;
@@ -270,9 +365,34 @@ int main(int argc, const char *argv[]) {
             if (strcmp(argv[1], "--snapshot") == 0) return Snapshot(options);
             return options.window ? WindowBenchmark(options) : Benchmark(options);
         }
+        // A normal launch: an optional file and usdview's options. Vela opens
+        // the file itself, so AppKit must not treat arguments as files.
+        VelaSetLaunchTime(std::chrono::duration<double>(
+            std::chrono::steady_clock::now().time_since_epoch()).count());
+        std::vector<std::string> args;
+        for (int i = 1; i < argc; ++i) {
+            // Arguments AppKit adds itself, e.g. -NSDocumentRevisionsDebugMode YES.
+            if (argv[i][0] == '-' && argv[i][1] == 'N' && argv[i][2] == 'S') { ++i; continue; }
+            args.push_back(argv[i]);
+        }
+        vela::LaunchOptions launch;
+        std::string error;
+        if (!vela::ParseLaunchOptions(args, &launch, &error)) {
+            fprintf(stderr, "%s\n%s", error.c_str(), vela::LaunchUsage());
+            Usage();
+            return 2;
+        }
+        NSURL *launchFile = nil;
+        if (!launch.file.empty()) {
+            launchFile = [NSURL fileURLWithPath:@(launch.file.c_str())];
+            launch.file = launchFile.fileSystemRepresentation;
+            VelaSetLaunchOptions(launch);
+            [NSUserDefaults.standardUserDefaults setVolatileDomain:@{
+                @"NSTreatUnknownArgumentsAsOpen": @"NO"} forName:NSArgumentDomain];
+        }
         [NSApplication sharedApplication];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-        VelaDelegate *delegate = [VelaDelegate new];
+        VelaDelegate *delegate = [[VelaDelegate alloc] initWithFile:launchFile];
         NSApp.delegate = delegate;
         NSMenu *bar = VelaBuildMainMenu();
         NSApp.mainMenu = bar;

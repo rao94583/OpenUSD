@@ -15,6 +15,8 @@
 #include "pxr/imaging/hio/image.h"
 #include "pxr/usd/usdGeom/tokens.h"
 #include "pxr/usd/usd/prim.h"
+#include "pxr/usd/usdGeom/metrics.h"
+#include "pxr/usd/usdGeom/tokens.h"
 #include "pxr/usdImaging/usdImagingGL/engine.h"
 
 #include <chrono>
@@ -48,15 +50,35 @@ const GfVec4f SpecularDefault(0.1f, 0.1f, 0.1f, 1.0f);
 const GfVec4f AmbientDefault(0.2f, 0.2f, 0.2f, 1.0f);
 const float ShininessDefault = 32.0f;
 
-UsdImagingGLRenderParams MakeRenderParams(UsdTimeCode time) {
+UsdImagingGLDrawMode HydraDrawMode(DrawMode mode) {
+    switch (mode) {
+    case DrawMode::Points: return UsdImagingGLDrawMode::DRAW_POINTS;
+    case DrawMode::Wireframe: return UsdImagingGLDrawMode::DRAW_WIREFRAME;
+    case DrawMode::WireframeOnSurface: return UsdImagingGLDrawMode::DRAW_WIREFRAME_ON_SURFACE;
+    case DrawMode::ShadedFlat: return UsdImagingGLDrawMode::DRAW_SHADED_FLAT;
+    case DrawMode::ShadedSmooth: return UsdImagingGLDrawMode::DRAW_SHADED_SMOOTH;
+    case DrawMode::GeomOnly: return UsdImagingGLDrawMode::DRAW_GEOM_ONLY;
+    case DrawMode::GeomFlat: return UsdImagingGLDrawMode::DRAW_GEOM_FLAT;
+    case DrawMode::GeomSmooth: return UsdImagingGLDrawMode::DRAW_GEOM_SMOOTH;
+    }
+    return UsdImagingGLDrawMode::DRAW_SHADED_SMOOTH;
+}
+
+// As usdview sets them.
+UsdImagingGLRenderParams MakeRenderParams(UsdTimeCode time, const ViewSettings &settings) {
     UsdImagingGLRenderParams params;
     params.frame = time;
-    params.complexity = 1.0f;
+    params.complexity = float(settings.complexity);
+    params.drawMode = HydraDrawMode(settings.drawMode);
     params.colorCorrectionMode = HdxColorCorrectionTokens->sRGB;
-    // usdview's and usdrecord's default purposes.
-    params.showProxy = true;
-    params.showRender = false;
-    params.showGuides = false;
+    params.showProxy = settings.showProxy;
+    params.showRender = settings.showRender;
+    params.showGuides = settings.showGuides;
+    params.cullStyle = settings.cullBackfaces
+        ? UsdImagingGLCullStyle::CULL_STYLE_BACK_UNLESS_DOUBLE_SIDED
+        : UsdImagingGLCullStyle::CULL_STYLE_NOTHING;
+    params.enableSceneLights = settings.sceneLights;
+    params.enableSceneMaterials = settings.sceneMaterials;
     return params;
 }
 
@@ -68,6 +90,10 @@ struct Renderer::Impl {
     std::unique_ptr<UsdImagingGLEngine> engine;
     UsdStageRefPtr stage;
     SdfPathVector selection;
+    // The engine drops a selection set before its first render populates
+    // the scene, so it is applied once populated.
+    bool populated = false;
+    bool selectionPending = false;
     id<MTLLibrary> library;
     std::unordered_map<NSUInteger, id<MTLRenderPipelineState>> pipelines;
 
@@ -110,23 +136,45 @@ void Renderer::Impl::Render(const View &view) {
         GfRect2i(GfVec2i(0), view.size[0], view.size[1])));
     engine->SetRenderBufferSize(view.size);
 
-    // A light at the camera, as usdview and usdrecord use by default.
-    const GfVec3d &position = frustum.GetPosition();
-    GlfSimpleLight cameraLight(
-        GfVec4f(position[0], position[1], position[2], 1.0f));
-    cameraLight.SetTransform(frustum.ComputeViewInverse());
-    cameraLight.SetAmbient(SceneAmbient);
+    // Default lights, for shaded draw modes only, as in usdview: a light at
+    // the camera (also usdrecord's) and optionally a dome light.
+    const ViewSettings &settings = view.settings;
+    GlfSimpleLightVector lights;
+    if (IsShaded(settings.drawMode) && settings.cameraLight) {
+        const GfVec3d &position = frustum.GetPosition();
+        GlfSimpleLight cameraLight(
+            GfVec4f(position[0], position[1], position[2], 1.0f));
+        cameraLight.SetTransform(frustum.ComputeViewInverse());
+        cameraLight.SetAmbient(SceneAmbient);
+        lights.push_back(cameraLight);
+    }
+    if (IsShaded(settings.drawMode) && settings.domeLight) {
+        GlfSimpleLight dome;
+        dome.SetIsDomeLight(true);
+        if (UsdGeomGetStageUpAxis(stage) == UsdGeomTokens->z) {
+            dome.SetTransform(GfMatrix4d().SetRotate(GfRotation(GfVec3d::XAxis(), 90)));
+        }
+        lights.push_back(dome);
+    }
     GlfSimpleMaterial material;
     material.SetAmbient(AmbientDefault);
     material.SetSpecular(SpecularDefault);
     material.SetShininess(ShininessDefault);
-    engine->SetLightingState({cameraLight}, material, SceneAmbient);
+    engine->SetLightingState(lights, material, SceneAmbient);
     engine->SetRendererSetting(HdRenderSettingsTokens->domeLightCameraVisibility,
-                               VtValue(view.domeLightsVisible));
+                               VtValue(settings.domeLightTexturesVisible));
 
-    UsdImagingGLRenderParams params = MakeRenderParams(view.time);
+    UsdImagingGLRenderParams params = MakeRenderParams(view.time, settings);
     params.clearColor = view.clearColor;
     params.highlight = view.highlight;
+    if (!populated) {
+        engine->Render(stage->GetPseudoRoot(), params);
+        populated = true;
+    }
+    if (selectionPending) {
+        engine->SetSelected(selection);
+        selectionPending = false;
+    }
     engine->Render(stage->GetPseudoRoot(), params);
 }
 
@@ -155,7 +203,7 @@ id<MTLCommandQueue> Renderer::GetQueue() const {
     return _impl->Metal()->GetQueue();
 }
 
-void Renderer::SetStage(const UsdStageRefPtr &stage) {
+void Renderer::SetStage(const UsdStageRefPtr &stage, bool unloadedAsBounds) {
     _impl->engine.reset();
     _impl->stage = stage;
     if (!stage) {
@@ -164,19 +212,23 @@ void Renderer::SetStage(const UsdStageRefPtr &stage) {
     UsdImagingGLEngine::Parameters params;
     params.driver = _impl->driver;
     params.gpuEnabled = true;
+    params.displayUnloadedPrimsWithBounds = unloadedAsBounds;
     _impl->engine = std::make_unique<UsdImagingGLEngine>(params);
     // Vela draws the AOV itself, so no OpenGL interop is needed.
     _impl->engine->SetEnablePresentation(false);
     _impl->engine->SetRendererAov(HdAovTokens->color);
     // usdview's default: a half-transparent yellow tint.
     _impl->engine->SetSelectionColor(GfVec4f(1.0f, 1.0f, 0.0f, 0.5f));
-    _impl->engine->SetSelected(_impl->selection);
+    _impl->populated = false;
+    _impl->selectionPending = !_impl->selection.empty();
 }
 
 void Renderer::SetSelection(const SdfPathVector &paths) {
     _impl->selection = paths;
-    if (_impl->engine) {
+    if (_impl->engine && _impl->populated) {
         _impl->engine->SetSelected(paths);
+    } else {
+        _impl->selectionPending = true;
     }
 }
 
@@ -255,7 +307,7 @@ bool Renderer::WriteImage(const View &view, const std::string &path) {
 }
 
 bool Renderer::Pick(const GfFrustum &frustum, UsdTimeCode time,
-                    SdfPath *path, GfVec3d *point) {
+                    const ViewSettings &settings, SdfPath *path, GfVec3d *point) {
     if (!_impl->engine) {
         return false;
     }
@@ -265,7 +317,7 @@ bool Renderer::Pick(const GfFrustum &frustum, UsdTimeCode time,
     if (!_impl->engine->TestIntersection(
             pickParams, frustum.ComputeViewMatrix(),
             frustum.ComputeProjectionMatrix(), _impl->stage->GetPseudoRoot(),
-            MakeRenderParams(time), &results) || results.empty()) {
+            MakeRenderParams(time, settings), &results) || results.empty()) {
         return false;
     }
     if (path) *path = results.front().hitPrimPath;

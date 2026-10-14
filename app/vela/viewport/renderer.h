@@ -4,6 +4,8 @@
 
 #import <Metal/Metal.h>
 
+#include "app/vela/core/view_settings.h"
+
 #include "pxr/pxr.h"
 #include "pxr/base/gf/camera.h"
 #include "pxr/base/gf/vec2i.h"
@@ -29,9 +31,9 @@ struct View {
     // Render size in pixels.
     GfVec2i size{1, 1};
     GfVec4f clearColor{0.0f};
-    // Whether dome light textures show in the background: on in usdview,
-    // off in usdrecord.
-    bool domeLightsVisible = true;
+    // Draw mode, purposes, lighting and the like. The background is
+    // clearColor, and highlight below decides on selection highlights.
+    ViewSettings settings;
     // Whether selected prims are drawn highlighted.
     bool highlight = false;
 };
@@ -44,7 +46,9 @@ public:
     id<MTLDevice> GetDevice() const;
     id<MTLCommandQueue> GetQueue() const;
 
-    void SetStage(const UsdStageRefPtr &stage);
+    // unloadedAsBounds draws unloaded prims as bounding boxes (usdview's
+    // --bboxStandin).
+    void SetStage(const UsdStageRefPtr &stage, bool unloadedAsBounds = false);
     void SetSelection(const SdfPathVector &paths);
 
     // Renders the stage and encodes drawing the image, upright, into
@@ -59,8 +63,9 @@ public:
     bool WriteImage(const View &view, const std::string &path);
 
     // The prim drawn nearest the center of a pick frustum.
+    // Picking draws what the view settings show (purposes, draw mode).
     bool Pick(const GfFrustum &frustum, UsdTimeCode time,
-              SdfPath *path, GfVec3d *point);
+              const ViewSettings &settings, SdfPath *path, GfVec3d *point);
 
 private:
     struct Impl;

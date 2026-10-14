@@ -8,7 +8,10 @@
 
 #include "pxr/usd/usd/primRange.h"
 
+#include <chrono>
 #include <cmath>
+#include <filesystem>
+#include <optional>
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -182,8 +185,30 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 @end
 
+namespace {
+std::optional<vela::LaunchOptions> &PendingLaunchOptions() {
+    static std::optional<vela::LaunchOptions> options;
+    return options;
+}
+double &LaunchTime() {
+    static double time = 0.0;
+    return time;
+}
+double Now() {
+    return std::chrono::duration<double>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+} // namespace
+
+void VelaSetLaunchOptions(const vela::LaunchOptions &options) {
+    PendingLaunchOptions() = options;
+}
+void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
+
 @implementation VelaDocument {
     std::shared_ptr<vela::Document> _core;
+    int _observer;
+    vela::LaunchOptions _launch;
 }
 
 + (BOOL)autosavesInPlace { return NO; }
@@ -204,13 +229,79 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 - (BOOL)readFromURL:(NSURL *)url ofType:(NSString *)type error:(NSError **)error {
     std::string message;
-    _core = vela::Document::Open(url.fileSystemRepresentation, &message);
-    if (_core) return YES;
+    // The command line's options apply to the file they name.
+    std::error_code ignored;
+    auto &pending = PendingLaunchOptions();
+    if (pending && std::filesystem::equivalent(pending->file, url.fileSystemRepresentation, ignored)) {
+        _launch = *pending;
+        pending.reset();
+    }
+    _launch.file = url.fileSystemRepresentation;
+    const double start = Now();
+    _core = vela::OpenDocument(_launch, &message);
+    if (_core && _launch.timing) {
+        printf("Opened %s in %.3f s\n", url.lastPathComponent.UTF8String, Now() - start);
+    }
+    if (_core) {
+        for (const std::string &warning : vela::ApplyLaunchOptions(_launch, *_core)) {
+            fprintf(stderr, "Vela: %s\n", warning.c_str());
+        }
+    }
+    if (_core) {
+        // The window shows unsaved edits, and closing asks to save them.
+        __weak VelaDocument *weakSelf = self;
+        _observer = _core->AddObserver([weakSelf](unsigned changes) {
+            using D = vela::Document;
+            if (changes & (D::StageContent | D::UndoState | D::Saved)) [weakSelf showEditedState];
+            if (changes & D::Saved) weakSelf.fileModificationDate = [NSDate date];
+        });
+        return YES;
+    }
     if (error) *error = [NSError errorWithDomain:@"org.openusd.vela" code:1
         userInfo:@{NSLocalizedDescriptionKey:
             [NSString stringWithFormat:@"Could not open USD stage: %@", url.lastPathComponent],
                    NSLocalizedFailureReasonErrorKey: @(message.c_str())}];
     return NO;
+}
+
+- (void)dealloc {
+    if (_core) _core->RemoveObserver(_observer);
+}
+
+- (void)showEditedState {
+    const bool edited = _core->HasUnsavedEdits();
+    if (edited != self.documentEdited) {
+        [self updateChangeCount:edited ? NSChangeDone : NSChangeCleared];
+    }
+}
+
+// Saving writes the edited layers in place, through the "save" action (the
+// close prompt's Save comes here). Other save operations would rewrite the
+// root layer as a new document; Export Flattened covers that.
+- (void)saveToURL:(NSURL *)url ofType:(NSString *)typeName
+    forSaveOperation:(NSSaveOperationType)operation
+    completionHandler:(void (^)(NSError *))completionHandler {
+    if (operation != NSSaveOperation) {
+        completionHandler([NSError errorWithDomain:@"org.openusd.vela" code:2 userInfo:@{
+            NSLocalizedDescriptionKey: @"Use File → Export Flattened… to write a new file."}]);
+        return;
+    }
+    vela::ActionResult result;
+    if (!_core->GetLayersToSave().empty()) {
+        result = vela::ActionRegistry::Get().Run(*_core, "save");
+    }
+    if (result.ok && _core->HasUnsavedEdits()) {
+        // In-memory layers have no file to save to.
+        result = vela::ActionResult::Error("Some edited layers are in memory only; "
+                                           "export them to keep their edits.");
+    }
+    if (!result.ok) {
+        completionHandler([NSError errorWithDomain:@"org.openusd.vela" code:3 userInfo:@{
+            NSLocalizedDescriptionKey: @(result.error.c_str())}]);
+        return;
+    }
+    [self showEditedState];
+    completionHandler(nil);
 }
 
 - (size_t)primCount {
@@ -220,8 +311,37 @@ PXR_NAMESPACE_USING_DIRECTIVE
 }
 
 - (void)makeWindowControllers {
-    [self addWindowController:[[VelaWindowController alloc] initWithDocument:_core
-                                                                   primCount:[self primCount]]];
+    VelaWindowController *controller =
+        [[VelaWindowController alloc] initWithDocument:_core primCount:[self primCount]];
+    [self addWindowController:controller];
+    // Window-level launch options.
+    VelaViewportView *viewport = controller.viewport;
+    viewport.renderingDisabled = _launch.norender;
+    if (_launch.bboxStandin) [viewport setDrawsUnloadedAsBounds:YES];
+    if (_launch.viewportWidth > 0) {
+        // Grow or shrink the window by the difference.
+        [controller.window.contentView layoutSubtreeIfNeeded];
+        const NSSize current = viewport.bounds.size;
+        NSRect frame = controller.window.frame;
+        frame.size.width += _launch.viewportWidth - current.width;
+        frame.size.height += _launch.viewportHeight - current.height;
+        [controller.window setFrame:frame display:NO];
+    }
+    const bool timing = _launch.timing, quit = _launch.quitAfterStartup,
+               norender = _launch.norender;
+    if (timing || quit) {
+        auto report = ^{
+            if (timing) printf("%s %.3f s after launch\n",
+                               norender ? "Started" : "First frame", Now() - LaunchTime());
+            fflush(stdout);
+            if (quit) [NSApp terminate:nil];
+        };
+        if (_launch.norender) {
+            dispatch_async(dispatch_get_main_queue(), report);
+        } else {
+            viewport.firstFrameDrawn = report;
+        }
+    }
 }
 
 @end
