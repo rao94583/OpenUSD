@@ -277,7 +277,11 @@ side of the viewport; the existing timeline and playback remain below it.
   instance proxies), a constant-space expander check without enumerating a
   whole branch, case-insensitive path/type search that retains ancestors,
   time-dependent visibility and model draw-mode summaries. Searches scan
-  the composed hierarchy once per query or stage change; unfiltered browsing
+  the composed hierarchy once per query or stage change; visible-only filters
+  also refresh with time. Active, loaded, model and visible filters retain
+  matching ancestors. Optional prototype roots and a Prototype navigation
+  button support inspecting generated prims; authoring rejects those prims.
+  Unfiltered browsing
   does not traverse unopened branches.
 - `browser_view.*`: view-based `NSOutlineView` with Prim, Type, Visibility and
   Draw Mode columns. Canonical path items preserve identity. Tree selections
@@ -294,10 +298,16 @@ side of the viewport; the existing timeline and playback remain below it.
 - Double-click a property for a read-only detail window: paginated arrays,
   relationship targets, numeric time samples or spline knots with interpolation
   and tangent slopes. Pages are bounded, and property summaries avoid dumping
-  large arrays. Scalar and common vector/matrix array previews are supported.
+  large arrays. Array previews use the USD value visitor, including half,
+  quaternion, matrix, asset and path-expression arrays; a registry-wide test
+  exercises every built-in Sdf array type. A Curve tab samples scalar
+  splines through the USD attribute evaluator (at most 1024 samples and 256
+  knot markers) and draws with AppKit, without Metal. Knot tables stay paged.
 - `browser_test`: ancestor-preserving search, search invalidation after edits,
   inactive prims and instance proxies, time-varying values, nested metadata,
-  layers, variants, composition, large array paging and spline knots.
+  layers, variants, composition, schema-wide array paging, spline knots and
+  bounded curve evaluation. Tests also cover time-dependent filters, prototype
+  navigation and refusal to edit generated prototype prims.
 - `browser_ui_test` / `--check-browser FILE`: instantiate controls without
   opening a window; check both selection directions, ancestor reveal,
   filter preservation, inspector population and property detail tabs.
@@ -306,9 +316,10 @@ side of the viewport; the existing timeline and playback remain below it.
   document layout without constructing the renderer. No rendering/display wake
   is required.
 
-Phase 4 is not complete. Still pending: full array-type support, graphical
-spline curves and advanced spline information, composition graph/navigation,
-prototype browsing and additional outline filters. Manual layout and picking
+Phase 4 is not complete. Still pending: advanced spline information
+(extrapolation/loops/tangent algorithms) and composition graph/navigation.
+The Curve tab is a sampled preview over the knot interval, not an exact
+rendering of every discontinuity or extrapolation. Manual layout and picking
 checks remain for an awake display. The existing playback/timeline already
 uses the shared document and actions.
 

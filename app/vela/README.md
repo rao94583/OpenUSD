@@ -39,12 +39,18 @@ to the stage bounds.
 
 The prim outline opens branches lazily and shows prim type, inherited
 visibility and model draw mode. Search matches paths or types, keeping the
-ancestors of matching prims. Inactive prims and instance proxies are included.
+ancestors of matching prims. Inactive prims and instance proxies are included. The filter menu narrows
+the tree to active, loaded, model or visible prims while retaining ancestors.
+Enable Prototypes to inspect USD-generated prototype roots; an instance or
+instance proxy also exposes a Prototype button. Navigation reveals the
+prototype by clearing the outline filters. Generated prototypes are read-only.
 Tree selection and viewport picking share the same document selection.
 
 The inspector tabs show Properties, Metadata, Composition, Layers and Variants.
 Double-click a property for paginated array elements, relationship targets,
-time samples or spline knots and tangent slopes; its Metadata and Opinions
+time samples or spline knots and tangent slopes. The Curve tab previews
+scalar splines over their knot interval with bounded USD-evaluated samples.
+Its Metadata and Opinions
 tabs show property metadata and authoring across layers. Filter properties by
 name or type in the inspector. Double-click Layers or Composition rows for
 layer metadata and sublayer details. Large arrays show their count
@@ -56,8 +62,9 @@ bazel test //app/vela:browser_test //app/vela:browser_ui_test
 Vela --check-browser FILE           # controls/selection test; no shown window
 ```
 
-Phase 4 still needs composition graph/navigation, graphical spline
-curves, further filters and full array-type support. The layer tab currently
+Array previews cover all built-in Sdf array types in this build, including
+half, quaternion, matrix, asset and path-expression arrays. Phase 4 still
+needs composition graph/navigation and advanced spline/loop details. The layer tab currently
 shows the local layer stack; referenced layer opinions appear in Composition.
 
 ## Actions and undo

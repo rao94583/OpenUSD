@@ -3,6 +3,8 @@
 #include "pxr/base/tf/stringUtils.h"
 #include "pxr/base/ts/spline.h"
 #include "pxr/base/vt/array.h"
+#include "pxr/base/vt/typeHeaders.h"
+#include "pxr/base/vt/visitValue.h"
 #include "pxr/usd/usd/primRange.h"
 #include "pxr/usd/usd/primCompositionQuery.h"
 #include "pxr/usd/usd/relationship.h"
@@ -10,8 +12,10 @@
 #include "pxr/usd/usdGeom/imageable.h"
 #include "pxr/usd/usdGeom/modelAPI.h"
 #include "pxr/usd/sdf/assetPath.h"
+#include "pxr/usd/sdf/pathExpression.h"
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 
 namespace vela {
 namespace {
@@ -42,32 +46,32 @@ template<class Map> void MetadataRows(const Map &metadata, const std::string &pr
             MetadataRows(value.template UncheckedGet<VtDictionary>(), prefix + TfStringify(name) + ".", rows, depth + 1);
     }
 }
-template<class T> bool ArrayRows(const VtValue &value, size_t offset,
-                                size_t limit, InspectorRows *rows) {
-    if (!value.IsHolding<VtArray<T>>()) return false;
-    const auto &array = value.UncheckedGet<VtArray<T>>();
-    const size_t end = offset + std::min(limit, array.size() - std::min(offset, array.size()));
-    for (size_t i = offset; i < end; ++i)
-        rows->push_back({"[" + std::to_string(i) + "]", "element", Short(TfStringify(array[i])), ""});
-    return true;
+struct ArrayPreview {
+    size_t offset, limit;
+    InspectorRows *rows;
+    template<class T> bool operator()(const VtArray<T> &array) const {
+        const size_t end = offset + std::min(limit, array.size() - std::min(offset, array.size()));
+        for (size_t i = offset; i < end; ++i) {
+            std::string preview;
+            if constexpr (std::is_same_v<T, char> || std::is_same_v<T, unsigned char>) preview = TfStringify(int(array[i]));
+            else preview = Short(TfStringify(array[i]));
+            rows->push_back({"[" + std::to_string(i) + "]", "element", preview, ""});
+        }
+        return true;
+    }
+    template<class T> bool operator()(const T &) const { return false; }
+};
+bool Arrays(const VtValue &value, size_t offset, size_t limit, InspectorRows *rows) {
+    return VtVisitValueWithExtTypes<TfMetaList<VtArray<SdfAssetPath>, VtArray<SdfPathExpression>>>::VisitValue(
+        value, ArrayPreview{offset, limit, rows});
 }
-bool Arrays(const VtValue &v, size_t offset, size_t limit, InspectorRows *rows) {
-    return ArrayRows<bool>(v, offset, limit, rows) || ArrayRows<int>(v, offset, limit, rows) ||
-        ArrayRows<unsigned int>(v, offset, limit, rows) || ArrayRows<int64_t>(v, offset, limit, rows) ||
-        ArrayRows<uint64_t>(v, offset, limit, rows) || ArrayRows<float>(v, offset, limit, rows) ||
-        ArrayRows<double>(v, offset, limit, rows) || ArrayRows<std::string>(v, offset, limit, rows) ||
-        ArrayRows<TfToken>(v, offset, limit, rows) || ArrayRows<SdfAssetPath>(v, offset, limit, rows) ||
-        ArrayRows<GfVec2f>(v, offset, limit, rows) || ArrayRows<GfVec3f>(v, offset, limit, rows) ||
-        ArrayRows<GfVec4f>(v, offset, limit, rows) || ArrayRows<GfVec2d>(v, offset, limit, rows) ||
-        ArrayRows<GfVec3d>(v, offset, limit, rows) || ArrayRows<GfVec4d>(v, offset, limit, rows) ||
-        ArrayRows<GfVec2i>(v, offset, limit, rows) || ArrayRows<GfVec3i>(v, offset, limit, rows) ||
-        ArrayRows<GfVec4i>(v, offset, limit, rows) || ArrayRows<GfMatrix4d>(v, offset, limit, rows);
-}
+
 } // namespace
 
 Browser::Browser(Document &document) : _document(document) {
     _observer = document.AddObserver([this](unsigned changes) {
-        if (changes & Document::StageContent) _matchesValid = false;
+        if (changes & Document::StageContent ||
+            ((changes & Document::Time) && _primFilter == PrimFilter::Visible)) _matchesValid = false;
     });
 }
 Browser::~Browser() { _document.RemoveObserver(_observer); }
@@ -75,32 +79,64 @@ void Browser::SetFilter(std::string query) {
     query = Lower(std::move(query));
     if (_query != query) { _query = std::move(query); _matchesValid = false; }
 }
+void Browser::SetPrimFilter(PrimFilter filter) {
+    if (_primFilter != filter) { _primFilter = filter; _matchesValid = false; }
+}
+void Browser::SetShowPrototypes(bool show) {
+    if (_showPrototypes != show) { _showPrototypes = show; _matchesValid = false; }
+}
+bool Browser::_NeedsMatches() const { return !_query.empty() || _primFilter != PrimFilter::All; }
+SdfPath Browser::PrototypePath(const SdfPath &path) const {
+    const auto prim = _document.GetStage()->GetPrimAtPath(path);
+    if (!prim) return {};
+    const auto prototype = prim.IsInstanceProxy() ? prim.GetPrimInPrototype() : prim.GetPrototype();
+    return prototype ? prototype.GetPath() : SdfPath();
+}
 void Browser::_BuildMatches() {
     _matches.clear();
-    for (const auto &prim : UsdPrimRange(_document.GetStage()->GetPseudoRoot(),
-                                       UsdTraverseInstanceProxies(UsdPrimAllPrimsPredicate))) {
-        if (Lower(prim.GetPath().GetString() + " " + prim.GetTypeName().GetString()).find(_query) == std::string::npos)
-            continue;
-        for (SdfPath path = prim.GetPath(); !path.IsEmpty(); path = path.GetParentPath())
-            _matches.insert(path);
+    std::vector<UsdPrim> roots{_document.GetStage()->GetPseudoRoot()};
+    if (_showPrototypes) {
+        const auto prototypes = _document.GetStage()->GetPrototypes();
+        roots.insert(roots.end(), prototypes.begin(), prototypes.end());
+    }
+    for (const auto &root : roots) {
+        for (const auto &prim : UsdPrimRange(root, UsdTraverseInstanceProxies(UsdPrimAllPrimsPredicate))) {
+            if (Lower(prim.GetPath().GetString() + " " + prim.GetTypeName().GetString()).find(_query) == std::string::npos)
+                continue;
+            if (_primFilter == PrimFilter::Active && !prim.IsActive()) continue;
+            if (_primFilter == PrimFilter::Loaded && !prim.IsLoaded()) continue;
+            if (_primFilter == PrimFilter::Models && !prim.IsModel()) continue;
+            if (_primFilter == PrimFilter::Visible) {
+                const UsdGeomImageable imageable(prim);
+                if (!imageable || imageable.ComputeVisibility(_document.GetTime()) == UsdGeomTokens->invisible) continue;
+            }
+            for (SdfPath path = prim.GetPath(); !path.IsEmpty(); path = path.GetParentPath())
+                _matches.insert(path);
+        }
     }
     _matchesValid = true;
 }
 SdfPathVector Browser::Children(const SdfPath &parent) {
     const auto prim = _document.GetStage()->GetPrimAtPath(parent);
     if (!prim) return {};
-    if (!_query.empty() && !_matchesValid) _BuildMatches();
+    if (_NeedsMatches() && !_matchesValid) _BuildMatches();
     SdfPathVector paths;
     for (const auto &child : prim.GetFilteredChildren(UsdTraverseInstanceProxies(UsdPrimAllPrimsPredicate)))
-        if (_query.empty() || _matches.count(child.GetPath())) paths.push_back(child.GetPath());
+        if (!_NeedsMatches() || _matches.count(child.GetPath())) paths.push_back(child.GetPath());
+    if (_showPrototypes && parent == SdfPath::AbsoluteRootPath())
+        for (const auto &prototype : _document.GetStage()->GetPrototypes())
+            if (!_NeedsMatches() || _matches.count(prototype.GetPath())) paths.push_back(prototype.GetPath());
     return paths;
 }
 bool Browser::HasChildren(const SdfPath &parent) {
     const auto prim = _document.GetStage()->GetPrimAtPath(parent);
     if (!prim) return false;
-    if (!_query.empty() && !_matchesValid) _BuildMatches();
+    if (_NeedsMatches() && !_matchesValid) _BuildMatches();
     for (const auto &child : prim.GetFilteredChildren(UsdTraverseInstanceProxies(UsdPrimAllPrimsPredicate)))
-        if (_query.empty() || _matches.count(child.GetPath())) return true;
+        if (!_NeedsMatches() || _matches.count(child.GetPath())) return true;
+    if (_showPrototypes && parent == SdfPath::AbsoluteRootPath())
+        for (const auto &prototype : _document.GetStage()->GetPrototypes())
+            if (!_NeedsMatches() || _matches.count(prototype.GetPath())) return true;
     return false;
 }
 size_t Browser::PropertyDetailCount(const SdfPath &path, const std::string &property) const {
@@ -122,6 +158,7 @@ PrimSummary Browser::Summary(const SdfPath &path) const {
     const auto prim = _document.GetStage()->GetPrimAtPath(path);
     if (!prim) return {};
     PrimSummary result{prim.GetName().GetString(), prim.GetTypeName().GetString()};
+    result.inPrototype = prim.IsInPrototype();
     result.active = prim.IsActive(); result.loaded = prim.IsLoaded(); result.instanceProxy = prim.IsInstanceProxy();
     if (UsdGeomImageable imageable{prim}) result.visibility = imageable.ComputeVisibility(_document.GetTime()).GetString();
     result.drawMode = UsdGeomModelAPI(prim).ComputeModelDrawMode().GetString();
@@ -150,6 +187,34 @@ InspectorRows Browser::Properties(const SdfPath &path, const std::string &query)
         }), rows.end());
     }
     return rows;
+}
+SplinePlot Browser::SplinePreview(const SdfPath &path, const std::string &property, size_t samples) const {
+    const auto prim = _document.GetStage()->GetPrimAtPath(path);
+    const auto attr = prim ? prim.GetAttribute(TfToken(property)) : UsdAttribute();
+    SplinePlot plot;
+    if (!attr || !attr.HasSpline()) return plot;
+    const auto knots = attr.GetSpline().GetKnots();
+    if (knots.empty()) return plot;
+    const double first = knots.begin()->GetTime(), last = std::prev(knots.end())->GetTime();
+    if (!std::isfinite(first) || !std::isfinite(last)) return plot;
+    auto evaluate = [&](double time, std::vector<GfVec2d> *points) {
+        VtValue value;
+        if (!attr.Get(&value, UsdTimeCode(time))) return;
+        const auto numeric = VtValue::Cast<double>(value);
+        if (numeric.IsHolding<double>() && std::isfinite(numeric.UncheckedGet<double>()))
+            points->emplace_back(time, numeric.UncheckedGet<double>());
+    };
+    samples = std::clamp(samples, size_t(2), size_t(1024));
+    for (size_t i = 0; i < samples; ++i) {
+        const double f = double(i) / (samples - 1);
+        evaluate(first * (1.0 - f) + last * f, &plot.samples);
+    }
+    // The complete knot table remains paginated; the graph marks at most 256.
+    for (const auto &knot : knots) {
+        if (plot.knots.size() >= 256) break;
+        evaluate(knot.GetTime(), &plot.knots);
+    }
+    return plot;
 }
 InspectorRows Browser::PropertyMetadata(const SdfPath &path, const std::string &property) const {
     const auto prim = _document.GetStage()->GetPrimAtPath(path);
@@ -203,7 +268,8 @@ InspectorRows Browser::Metadata(const SdfPath &path) const {
 }
 InspectorRows Browser::Composition(const SdfPath &path) const {
     const auto prim = _document.GetStage()->GetPrimAtPath(path);
-    if (!prim || prim.IsInstanceProxy()) return {};
+    if (!prim) return {};
+    if (prim.IsInstanceProxy()) return {{"Prototype", "instance proxy", PrototypePath(path).GetString(), "generated by USD"}};
     InspectorRows rows;
     auto query = UsdPrimCompositionQuery(prim);
     for (const auto &arc : query.GetCompositionArcs()) {

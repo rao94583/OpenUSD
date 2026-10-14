@@ -15,6 +15,10 @@ with tempfile.TemporaryDirectory(prefix='Vela browsing ') as temp:
             double size.timeSamples = {1: 2, 3: 8}
         }
     }
+    def Xform "Instance" (
+        instanceable = true
+        prepend references = </World>
+    ) {}
     ''')
     result = subprocess.check_output([vela, '--check-browser', scene], text=True)
     assert 'Browser selection and inspector checks passed' in result, result

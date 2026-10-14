@@ -1,7 +1,9 @@
 #import "browser_view.h"
 #import "window_layout.h"
+#import "spline_view.h"
 #include "app/vela/core/browser.h"
 #include "app/vela/core/actions.h"
+#include "pxr/usd/usd/primRange.h"
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -18,6 +20,9 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSOutlineView *_outline;
     NSSearchField *_search;
     NSSearchField *_propertySearch;
+    NSPopUpButton *_primFilter;
+    NSButton *_showPrototypes;
+    NSButton *_prototypeButton;
     NSMutableDictionary<NSString *, NSArray<NSString *> *> *_children;
     NSMutableDictionary<NSString *, NSString *> *_items;
     NSMutableArray<NSTableView *> *_tables;
@@ -27,6 +32,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     BOOL _reloadScheduled;
     NSWindow *_detailWindow;
     NSTableView *_detailTable;
+    VelaSplineView *_splineView;
     NSTableView *_detailMetadataTable;
     NSTableView *_detailOpinionsTable;
     vela::InspectorRows _detailMetadataRows, _detailOpinionsRows;
@@ -54,6 +60,12 @@ PXR_NAMESPACE_USING_DIRECTIVE
     _search = [NSSearchField new];
     _search.placeholderString = @"Filter by path or type";
     _search.delegate = self;
+    _primFilter = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+    [_primFilter addItemsWithTitles:@[@"All prims", @"Active prims", @"Loaded prims", @"Models", @"Visible prims"]];
+    _primFilter.target = self; _primFilter.action = @selector(filterOptionsChanged:);
+    _showPrototypes = [NSButton checkboxWithTitle:@"Prototypes" target:self action:@selector(filterOptionsChanged:)];
+    NSStackView *filterBar = [NSStackView stackViewWithViews:@[_primFilter, _showPrototypes]];
+    filterBar.spacing = 6;
     _outline = [NSOutlineView new];
     _outline.dataSource = self; _outline.delegate = self;
     _outline.allowsMultipleSelection = YES;
@@ -68,7 +80,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     tree.hasVerticalScroller = YES; tree.hasHorizontalScroller = YES;
     tree.documentView = _outline;
     NSView *left = [NSView new];
-    for (NSView *view in @[_search, tree]) {
+    for (NSView *view in @[_search, filterBar, tree]) {
         view.translatesAutoresizingMaskIntoConstraints = NO; [left addSubview:view];
     }
     [NSLayoutConstraint activateConstraints:@[
@@ -77,12 +89,18 @@ PXR_NAMESPACE_USING_DIRECTIVE
         [_search.topAnchor constraintEqualToAnchor:left.topAnchor constant:8],
         [tree.leadingAnchor constraintEqualToAnchor:left.leadingAnchor constant:6],
         [tree.trailingAnchor constraintEqualToAnchor:left.trailingAnchor constant:-6],
-        [tree.topAnchor constraintEqualToAnchor:_search.bottomAnchor constant:6],
+        [filterBar.leadingAnchor constraintEqualToAnchor:left.leadingAnchor constant:6],
+        [filterBar.trailingAnchor constraintEqualToAnchor:left.trailingAnchor constant:-6],
+        [filterBar.topAnchor constraintEqualToAnchor:_search.bottomAnchor constant:6],
+        [tree.topAnchor constraintEqualToAnchor:filterBar.bottomAnchor constant:6],
         [tree.bottomAnchor constraintEqualToAnchor:left.bottomAnchor constant:-6]]];
     _outlineView = left;
 
     _selectionLabel = [NSTextField labelWithString:@"No selection"];
     _selectionLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
+    _prototypeButton = [NSButton buttonWithTitle:@"Prototype" target:self action:@selector(goToPrototype:)];
+    NSStackView *selectionBar = [NSStackView stackViewWithViews:@[_selectionLabel, _prototypeButton]];
+    [_selectionLabel setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow forOrientation:NSLayoutConstraintOrientationHorizontal];
     _propertySearch = [NSSearchField new];
     _propertySearch.placeholderString = @"Filter properties by name or type";
     _propertySearch.delegate = self;
@@ -102,18 +120,18 @@ PXR_NAMESPACE_USING_DIRECTIVE
         tab.view = scroll; [tabs addTabViewItem:tab];
     }
     NSView *right = [NSView new];
-    for (NSView *view in @[_selectionLabel, _propertySearch, tabs]) {
+    for (NSView *view in @[selectionBar, _propertySearch, tabs]) {
         view.translatesAutoresizingMaskIntoConstraints = NO; [right addSubview:view];
     }
     [NSLayoutConstraint activateConstraints:@[
-        [_selectionLabel.leadingAnchor constraintEqualToAnchor:right.leadingAnchor constant:6],
-        [_selectionLabel.trailingAnchor constraintEqualToAnchor:right.trailingAnchor constant:-6],
-        [_selectionLabel.topAnchor constraintEqualToAnchor:right.topAnchor constant:8],
+        [selectionBar.leadingAnchor constraintEqualToAnchor:right.leadingAnchor constant:6],
+        [selectionBar.trailingAnchor constraintEqualToAnchor:right.trailingAnchor constant:-6],
+        [selectionBar.topAnchor constraintEqualToAnchor:right.topAnchor constant:8],
         [tabs.leadingAnchor constraintEqualToAnchor:right.leadingAnchor constant:6],
         [tabs.trailingAnchor constraintEqualToAnchor:right.trailingAnchor constant:-6],
         [_propertySearch.leadingAnchor constraintEqualToAnchor:right.leadingAnchor constant:6],
         [_propertySearch.trailingAnchor constraintEqualToAnchor:right.trailingAnchor constant:-6],
-        [_propertySearch.topAnchor constraintEqualToAnchor:_selectionLabel.bottomAnchor constant:6],
+        [_propertySearch.topAnchor constraintEqualToAnchor:selectionBar.bottomAnchor constant:6],
         [tabs.topAnchor constraintEqualToAnchor:_propertySearch.bottomAnchor constant:6],
         [tabs.bottomAnchor constraintEqualToAnchor:right.bottomAnchor constant:-6]]];
     _inspectorView = right;
@@ -172,8 +190,9 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSTextField *label = [view makeViewWithIdentifier:column.identifier owner:self];
     if (!label) { label = [NSTextField labelWithString:@""]; label.identifier = column.identifier; }
     label.stringValue = @(value.c_str()); label.lineBreakMode = NSLineBreakByTruncatingMiddle;
-    label.textColor = summary.active && summary.loaded ? NSColor.labelColor : NSColor.secondaryLabelColor;
-    label.toolTip = [NSString stringWithFormat:@"%@%@%@", item,
+    label.textColor = summary.active && summary.loaded && !summary.inPrototype ? NSColor.labelColor : NSColor.secondaryLabelColor;
+    label.toolTip = [NSString stringWithFormat:@"%@%@%@%@", item,
+        summary.inPrototype ? @" (USD prototype, read-only)" : @"",
         summary.active ? @"" : @" (inactive)", summary.instanceProxy ? @" (instance proxy)" : @""];
     return label;
 }
@@ -205,6 +224,19 @@ PXR_NAMESPACE_USING_DIRECTIVE
     if (notification.object == _propertySearch) [self refreshInspector];
     else [self applyFilter];
 }
+- (void)filterOptionsChanged:(id)sender {
+    _browser->SetPrimFilter(static_cast<vela::Browser::PrimFilter>(_primFilter.indexOfSelectedItem));
+    _browser->SetShowPrototypes(_showPrototypes.state == NSControlStateValueOn);
+    [self applyFilter];
+}
+- (void)goToPrototype:(id)sender {
+    const auto path = _browser->PrototypePath([self inspectedPath]);
+    if (path.IsEmpty()) return;
+    _showPrototypes.state = NSControlStateValueOn;
+    [_primFilter selectItemAtIndex:0]; _search.stringValue = @"";
+    [self filterOptionsChanged:nil];
+    vela::ActionRegistry::Get().Run(*_document, "select", {{"paths", JsValue(JsArray{JsValue(path.GetString())})}});
+}
 - (void)applyFilter {
     _browser->SetFilter(_search.stringValue.UTF8String);
     _syncing = YES; [_children removeAllObjects]; [_outline reloadData]; _syncing = NO;
@@ -228,7 +260,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
     } else {
         if (changes & vela::Document::Selection) [self syncSelection];
         if (changes & (vela::Document::Selection | vela::Document::Time | vela::Document::EditTarget | vela::Document::UndoState)) [self refreshInspector];
-        if (changes & vela::Document::Time) { _syncing = YES; [_outline reloadData]; _syncing = NO; [self syncSelection]; }
+        if ((changes & vela::Document::Time) && _primFilter.indexOfSelectedItem == 4) [self applyFilter];
+        else if (changes & vela::Document::Time) { _syncing = YES; [_outline reloadData]; _syncing = NO; [self syncSelection]; }
     }
 }
 - (SdfPath)inspectedPath {
@@ -237,6 +270,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
 }
 - (void)refreshInspector {
     const auto path = [self inspectedPath];
+    _prototypeButton.enabled = !_browser->PrototypePath(path).IsEmpty();
     _selectionLabel.stringValue = path.IsEmpty() ? @"No selection" : @(path.GetText());
     _selectionLabel.toolTip = _document->GetSelection().size() > 1 ? @"Inspecting the last selected prim" : nil;
     _rows[0] = _browser->Properties(path, _propertySearch.stringValue.UTF8String); _rows[1] = _browser->Metadata(path);
@@ -292,6 +326,9 @@ PXR_NAMESPACE_USING_DIRECTIVE
             scroll.documentView = tables[i]; scroll.hasVerticalScroller = YES; scroll.hasHorizontalScroller = YES;
             tab.view = scroll; [tabs addTabViewItem:tab];
         }
+        _splineView = [VelaSplineView new];
+        NSTabViewItem *curveTab = [[NSTabViewItem alloc] initWithIdentifier:@"Curve"];
+        curveTab.label = @"Curve"; curveTab.view = _splineView; [tabs addTabViewItem:curveTab];
         _previousPage = [NSButton buttonWithTitle:@"Previous" target:self action:@selector(previousPage:)];
         _nextPage = [NSButton buttonWithTitle:@"Next" target:self action:@selector(nextPage:)];
         _pageLabel = [NSTextField labelWithString:@""];
@@ -313,6 +350,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
 }
 - (void)refreshDetails {
     _detailRows = _browser->PropertyDetails(_detailPath, _detailProperty, _detailOffset);
+    [_splineView setPlot:_browser->SplinePreview(_detailPath, _detailProperty)];
     _detailMetadataRows = _browser->PropertyMetadata(_detailPath, _detailProperty);
     _detailOpinionsRows = _browser->PropertyOpinions(_detailPath, _detailProperty);
     [_detailTable reloadData]; [_detailMetadataTable reloadData]; [_detailOpinionsTable reloadData];
@@ -349,6 +387,19 @@ PXR_NAMESPACE_USING_DIRECTIVE
     if (_outline.tableColumns.count != 4 || _tables.count != 5) return NO;
     auto roots = _browser->Children();
     if (roots.empty()) return YES;
+    const auto prototypes = _document->GetStage()->GetPrototypes();
+    if (!prototypes.empty()) {
+        for (const auto &prim : _document->GetStage()->Traverse()) {
+            if (!prim.IsInstance()) continue;
+            vela::ActionRegistry::Get().Run(*_document, "select", {{"paths", JsValue(JsArray{JsValue(prim.GetPath().GetString())})}});
+            if (!_prototypeButton.enabled) return NO;
+            [self goToPrototype:nil];
+            if (!_browser->GetShowPrototypes() || [self inspectedPath] != prim.GetPrototype().GetPath() || _outline.selectedRow < 0) return NO;
+            _showPrototypes.state = NSControlStateValueOff; [self filterOptionsChanged:nil];
+            _document->SetSelection({});
+            break;
+        }
+    }
     SdfPath path = roots.front();
     const auto children = _browser->Children(path);
     if (!children.empty()) path = children.front();

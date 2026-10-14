@@ -1,9 +1,18 @@
 #include "browser.h"
+#include <algorithm>
 #include "test_support.h"
 #include "pxr/usd/usdGeom/cube.h"
 #include "pxr/usd/usdGeom/xform.h"
 #include "pxr/usd/usd/variantSets.h"
 #include "pxr/usd/usd/references.h"
+#include "pxr/usd/usdGeom/imageable.h"
+#include "pxr/usd/usd/payloads.h"
+#include "actions.h"
+#include "pxr/base/vt/typeHeaders.h"
+#include "pxr/base/vt/visitValue.h"
+#include "pxr/usd/sdf/schema.h"
+#include "pxr/usd/sdf/assetPath.h"
+#include "pxr/usd/sdf/pathExpression.h"
 #include "pxr/base/ts/spline.h"
 #include "pxr/base/ts/knot.h"
 using namespace vela;
@@ -45,6 +54,88 @@ void TestOutline() {
     b.SetFilter(""); CHECK(b.Children().size() == 4);
     CHECK(b.Children(SdfPath("/Missing")).empty());
 }
+void TestFiltersAndPrototypes() {
+    auto stage = UsdStage::CreateInMemory();
+    auto world = UsdGeomXform::Define(stage, SdfPath("/World"));
+    world.GetPrim().SetMetadata(TfToken("kind"), TfToken("component"));
+    auto cube = UsdGeomCube::Define(stage, SdfPath("/World/Cube"));
+    auto inactive = stage->DefinePrim(SdfPath("/Inactive")); inactive.SetActive(false);
+    auto instance = stage->DefinePrim(SdfPath("/Instance"));
+    instance.GetReferences().AddInternalReference(SdfPath("/World")); instance.SetInstanceable(true);
+    const auto prototype = instance.GetPrototype();
+    Document d(stage); Browser b(d);
+    CHECK(prototype); CHECK(b.Children().size() == 3);
+    CHECK(b.PrototypePath(instance.GetPath()) == prototype.GetPath());
+    const auto proxy = stage->GetPrimAtPath(SdfPath("/Instance/Cube"));
+    CHECK(b.PrototypePath(proxy.GetPath()) == prototype.GetPath().AppendChild(TfToken("Cube")));
+    CHECK(b.PrototypePath(SdfPath("/World/Cube")).IsEmpty());
+    CHECK(!b.Composition(proxy.GetPath()).empty());
+    b.SetShowPrototypes(true); CHECK(b.Children().size() == 4);
+    CHECK(b.Summary(prototype.GetPath()).inPrototype);
+    CHECK(b.Children(prototype.GetPath()).size() == 1);
+    b.SetFilter("cube"); CHECK(b.Children().size() == 3);
+    b.SetShowPrototypes(false); CHECK(b.Children().size() == 2);
+    b.SetFilter("inactive"); b.SetPrimFilter(Browser::PrimFilter::Active);
+    CHECK(b.Children().empty());
+    b.SetFilter(""); b.SetPrimFilter(Browser::PrimFilter::Models);
+    CHECK(b.Children().size() == 2); // component and its instance
+    b.SetPrimFilter(Browser::PrimFilter::Visible);
+    cube.CreateVisibilityAttr().Set(UsdGeomTokens->invisible, UsdTimeCode(1));
+    cube.GetVisibilityAttr().Set(UsdGeomTokens->inherited, UsdTimeCode(2));
+    d.SetTime(UsdTimeCode(1)); CHECK(b.Children(world.GetPath()).empty());
+    d.SetTime(UsdTimeCode(2)); CHECK(b.Children(world.GetPath()).size() == 1);
+    // Generated prototypes can be selected for inspection but cannot be edited.
+    auto &actions = ActionRegistry::Get();
+    const auto protoChild = prototype.GetPath().AppendChild(TfToken("Cube"));
+    CHECK(actions.Run(d, "select", {{"paths", JsValue(JsArray{JsValue(protoChild.GetString())})}}).ok);
+    CHECK(!actions.Run(d, "set_active", {{"path", JsValue(protoChild.GetString())}, {"active", JsValue(false)}}).ok);
+    CHECK(!actions.Run(d, "hide_selection").ok);
+    CHECK(d.GetUndoStack().CanUndo()); // visibility edits above were recorded
+    CHECK(stage->GetPrimAtPath(protoChild));
+    // Unloaded payload roots remain available under All but are excluded by
+    // Loaded. Switching filters does not change the stage's load rules.
+    auto payload = UsdStage::CreateInMemory();
+    UsdGeomXform::Define(payload, SdfPath("/Asset"));
+    auto asset = stage->DefinePrim(SdfPath("/Payload"));
+    asset.GetPayloads().AddPayload(payload->GetRootLayer()->GetIdentifier(), SdfPath("/Asset"));
+    stage->Unload(asset.GetPath());
+    b.SetPrimFilter(Browser::PrimFilter::All);
+    auto all = b.Children();
+    CHECK(std::find(all.begin(), all.end(), asset.GetPath()) != all.end());
+    b.SetPrimFilter(Browser::PrimFilter::Loaded); auto loaded = b.Children();
+    CHECK(std::find(loaded.begin(), loaded.end(), asset.GetPath()) == loaded.end());
+    CHECK(!asset.IsLoaded());
+}
+
+struct PopulateArray {
+    VtValue scalar;
+    template<class T> VtValue operator()(const VtArray<T> &) const {
+        return scalar.IsHolding<T>() ? VtValue(VtArray<T>{scalar.UncheckedGet<T>()}) : VtValue();
+    }
+    template<class T> VtValue operator()(const T &) const { return {}; }
+};
+void TestArrayTypes() {
+    auto stage = UsdStage::CreateInMemory();
+    auto prim = stage->DefinePrim(SdfPath("/Arrays"));
+    Document d(stage); Browser b(d);
+    size_t tested = 0;
+    for (const auto &type : SdfSchema::GetInstance().GetAllTypes()) {
+        if (!type.IsArray() || type.GetDefaultValue().IsEmpty()) continue;
+        const auto value = VtVisitValueWithExtTypes<TfMetaList<VtArray<SdfAssetPath>, VtArray<SdfPathExpression>>>::VisitValue(
+            type.GetDefaultValue(), PopulateArray{type.GetScalarType().GetDefaultValue()});
+        if (value.IsEmpty()) std::fprintf(stderr, "Missing array type: %s (%s)\n", type.GetAsToken().GetText(), type.GetDefaultValue().GetTypeName().c_str());
+        CHECK(!value.IsEmpty());
+        if (value.IsEmpty()) continue;
+        const std::string name = "array_" + std::to_string(tested++);
+        CHECK(prim.CreateAttribute(TfToken(name), type).Set(value));
+        const auto rows = b.PropertyDetails(prim.GetPath(), name);
+        CHECK(rows.size() == 2);
+        CHECK(rows.back().name == "[0]");
+        CHECK(rows.back().value.find("unavailable") == std::string::npos);
+    }
+    CHECK(tested >= 30);
+}
+
 void TestInspector() {
     auto stage = UsdStage::CreateInMemory();
     auto cube = UsdGeomCube::Define(stage, SdfPath("/Cube"));
@@ -112,9 +203,14 @@ void TestInspector() {
     TsKnot last; last.SetTime(3); last.SetValue(6.0);
     spline.SetKnot(first); spline.SetKnot(last);
     CHECK(splineAttr.SetSpline(spline));
+    const auto preview = b.SplinePreview(path, "curve", 10);
+    CHECK(preview.samples.size() == 10); CHECK(preview.knots.size() == 2);
+    CHECK(preview.samples.front() == GfVec2d(1, 2)); CHECK(preview.samples.back() == GfVec2d(3, 6));
+    CHECK(b.SplinePreview(path, "curve", 100000).samples.size() == 1024);
+    CHECK(b.SplinePreview(path, "size").samples.empty());
     CHECK(b.PropertyDetailCount(path, "curve") == 2);
     CHECK(b.PropertyDetails(path, "curve").size() == 3);
     CHECK(b.PropertyDetails(path, "curve", 1, 1).size() == 2);
 }
 }
-int main() { test::RegisterPlugins(); TestOutline(); TestInspector(); return test::Finish("browser"); }
+int main() { test::RegisterPlugins(); TestOutline(); TestFiltersAndPrototypes(); TestArrayTypes(); TestInspector(); return test::Finish("browser"); }

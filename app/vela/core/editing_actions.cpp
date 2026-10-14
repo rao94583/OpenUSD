@@ -100,7 +100,8 @@ bool ConvertValue(const JsValue &v, const SdfValueTypeName &type, VtValue *out) 
 UsdPrim Prim(Document &d, const JsObject &p) {
     const SdfPath path(p.at("path").GetString());
     if (!path.IsAbsolutePath() || !path.IsPrimPath()) return {};
-    return d.GetStage()->GetPrimAtPath(path);
+    auto prim = d.GetStage()->GetPrimAtPath(path);
+    return prim && !prim.IsInPrototype() ? prim : UsdPrim();
 }
 bool Editable(const Document &d) { return d.GetEditTarget()->PermissionToEdit(); }
 UsdTimeCode Time(const JsObject &p) {
@@ -171,7 +172,7 @@ void SelectionActions(ActionRegistry &r) {
                 SdfPathVector paths = d.GetSelection();
                 for (const auto &path : paths) {
                     const auto prim = d.GetStage()->GetPrimAtPath(path);
-                    if (!prim || prim.IsInstanceProxy() || (visibility && !UsdGeomImageable(prim)))
+                    if (!prim || prim.IsInstanceProxy() || prim.IsInPrototype() || (visibility && !UsdGeomImageable(prim)))
                         return ActionResult::Error("Selection contains a prim that cannot perform this operation: " + path.GetString());
                 }
                 std::sort(paths.begin(), paths.end(), [](const SdfPath &a, const SdfPath &b) {

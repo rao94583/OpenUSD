@@ -86,6 +86,8 @@ objc_library(
         "main.mm",
         "menus.h",
         "menus.mm",
+        "spline_view.h",
+        "spline_view.mm",
         "window_layout.h",
         "window_layout.mm",
         "viewport/renderer.h",
