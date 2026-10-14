@@ -30,6 +30,7 @@ cc_library(
     srcs = [
         "core/actions.cpp",
         "core/document.cpp",
+        "core/editing_actions.cpp",
         "core/free_camera.cpp",
         "core/standard_actions.cpp",
         "core/undo.cpp",
@@ -67,6 +68,7 @@ cc_test(
     deps = [":core"],
 ) for name in [
     "actions_test",
+    "editing_actions_test",
     "document_test",
     "undo_test",
 ]]

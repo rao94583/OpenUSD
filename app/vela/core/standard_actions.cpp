@@ -283,7 +283,10 @@ void RegisterPlayback(ActionRegistry &r) {
 
 } // namespace
 
+void RegisterEditingActions(ActionRegistry &registry);
+
 void RegisterStandardActions(ActionRegistry &registry) {
+    RegisterEditingActions(registry);
     RegisterEdit(registry);
     RegisterView(registry);
     RegisterPlayback(registry);

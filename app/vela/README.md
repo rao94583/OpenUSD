@@ -1,6 +1,6 @@
 # Vela
 
-Native macOS USD viewer (Phase 2: viewport). Requires macOS 13+, Xcode and
+Native macOS USD viewer (Phase 5 editing work has started). Requires macOS 13+, Xcode and
 the repository's Bazel toolchain. It opens `.usd`, `.usda`, `.usdc` and
 `.usdz` through `NSDocument` (File → Open, Finder) and shows the stage in a
 Storm viewport rendered with Metal.
@@ -38,9 +38,16 @@ to the stage bounds.
 ## Actions and undo
 
 Every menu item and shortcut runs a named action from the registry in
-`core/standard_actions.cpp`; `--describe-actions` lists them with their
+`core/standard_actions.cpp` and `core/editing_actions.cpp`; `--describe-actions` lists them with their
 parameter schemas. Changes to the stage are undoable across all its
 layers (Edit → Undo, ⌘Z), one step per action.
+
+The Prim menu hides/shows, activates/deactivates and loads/unloads the
+selection. Attribute, variant, purpose and model draw mode authoring actions
+are available in the registry; inspector integration awaits the Phase 4 code.
+Edits currently change in-memory layers; saving/export and close prompts are
+pending. See [PHASE5.md](PHASE5.md) for the parity checklist and supported
+attribute types.
 
 ## Command line
 

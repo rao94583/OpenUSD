@@ -27,6 +27,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSSlider *_slider;
     NSTextField *_frameLabel;
     NSTextField *_statusLabel;
+    NSString *_viewportStatus;
     NSButton *_playButton;
     NSTimer *_timer;
 }
@@ -90,8 +91,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
     _viewport.statusChanged = ^(NSString *status) {
         VelaWindowController *strongSelf = weakSelf;
         if (strongSelf) {
-            strongSelf->_statusLabel.stringValue = [NSString stringWithFormat:
-                @"%zu prims    %@", strongSelf->_primCount, status];
+            strongSelf->_viewportStatus = status;
+            [strongSelf showStatus];
         }
     };
     _observer = _document->AddObserver([weakSelf](unsigned changes) {
@@ -116,7 +117,17 @@ PXR_NAMESPACE_USING_DIRECTIVE
     }
 }
 
+- (void)showStatus {
+    _statusLabel.stringValue = [NSString stringWithFormat:@"%zu prims    %@",
+                                _primCount, _viewportStatus ?: @""];
+}
+
 - (void)documentChanged:(unsigned)changes {
+    if (changes & vela::Document::StageContent) {
+        _primCount = 0;
+        for (const auto &prim : _document->GetStage()->Traverse()) { (void)prim; ++_primCount; }
+        [self showStatus];
+    }
     if (changes & vela::Document::Time) {
         [self showTime];
     }

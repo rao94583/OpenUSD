@@ -266,6 +266,36 @@ To check interactively: menus and their enabled states, F/A/Space/arrow
 keys in the viewport, click and Shift-click selection, the timeline and
 playback.
 
+## Phase 5 progress
+
+Started with the independent authoring actions in `core/editing_actions.cpp`.
+The Phase 4 browsing implementation is not present in this checkout (HEAD
+was the Phase 3 commit when this work began), so inspector integration is
+pending. See [PHASE5.md](PHASE5.md) for the usdview parity checklist and
+remaining work; Phase 5 is not complete.
+
+- `set_attribute` and `clear_attribute`: existing typed attributes, scalar
+  and array values, default values and numeric time samples. Invalid types,
+  integer overflow and uniform time samples are rejected before authoring.
+- `set_variant`, `set_active`, `set_visibility`, `set_purpose` and
+  `set_model_draw_mode`: author to the document's current edit target and
+  share its undo history. Instance proxies and read-only targets are rejected.
+- `set_payload_loaded`: load rules without layer authoring or undo entries.
+- Prim menu: hide/show, activate/deactivate and load/unload the selection.
+  Authoring batches are one undo step and validate all prims before edits;
+  descendants are deactivated before ancestors. The status prim count now
+  refreshes after recomposition.
+- `editing_actions_test`: typed values, 64-bit limits, root/session target
+  isolation, time samples, variants, inherited visibility, parent/child
+  activation and payloads, including undo/redo layer-text round trips.
+  It adapts action scenarios from `testUsdviewDeactivate` and
+  `testUsdviewInstancingEdits` without requiring a display.
+
+Checks: editing, action, document, undo, camera, menu and signed-bundle
+smoke tests. GPU snapshots and manual UI checks are deferred while the
+display may sleep. Edits remain in-memory; saving/export and dirty-state
+handling are still pending.
+
 ## Testing
 
 - `cc_test` for the core: document, actions, undo, camera math
