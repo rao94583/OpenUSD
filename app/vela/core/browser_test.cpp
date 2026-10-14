@@ -64,6 +64,9 @@ void TestInspector() {
     CHECK(Find(rows, "values") && Find(rows, "values")->value == "10000 elements");
     d.SetTime(UsdTimeCode(3)); rows = b.Properties(path);
     CHECK(Find(rows, "size") && Find(rows, "size")->value == "8");
+    CHECK(b.Properties(path, "SiZe").size() == 1);
+    CHECK(!b.Properties(path, "int[]").empty());
+    CHECK(b.Properties(path, "does not exist").empty());
     CHECK(Find(rows, "targets") && Find(rows, "targets")->type == "relationship");
     CHECK(b.PropertyDetailCount(path, "values") == 10000);
     CHECK(b.PropertyDetailCount(path, "size") == 2);
@@ -82,6 +85,25 @@ void TestInspector() {
     d.SetEditTarget(stage->GetSessionLayer()); CHECK(b.Layers().front().type == "edit target");
     auto variantRows = b.Variants(path); CHECK(variantRows.size() == 1);
     CHECK(variantRows[0].value == "red"); CHECK(variantRows[0].source.find("blue") != std::string::npos);
+    auto sizeMetadata = b.PropertyMetadata(path, "size");
+    CHECK(Find(sizeMetadata, "typeName"));
+    CHECK(b.PropertyMetadata(path, "missing").empty());
+    // Opinion drill-down must show both stronger session and weaker root
+    // authoring, without flattening or changing either layer.
+    cube.GetSizeAttr().Set(12.0);
+    std::string rootText; stage->GetRootLayer()->ExportToString(&rootText);
+    std::string sessionText; stage->GetSessionLayer()->ExportToString(&sessionText);
+    const auto opinions = b.PropertyOpinions(path, "size");
+    CHECK(Find(opinions, "default") && Find(opinions, "default")->value == "12");
+    size_t layerOpinions = 0;
+    for (const auto &row : opinions) if (row.name == "Opinion") ++layerOpinions;
+    CHECK(layerOpinions == 2);
+    CHECK(b.PropertyOpinions(path, "missing").empty());
+    const auto layerDetails = b.LayerDetails(stage->GetRootLayer()->GetIdentifier());
+    CHECK(Find(layerDetails, "Identifier")); CHECK(Find(layerDetails, "Editable"));
+    CHECK(b.LayerDetails("not a stage layer").empty());
+    std::string after; stage->GetRootLayer()->ExportToString(&after); CHECK(after == rootText);
+    stage->GetSessionLayer()->ExportToString(&after); CHECK(after == sessionText);
     CHECK(b.Properties(SdfPath("/Missing")).empty());
     CHECK(b.PropertyDetails(path, "missing").empty());
     auto splineAttr = cube.GetPrim().CreateAttribute(TfToken("curve"), SdfValueTypeNames->Double);

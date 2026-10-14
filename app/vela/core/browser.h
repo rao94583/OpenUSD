@@ -27,7 +27,10 @@ public:
     bool HasChildren(const SdfPath &parent);
     size_t PropertyDetailCount(const SdfPath &path, const std::string &property) const;
     PrimSummary Summary(const SdfPath &path) const;
-    InspectorRows Properties(const SdfPath &path) const;
+    InspectorRows Properties(const SdfPath &path, const std::string &query = "") const;
+    InspectorRows PropertyMetadata(const SdfPath &path, const std::string &property) const;
+    InspectorRows PropertyOpinions(const SdfPath &path, const std::string &property) const;
+    InspectorRows LayerDetails(const std::string &identifier) const;
     InspectorRows Metadata(const SdfPath &path) const;
     InspectorRows Composition(const SdfPath &path) const;
     InspectorRows Layers() const;

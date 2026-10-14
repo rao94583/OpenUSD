@@ -86,6 +86,8 @@ objc_library(
         "main.mm",
         "menus.h",
         "menus.mm",
+        "window_layout.h",
+        "window_layout.mm",
         "viewport/renderer.h",
         "viewport/renderer.mm",
         "viewport/viewport_view.h",

@@ -1,4 +1,5 @@
 #import "browser_view.h"
+#import "window_layout.h"
 #include "app/vela/core/browser.h"
 #include "app/vela/core/actions.h"
 
@@ -16,6 +17,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSView *_inspectorView;
     NSOutlineView *_outline;
     NSSearchField *_search;
+    NSSearchField *_propertySearch;
     NSMutableDictionary<NSString *, NSArray<NSString *> *> *_children;
     NSMutableDictionary<NSString *, NSString *> *_items;
     NSMutableArray<NSTableView *> *_tables;
@@ -25,6 +27,13 @@ PXR_NAMESPACE_USING_DIRECTIVE
     BOOL _reloadScheduled;
     NSWindow *_detailWindow;
     NSTableView *_detailTable;
+    NSTableView *_detailMetadataTable;
+    NSTableView *_detailOpinionsTable;
+    vela::InspectorRows _detailMetadataRows, _detailOpinionsRows;
+    NSWindow *_layerWindow;
+    NSTableView *_layerTable;
+    vela::InspectorRows _layerRows;
+    std::string _layerIdentifier;
     vela::InspectorRows _detailRows;
     std::string _detailProperty;
     SdfPath _detailPath;
@@ -58,22 +67,32 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSScrollView *tree = [NSScrollView new];
     tree.hasVerticalScroller = YES; tree.hasHorizontalScroller = YES;
     tree.documentView = _outline;
-    NSStackView *left = [NSStackView stackViewWithViews:@[_search, tree]];
-    left.orientation = NSUserInterfaceLayoutOrientationVertical;
-    left.alignment = NSLayoutAttributeWidth; left.spacing = 6;
-    left.edgeInsets = NSEdgeInsetsMake(8, 6, 6, 6);
-    [_search setContentHuggingPriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationVertical];
-    [tree setContentHuggingPriority:NSLayoutPriorityDefaultLow forOrientation:NSLayoutConstraintOrientationVertical];
+    NSView *left = [NSView new];
+    for (NSView *view in @[_search, tree]) {
+        view.translatesAutoresizingMaskIntoConstraints = NO; [left addSubview:view];
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [_search.leadingAnchor constraintEqualToAnchor:left.leadingAnchor constant:6],
+        [_search.trailingAnchor constraintEqualToAnchor:left.trailingAnchor constant:-6],
+        [_search.topAnchor constraintEqualToAnchor:left.topAnchor constant:8],
+        [tree.leadingAnchor constraintEqualToAnchor:left.leadingAnchor constant:6],
+        [tree.trailingAnchor constraintEqualToAnchor:left.trailingAnchor constant:-6],
+        [tree.topAnchor constraintEqualToAnchor:_search.bottomAnchor constant:6],
+        [tree.bottomAnchor constraintEqualToAnchor:left.bottomAnchor constant:-6]]];
     _outlineView = left;
 
     _selectionLabel = [NSTextField labelWithString:@"No selection"];
     _selectionLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
+    _propertySearch = [NSSearchField new];
+    _propertySearch.placeholderString = @"Filter properties by name or type";
+    _propertySearch.delegate = self;
     NSTabView *tabs = [NSTabView new];
     NSArray<NSString *> *names = @[@"Properties", @"Metadata", @"Composition", @"Layers", @"Variants"];
     for (NSInteger i = 0; i < names.count; ++i) {
         NSTableView *table = [self makeTable];
         table.tag = i;
         if (i == 0) { table.target = self; table.doubleAction = @selector(openProperty:); }
+        if (i == 2 || i == 3) { table.target = self; table.doubleAction = @selector(openLayer:); }
         [_tables addObject:table];
         NSTabViewItem *tab = [[NSTabViewItem alloc] initWithIdentifier:names[i]];
         tab.label = names[i];
@@ -82,12 +101,21 @@ PXR_NAMESPACE_USING_DIRECTIVE
         scroll.documentView = table;
         tab.view = scroll; [tabs addTabViewItem:tab];
     }
-    NSStackView *right = [NSStackView stackViewWithViews:@[_selectionLabel, tabs]];
-    right.orientation = NSUserInterfaceLayoutOrientationVertical;
-    right.alignment = NSLayoutAttributeWidth; right.spacing = 6;
-    right.edgeInsets = NSEdgeInsetsMake(8, 6, 6, 6);
-    [_selectionLabel setContentHuggingPriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationVertical];
-    [tabs setContentHuggingPriority:NSLayoutPriorityDefaultLow forOrientation:NSLayoutConstraintOrientationVertical];
+    NSView *right = [NSView new];
+    for (NSView *view in @[_selectionLabel, _propertySearch, tabs]) {
+        view.translatesAutoresizingMaskIntoConstraints = NO; [right addSubview:view];
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [_selectionLabel.leadingAnchor constraintEqualToAnchor:right.leadingAnchor constant:6],
+        [_selectionLabel.trailingAnchor constraintEqualToAnchor:right.trailingAnchor constant:-6],
+        [_selectionLabel.topAnchor constraintEqualToAnchor:right.topAnchor constant:8],
+        [tabs.leadingAnchor constraintEqualToAnchor:right.leadingAnchor constant:6],
+        [tabs.trailingAnchor constraintEqualToAnchor:right.trailingAnchor constant:-6],
+        [_propertySearch.leadingAnchor constraintEqualToAnchor:right.leadingAnchor constant:6],
+        [_propertySearch.trailingAnchor constraintEqualToAnchor:right.trailingAnchor constant:-6],
+        [_propertySearch.topAnchor constraintEqualToAnchor:_selectionLabel.bottomAnchor constant:6],
+        [tabs.topAnchor constraintEqualToAnchor:_propertySearch.bottomAnchor constant:6],
+        [tabs.bottomAnchor constraintEqualToAnchor:right.bottomAnchor constant:-6]]];
     _inspectorView = right;
 
     __weak VelaBrowserController *weakSelf = self;
@@ -97,7 +125,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     [_outline reloadData]; [self refreshInspector]; [self syncSelection];
     return self;
 }
-- (void)dealloc { _document->RemoveObserver(_observer); [_detailWindow close]; }
+- (void)dealloc { _document->RemoveObserver(_observer); [_detailWindow close]; [_layerWindow close]; }
 - (NSView *)outlineView { return _outlineView; }
 - (NSView *)inspectorView { return _inspectorView; }
 - (NSTableView *)makeTable {
@@ -174,6 +202,10 @@ PXR_NAMESPACE_USING_DIRECTIVE
     _syncing = NO;
 }
 - (void)controlTextDidChange:(NSNotification *)notification {
+    if (notification.object == _propertySearch) [self refreshInspector];
+    else [self applyFilter];
+}
+- (void)applyFilter {
     _browser->SetFilter(_search.stringValue.UTF8String);
     _syncing = YES; [_children removeAllObjects]; [_outline reloadData]; _syncing = NO;
     [self syncSelection];
@@ -207,17 +239,25 @@ PXR_NAMESPACE_USING_DIRECTIVE
     const auto path = [self inspectedPath];
     _selectionLabel.stringValue = path.IsEmpty() ? @"No selection" : @(path.GetText());
     _selectionLabel.toolTip = _document->GetSelection().size() > 1 ? @"Inspecting the last selected prim" : nil;
-    _rows[0] = _browser->Properties(path); _rows[1] = _browser->Metadata(path);
+    _rows[0] = _browser->Properties(path, _propertySearch.stringValue.UTF8String); _rows[1] = _browser->Metadata(path);
     _rows[2] = _browser->Composition(path); _rows[3] = _browser->Layers();
     _rows[4] = _browser->Variants(path);
     for (NSTableView *table in _tables) [table reloadData];
     if (_detailWindow) [self refreshDetails];
+    if (_layerWindow) { _layerRows = _browser->LayerDetails(_layerIdentifier); [_layerTable reloadData]; }
+}
+- (const vela::InspectorRows &)rowsForTable:(NSTableView *)table {
+    if (table == _detailTable) return _detailRows;
+    if (table == _detailMetadataTable) return _detailMetadataRows;
+    if (table == _detailOpinionsTable) return _detailOpinionsRows;
+    if (table == _layerTable) return _layerRows;
+    return _rows[table.tag];
 }
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)table {
-    return table == _detailTable ? _detailRows.size() : _rows[table.tag].size();
+    return [self rowsForTable:table].size();
 }
 - (NSView *)tableView:(NSTableView *)table viewForTableColumn:(NSTableColumn *)column row:(NSInteger)index {
-    const auto &rows = table == _detailTable ? _detailRows : _rows[table.tag];
+    const auto &rows = [self rowsForTable:table];
     const auto &row = rows[index];
     const std::string *value = [column.identifier isEqualToString:@"Name"] ? &row.name :
         [column.identifier isEqualToString:@"Type"] ? &row.type :
@@ -231,40 +271,81 @@ PXR_NAMESPACE_USING_DIRECTIVE
 - (void)openProperty:(NSTableView *)table {
     NSInteger row = table.clickedRow;
     if (row < 0 || row >= (NSInteger)_rows[0].size()) return;
-    _detailPath = [self inspectedPath]; _detailProperty = _rows[0][row].name; _detailOffset = 0;
+    [self inspectProperty:_rows[0][row].name show:YES];
+}
+- (void)inspectProperty:(const std::string &)property show:(BOOL)show {
+    _detailPath = [self inspectedPath]; _detailProperty = property; _detailOffset = 0;
     if (!_detailWindow) {
         _detailWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 820, 480)
             styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
             backing:NSBackingStoreBuffered defer:NO];
         _detailWindow.releasedWhenClosed = NO;
         _detailTable = [self makeTable];
-        NSScrollView *scroll = [NSScrollView new];
-        scroll.documentView = _detailTable; scroll.hasVerticalScroller = YES; scroll.hasHorizontalScroller = YES;
+        _detailMetadataTable = [self makeTable]; _detailOpinionsTable = [self makeTable];
+        NSTabView *tabs = [NSTabView new];
+        NSArray *names = @[@"Values", @"Metadata", @"Opinions"];
+        NSArray *tables = @[_detailTable, _detailMetadataTable, _detailOpinionsTable];
+        for (NSUInteger i = 0; i < names.count; ++i) {
+            NSTabViewItem *tab = [[NSTabViewItem alloc] initWithIdentifier:names[i]];
+            tab.label = names[i];
+            NSScrollView *scroll = [NSScrollView new];
+            scroll.documentView = tables[i]; scroll.hasVerticalScroller = YES; scroll.hasHorizontalScroller = YES;
+            tab.view = scroll; [tabs addTabViewItem:tab];
+        }
         _previousPage = [NSButton buttonWithTitle:@"Previous" target:self action:@selector(previousPage:)];
         _nextPage = [NSButton buttonWithTitle:@"Next" target:self action:@selector(nextPage:)];
         _pageLabel = [NSTextField labelWithString:@""];
         NSStackView *bar = [NSStackView stackViewWithViews:@[_previousPage, _nextPage, _pageLabel]];
-        NSStackView *content = [NSStackView stackViewWithViews:@[scroll, bar]];
-        content.orientation = NSUserInterfaceLayoutOrientationVertical; content.alignment = NSLayoutAttributeWidth;
-        content.edgeInsets = NSEdgeInsetsMake(8, 8, 8, 8);
-        [scroll setContentHuggingPriority:NSLayoutPriorityDefaultLow forOrientation:NSLayoutConstraintOrientationVertical];
-        [bar setContentHuggingPriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationVertical];
+        NSView *content = [NSView new];
+        for (NSView *view in @[tabs, bar]) { view.translatesAutoresizingMaskIntoConstraints = NO; [content addSubview:view]; }
+        [NSLayoutConstraint activateConstraints:@[
+            [tabs.leadingAnchor constraintEqualToAnchor:content.leadingAnchor constant:8],
+            [tabs.trailingAnchor constraintEqualToAnchor:content.trailingAnchor constant:-8],
+            [tabs.topAnchor constraintEqualToAnchor:content.topAnchor constant:8],
+            [tabs.bottomAnchor constraintEqualToAnchor:bar.topAnchor constant:-6],
+            [bar.leadingAnchor constraintEqualToAnchor:content.leadingAnchor constant:8],
+            [bar.trailingAnchor constraintEqualToAnchor:content.trailingAnchor constant:-8],
+            [bar.bottomAnchor constraintEqualToAnchor:content.bottomAnchor constant:-8]]];
         _detailWindow.contentView = content; [_detailWindow center];
     }
     _detailWindow.title = [NSString stringWithFormat:@"%@.%@", @(_detailPath.GetText()), @(_detailProperty.c_str())];
-    [self refreshDetails]; [_detailWindow makeKeyAndOrderFront:nil];
+    [self refreshDetails]; if (show) [_detailWindow makeKeyAndOrderFront:nil];
 }
 - (void)refreshDetails {
     _detailRows = _browser->PropertyDetails(_detailPath, _detailProperty, _detailOffset);
-    [_detailTable reloadData];
+    _detailMetadataRows = _browser->PropertyMetadata(_detailPath, _detailProperty);
+    _detailOpinionsRows = _browser->PropertyOpinions(_detailPath, _detailProperty);
+    [_detailTable reloadData]; [_detailMetadataTable reloadData]; [_detailOpinionsTable reloadData];
     _previousPage.enabled = _detailOffset > 0;
     _nextPage.enabled = _detailOffset + 128 < _browser->PropertyDetailCount(_detailPath, _detailProperty);
     _pageLabel.stringValue = [NSString stringWithFormat:@"Page %zu", _detailOffset / 128 + 1];
+}
+- (void)openLayer:(NSTableView *)table {
+    const auto &rows = [self rowsForTable:table];
+    if (table.clickedRow < 0 || table.clickedRow >= (NSInteger)rows.size()) return;
+    _layerIdentifier = rows[table.clickedRow].value;
+    _layerRows = _browser->LayerDetails(_layerIdentifier);
+    if (_layerRows.empty()) return;
+    if (!_layerWindow) {
+        _layerWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 820, 480)
+            styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
+            backing:NSBackingStoreBuffered defer:NO];
+        _layerWindow.releasedWhenClosed = NO; _layerTable = [self makeTable];
+        NSScrollView *scroll = [NSScrollView new];
+        scroll.documentView = _layerTable; scroll.hasVerticalScroller = YES; scroll.hasHorizontalScroller = YES;
+        _layerWindow.contentView = scroll; [_layerWindow center];
+    }
+    _layerWindow.title = @(_layerIdentifier.c_str());
+    [_layerTable reloadData]; [_layerWindow makeKeyAndOrderFront:nil];
 }
 - (void)previousPage:(id)sender { if (_detailOffset >= 128) _detailOffset -= 128; [self refreshDetails]; }
 - (void)nextPage:(id)sender { _detailOffset += 128; [self refreshDetails]; }
 
 - (BOOL)checkBrowsing {
+    if (!VelaCheckDocumentLayout(_outlineView, _inspectorView)) return NO;
+    if (fabs(_search.frame.size.width - (_outlineView.bounds.size.width - 12)) > 0.5) return NO;
+    if (fabs(_outline.enclosingScrollView.frame.size.width - (_outlineView.bounds.size.width - 12)) > 0.5) return NO;
+    if (fabs(_outline.enclosingScrollView.frame.origin.x - 6) > 0.5) return NO;
     if (_outline.tableColumns.count != 4 || _tables.count != 5) return NO;
     auto roots = _browser->Children();
     if (roots.empty()) return YES;
@@ -276,12 +357,22 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSString *item = [_outline itemAtRow:_outline.selectedRow];
     if (!item || SdfPath(item.UTF8String) != path) return NO;
     if (_rows[0].size() != _browser->Properties(path).size() || _rows[3].empty()) return NO;
+    if (!_rows[0].empty()) {
+        const auto name = _rows[0].front().name;
+        _propertySearch.stringValue = @(name.c_str()); [self refreshInspector];
+        if (_rows[0].empty()) return NO;
+        [self inspectProperty:name show:NO];
+        if (_detailRows.empty() || _detailMetadataRows.empty()) return NO;
+        _propertySearch.stringValue = @"__no_property__"; [self refreshInspector];
+        if (!_rows[0].empty()) return NO;
+        _propertySearch.stringValue = @""; [self refreshInspector];
+    }
     // Search and clearing search preserve the shared selection, including
     // when the selected row is hidden by the filter.
     _search.stringValue = @"__vela_no_matching_prim__";
-    [self controlTextDidChange:nil];
+    [self applyFilter];
     if (_outline.numberOfRows != 0 || _document->GetSelection().empty()) return NO;
-    _search.stringValue = @""; [self controlTextDidChange:nil];
+    _search.stringValue = @""; [self applyFilter];
     if (_outline.selectedRow < 0) return NO;
     [_outline deselectAll:nil];
     if (!_document->GetSelection().empty()) return NO;

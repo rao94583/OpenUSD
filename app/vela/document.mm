@@ -1,5 +1,6 @@
 #import "document.h"
 #import "browser_view.h"
+#import "window_layout.h"
 #import "menus.h"
 #import "viewport/viewport_view.h"
 
@@ -77,22 +78,10 @@ PXR_NAMESPACE_USING_DIRECTIVE
     bar.spacing = 10;
     bar.detachesHiddenViews = YES;
     _browser = [[VelaBrowserController alloc] initWithDocument:_document];
-    NSSplitView *split = [[NSSplitView alloc] initWithFrame:NSMakeRect(0, 0, 1200, 750)];
-    split.vertical = YES; split.dividerStyle = NSSplitViewDividerStyleThin;
-    _browser.outlineView.frame = NSMakeRect(0, 0, 280, 750);
-    _viewport.frame = NSMakeRect(281, 0, 580, 750);
-    _browser.inspectorView.frame = NSMakeRect(862, 0, 338, 750);
-    [split addSubview:_browser.outlineView]; [split addSubview:_viewport];
-    [split addSubview:_browser.inspectorView]; [split adjustSubviews];
-    NSStackView *content = [NSStackView stackViewWithViews:@[split, bar]];
-    content.orientation = NSUserInterfaceLayoutOrientationVertical;
-    content.spacing = 0;
-    content.alignment = NSLayoutAttributeWidth;
-    [split setContentHuggingPriority:NSLayoutPriorityDefaultLow
-                          forOrientation:NSLayoutConstraintOrientationVertical];
     [bar setContentHuggingPriority:NSLayoutPriorityRequired
                     forOrientation:NSLayoutConstraintOrientationVertical];
-    window.contentView = content;
+    window.contentView = VelaDocumentLayout(_browser.outlineView, _viewport,
+                                            _browser.inspectorView, bar);
     window.initialFirstResponder = _viewport;
     window.delegate = self;
     [window center];

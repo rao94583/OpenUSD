@@ -44,7 +44,10 @@ Tree selection and viewport picking share the same document selection.
 
 The inspector tabs show Properties, Metadata, Composition, Layers and Variants.
 Double-click a property for paginated array elements, relationship targets,
-time samples or spline knots and tangent slopes. Large arrays show their count
+time samples or spline knots and tangent slopes; its Metadata and Opinions
+tabs show property metadata and authoring across layers. Filter properties by
+name or type in the inspector. Double-click Layers or Composition rows for
+layer metadata and sublayer details. Large arrays show their count
 in the property list. The inspector follows selection and time; multiple
 selection inspects the last selected path. These views are read-only.
 
@@ -53,7 +56,7 @@ bazel test //app/vela:browser_test //app/vela:browser_ui_test
 Vela --check-browser FILE           # controls/selection test; no shown window
 ```
 
-Phase 4 still needs detailed composition/property navigation, graphical spline
+Phase 4 still needs composition graph/navigation, graphical spline
 curves, further filters and full array-type support. The layer tab currently
 shows the local layer stack; referenced layer opinions appear in Composition.
 

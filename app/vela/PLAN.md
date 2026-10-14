@@ -286,7 +286,10 @@ side of the viewport; the existing timeline and playback remain below it.
   Stage notices coalesce before refreshing AppKit controls.
 - Inspector tabs: composed Properties, nested Metadata previews, Composition
   arcs and prim specs, the local Layer stack with edit target/dirty state,
-  and Variant sets with choices and selection. Multiple selection inspects
+  and Variant sets with choices and selection. Property search matches names
+  or types. Property detail tabs include composed metadata and authored
+  opinions with layer offsets, strongest to weakest. Double-click Layers or
+  Composition rows for layer metadata and sublayer details. Multiple selection inspects
   the last path in document selection order.
 - Double-click a property for a read-only detail window: paginated arrays,
   relationship targets, numeric time samples or spline knots with interpolation
@@ -297,12 +300,14 @@ side of the viewport; the existing timeline and playback remain below it.
   layers, variants, composition, large array paging and spline knots.
 - `browser_ui_test` / `--check-browser FILE`: instantiate controls without
   opening a window; check both selection directions, ancestor reveal,
-  filter preservation and inspector population. No rendering/display wake
+  filter preservation, inspector population and property detail tabs.
+  `window_layout.*` pins the panes and their contents to their allocated
+  split-view regions; a resize regression check widens and narrows the
+  document layout without constructing the renderer. No rendering/display wake
   is required.
 
-Phase 4 is not complete. Still pending: property search, property metadata
-and opinion/composition drill-down, full array-type support, graphical spline
-curves and advanced spline information, composition navigation, layer details,
+Phase 4 is not complete. Still pending: full array-type support, graphical
+spline curves and advanced spline information, composition graph/navigation,
 prototype browsing and additional outline filters. Manual layout and picking
 checks remain for an awake display. The existing playback/timeline already
 uses the shared document and actions.

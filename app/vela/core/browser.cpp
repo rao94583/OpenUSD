@@ -127,7 +127,7 @@ PrimSummary Browser::Summary(const SdfPath &path) const {
     result.drawMode = UsdGeomModelAPI(prim).ComputeModelDrawMode().GetString();
     return result;
 }
-InspectorRows Browser::Properties(const SdfPath &path) const {
+InspectorRows Browser::Properties(const SdfPath &path, const std::string &query) const {
     const auto prim = _document.GetStage()->GetPrimAtPath(path);
     if (!prim) return {};
     InspectorRows rows;
@@ -143,7 +143,56 @@ InspectorRows Browser::Properties(const SdfPath &path) const {
             rows.push_back({rel.GetName().GetString(), "relationship", Short(value), Source(rel, _document.GetTime())});
         }
     }
+    if (!query.empty()) {
+        const auto needle = Lower(query);
+        rows.erase(std::remove_if(rows.begin(), rows.end(), [&](const InspectorRow &row) {
+            return Lower(row.name + " " + row.type).find(needle) == std::string::npos;
+        }), rows.end());
+    }
     return rows;
+}
+InspectorRows Browser::PropertyMetadata(const SdfPath &path, const std::string &property) const {
+    const auto prim = _document.GetStage()->GetPrimAtPath(path);
+    const auto prop = prim ? prim.GetProperty(TfToken(property)) : UsdProperty();
+    InspectorRows rows;
+    if (prop) MetadataRows(prop.GetAllMetadata(), "", &rows);
+    return rows;
+}
+InspectorRows Browser::PropertyOpinions(const SdfPath &path, const std::string &property) const {
+    const auto prim = _document.GetStage()->GetPrimAtPath(path);
+    const auto prop = prim ? prim.GetProperty(TfToken(property)) : UsdProperty();
+    InspectorRows rows;
+    if (!prop) return rows;
+    for (const auto &[spec, offset] : prop.GetPropertyStackWithLayerOffsets(_document.GetTime())) {
+        const auto layer = spec->GetLayer();
+        const std::string source = layer->GetIdentifier() + " @ " + spec->GetPath().GetString();
+        rows.push_back({"Opinion", "layer", source, "offset " + TfStringify(offset)});
+        for (const auto &field : spec->ListFields()) {
+            if (rows.size() >= 1024) { rows.push_back({"…", "", "Opinion preview limited to 1024 rows", ""}); return rows; }
+            const auto value = spec->GetField(field);
+            const std::string preview = field == SdfFieldKeys->TimeSamples ?
+                std::to_string(layer->GetNumTimeSamplesForPath(spec->GetPath())) + " authored time samples" : Value(value);
+            rows.push_back({field.GetString(), value.GetTypeName(), preview, source});
+        }
+    }
+    return rows;
+}
+InspectorRows Browser::LayerDetails(const std::string &identifier) const {
+    for (const auto &layer : _document.GetStage()->GetUsedLayers()) {
+        if (layer->GetIdentifier() != identifier) continue;
+        InspectorRows rows{{"Identifier", "layer", identifier, ""},
+            {"Path", "", layer->GetRealPath(), ""},
+            {"Dirty", "bool", layer->IsDirty() ? "true" : "false", ""},
+            {"Editable", "bool", layer->PermissionToEdit() ? "true" : "false", ""}};
+        for (const auto &field : layer->ListFields(SdfPath::AbsoluteRootPath())) {
+            const auto value = layer->GetField(SdfPath::AbsoluteRootPath(), field);
+            rows.push_back({field.GetString(), value.GetTypeName(), Value(value), "layer metadata"});
+        }
+        for (const auto &subLayer : layer->GetSubLayerPaths())
+            rows.push_back({"Sublayer", "asset path", subLayer, "relative to this layer"});
+        return rows;
+    }
+    return {};
 }
 InspectorRows Browser::Metadata(const SdfPath &path) const {
     const auto prim = _document.GetStage()->GetPrimAtPath(path);
