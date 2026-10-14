@@ -29,6 +29,7 @@ cc_library(
     name = "core",
     srcs = [
         "core/actions.cpp",
+        "core/browser.cpp",
         "core/document.cpp",
         "core/editing_actions.cpp",
         "core/free_camera.cpp",
@@ -37,6 +38,7 @@ cc_library(
     ],
     hdrs = [
         "core/actions.h",
+        "core/browser.h",
         "core/document.h",
         "core/free_camera.h",
         "core/undo.h",
@@ -68,6 +70,7 @@ cc_test(
     deps = [":core"],
 ) for name in [
     "actions_test",
+    "browser_test",
     "editing_actions_test",
     "document_test",
     "undo_test",
@@ -76,6 +79,8 @@ cc_test(
 objc_library(
     name = "frontend",
     srcs = [
+        "browser_view.h",
+        "browser_view.mm",
         "document.h",
         "document.mm",
         "main.mm",
@@ -186,4 +191,13 @@ py_test(
         "manual",
         "requires-darwin",
     ],
+)
+
+py_test(
+    name = "browser_ui_test",
+    srcs = ["test_browser.py"],
+    main = "test_browser.py",
+    args = ["$(rootpath :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
 )

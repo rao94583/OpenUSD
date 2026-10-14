@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 #import "document.h"
+#import "browser_view.h"
 #import "menus.h"
 #import "viewport/viewport_view.h"
 #include "app/vela/core/actions.h"
@@ -214,6 +215,7 @@ static void Usage() {
     fprintf(stderr,
         "Usage: Vela [FILE...]\n"
         "       Vela --check-document FILE\n"
+        "       Vela --check-browser FILE    # read-only browsing smoke check\n"
         "       Vela --describe-actions     # the action registry, as JSON\n"
         "       Vela --describe-menus       # the main menu, as text\n"
         "       Vela --snapshot FILE OUTPUT.png [--camera PATH] [--frame TIME]\n"
@@ -235,6 +237,16 @@ int main(int argc, const char *argv[]) {
         }
         if (argc == 2 && strcmp(argv[1], "--describe-menus") == 0) {
             printf("%s", VelaDescribeMenu(VelaBuildMainMenu()).UTF8String);
+            return 0;
+        }
+        if (argc == 3 && strcmp(argv[1], "--check-browser") == 0) {
+            std::string error;
+            auto core = vela::Document::Open(argv[2], &error);
+            if (!core) { fprintf(stderr, "%s\n", error.c_str()); return 1; }
+            [NSApplication sharedApplication];
+            VelaBrowserController *browser = [[VelaBrowserController alloc] initWithDocument:core];
+            if (![browser checkBrowsing]) return 1;
+            printf("Browser selection and inspector checks passed\n");
             return 0;
         }
         if (argc == 3 && strcmp(argv[1], "--check-document") == 0) {

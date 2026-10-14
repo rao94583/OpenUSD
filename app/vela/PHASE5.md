@@ -1,9 +1,9 @@
 # Phase 5: usdview parity checklist
 
-This checkout currently contains Phase 3. The Phase 4 outline and inspector
-are not present. Start Phase 5 with independent actions and headless tests;
-connect the authoring actions to the inspector when that implementation is
-available. Phase 5 remains in progress.
+The initial authoring actions were checkpointed at `3aa373d80` before
+starting Phase 4. The new browsing inspector is read-only; connect these
+actions to editing controls when Phase 4 browsing is complete. Phase 5
+remains in progress.
 
 The reference is this repository's `pxr/usdImaging/usdviewq/`, especially
 `appController.py`, `viewSettingsDataModel.py`, `stageView.py` and

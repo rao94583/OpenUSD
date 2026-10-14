@@ -1,4 +1,5 @@
 #import "document.h"
+#import "browser_view.h"
 #import "menus.h"
 #import "viewport/viewport_view.h"
 
@@ -24,6 +25,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     int _observer;
     size_t _primCount;
     VelaViewportView *_viewport;
+    VelaBrowserController *_browser;
     NSSlider *_slider;
     NSTextField *_frameLabel;
     NSTextField *_statusLabel;
@@ -74,11 +76,19 @@ PXR_NAMESPACE_USING_DIRECTIVE
     bar.edgeInsets = NSEdgeInsetsMake(6, 10, 6, 10);
     bar.spacing = 10;
     bar.detachesHiddenViews = YES;
-    NSStackView *content = [NSStackView stackViewWithViews:@[_viewport, bar]];
+    _browser = [[VelaBrowserController alloc] initWithDocument:_document];
+    NSSplitView *split = [[NSSplitView alloc] initWithFrame:NSMakeRect(0, 0, 1200, 750)];
+    split.vertical = YES; split.dividerStyle = NSSplitViewDividerStyleThin;
+    _browser.outlineView.frame = NSMakeRect(0, 0, 280, 750);
+    _viewport.frame = NSMakeRect(281, 0, 580, 750);
+    _browser.inspectorView.frame = NSMakeRect(862, 0, 338, 750);
+    [split addSubview:_browser.outlineView]; [split addSubview:_viewport];
+    [split addSubview:_browser.inspectorView]; [split adjustSubviews];
+    NSStackView *content = [NSStackView stackViewWithViews:@[split, bar]];
     content.orientation = NSUserInterfaceLayoutOrientationVertical;
     content.spacing = 0;
     content.alignment = NSLayoutAttributeWidth;
-    [_viewport setContentHuggingPriority:NSLayoutPriorityDefaultLow
+    [split setContentHuggingPriority:NSLayoutPriorityDefaultLow
                           forOrientation:NSLayoutConstraintOrientationVertical];
     [bar setContentHuggingPriority:NSLayoutPriorityRequired
                     forOrientation:NSLayoutConstraintOrientationVertical];

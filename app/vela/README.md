@@ -1,6 +1,6 @@
 # Vela
 
-Native macOS USD viewer (Phase 5 editing work has started). Requires macOS 13+, Xcode and
+Native macOS USD viewer (Phase 4 browsing is in progress). Requires macOS 13+, Xcode and
 the repository's Bazel toolchain. It opens `.usd`, `.usda`, `.usdc` and
 `.usdz` through `NSDocument` (File → Open, Finder) and shows the stage in a
 Storm viewport rendered with Metal.
@@ -35,6 +35,28 @@ default and proxy purposes), with usdview's grey background and visible dome
 light textures in the window. The free camera's clipping planes are fitted
 to the stage bounds.
 
+## Browsing
+
+The prim outline opens branches lazily and shows prim type, inherited
+visibility and model draw mode. Search matches paths or types, keeping the
+ancestors of matching prims. Inactive prims and instance proxies are included.
+Tree selection and viewport picking share the same document selection.
+
+The inspector tabs show Properties, Metadata, Composition, Layers and Variants.
+Double-click a property for paginated array elements, relationship targets,
+time samples or spline knots and tangent slopes. Large arrays show their count
+in the property list. The inspector follows selection and time; multiple
+selection inspects the last selected path. These views are read-only.
+
+```sh
+bazel test //app/vela:browser_test //app/vela:browser_ui_test
+Vela --check-browser FILE           # controls/selection test; no shown window
+```
+
+Phase 4 still needs detailed composition/property navigation, graphical spline
+curves, further filters and full array-type support. The layer tab currently
+shows the local layer stack; referenced layer opinions appear in Composition.
+
 ## Actions and undo
 
 Every menu item and shortcut runs a named action from the registry in
@@ -44,7 +66,7 @@ layers (Edit → Undo, ⌘Z), one step per action.
 
 The Prim menu hides/shows, activates/deactivates and loads/unloads the
 selection. Attribute, variant, purpose and model draw mode authoring actions
-are available in the registry; inspector integration awaits the Phase 4 code.
+are available in the registry; the current inspector remains read-only.
 Edits currently change in-memory layers; saving/export and close prompts are
 pending. See [PHASE5.md](PHASE5.md) for the parity checklist and supported
 attribute types.

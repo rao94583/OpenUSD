@@ -8,7 +8,8 @@ querying scenes in plain English, with skills for the USD Python API and for
 driving the app.
 
 This document records the decisions made so far, the architecture and the
-phases. Phases 1 and 2 are done and Phase 3 is implemented; see
+phases. Phases 1 and 2 are done, Phase 3 is implemented, and Phase 4
+browsing has started; see
 [README.md](README.md) for building, using and testing the app.
 
 ## Decisions
@@ -266,12 +267,51 @@ To check interactively: menus and their enabled states, F/A/Space/arrow
 keys in the viewport, click and Shift-click selection, the timeline and
 playback.
 
+## Phase 4 progress
+
+Started after checkpointing the initial Phase 5 actions (`3aa373d80`).
+The window now places a lazy prim outline and a read-only inspector on either
+side of the viewport; the existing timeline and playback remain below it.
+
+- `core/browser.*`: direct-child enumeration (including inactive prims and
+  instance proxies), a constant-space expander check without enumerating a
+  whole branch, case-insensitive path/type search that retains ancestors,
+  time-dependent visibility and model draw-mode summaries. Searches scan
+  the composed hierarchy once per query or stage change; unfiltered browsing
+  does not traverse unopened branches.
+- `browser_view.*`: view-based `NSOutlineView` with Prim, Type, Visibility and
+  Draw Mode columns. Canonical path items preserve identity. Tree selections
+  run the action registry; viewport selections reveal their ancestors and
+  update the tree and inspector. Filtering preserves the document selection.
+  Stage notices coalesce before refreshing AppKit controls.
+- Inspector tabs: composed Properties, nested Metadata previews, Composition
+  arcs and prim specs, the local Layer stack with edit target/dirty state,
+  and Variant sets with choices and selection. Multiple selection inspects
+  the last path in document selection order.
+- Double-click a property for a read-only detail window: paginated arrays,
+  relationship targets, numeric time samples or spline knots with interpolation
+  and tangent slopes. Pages are bounded, and property summaries avoid dumping
+  large arrays. Scalar and common vector/matrix array previews are supported.
+- `browser_test`: ancestor-preserving search, search invalidation after edits,
+  inactive prims and instance proxies, time-varying values, nested metadata,
+  layers, variants, composition, large array paging and spline knots.
+- `browser_ui_test` / `--check-browser FILE`: instantiate controls without
+  opening a window; check both selection directions, ancestor reveal,
+  filter preservation and inspector population. No rendering/display wake
+  is required.
+
+Phase 4 is not complete. Still pending: property search, property metadata
+and opinion/composition drill-down, full array-type support, graphical spline
+curves and advanced spline information, composition navigation, layer details,
+prototype browsing and additional outline filters. Manual layout and picking
+checks remain for an awake display. The existing playback/timeline already
+uses the shared document and actions.
+
 ## Phase 5 progress
 
 Started with the independent authoring actions in `core/editing_actions.cpp`.
-The Phase 4 browsing implementation is not present in this checkout (HEAD
-was the Phase 3 commit when this work began), so inspector integration is
-pending. See [PHASE5.md](PHASE5.md) for the usdview parity checklist and
+This work was checkpointed before starting Phase 4; connecting these actions
+to inspector editing controls is pending. See [PHASE5.md](PHASE5.md) for the usdview parity checklist and
 remaining work; Phase 5 is not complete.
 
 - `set_attribute` and `clear_attribute`: existing typed attributes, scalar
