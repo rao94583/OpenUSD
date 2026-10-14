@@ -126,6 +126,7 @@ void Renderer::Impl::Render(const View &view) {
 
     UsdImagingGLRenderParams params = MakeRenderParams(view.time);
     params.clearColor = view.clearColor;
+    params.highlight = view.highlight;
     engine->Render(stage->GetPseudoRoot(), params);
 }
 
@@ -167,7 +168,8 @@ void Renderer::SetStage(const UsdStageRefPtr &stage) {
     // Vela draws the AOV itself, so no OpenGL interop is needed.
     _impl->engine->SetEnablePresentation(false);
     _impl->engine->SetRendererAov(HdAovTokens->color);
-    _impl->engine->SetSelectionColor(GfVec4f(1.0f, 1.0f, 0.0f, 1.0f));
+    // usdview's default: a half-transparent yellow tint.
+    _impl->engine->SetSelectionColor(GfVec4f(1.0f, 1.0f, 0.0f, 0.5f));
     _impl->engine->SetSelected(_impl->selection);
 }
 

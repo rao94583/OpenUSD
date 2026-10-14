@@ -85,7 +85,7 @@ static bool MakeView(const UsdStageRefPtr &stage, const RenderOptions &options,
     const int height = options.height > 0 ? options.height : options.width * 9 / 16;
     view->size = GfVec2i(options.width, height);
     *freeCamera = vela::FreeCamera(UsdGeomGetStageUpAxis(stage) == UsdGeomTokens->z);
-    freeCamera->Frame(bounds);
+    freeCamera->Frame(bounds, 1.1, double(options.width) / height);
     view->camera = freeCamera->ComputeGfCamera(double(options.width) / height, bounds);
     return true;
 }

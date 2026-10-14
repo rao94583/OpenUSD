@@ -184,7 +184,7 @@ const GfBBox3d &Document::GetStageBounds() const {
 }
 
 void Document::FrameAll() {
-    if (_camera.Frame(GetStageBounds())) {
+    if (_camera.Frame(GetStageBounds(), 1.1, _aspectRatio)) {
         _Notify(Camera);
     }
 }
@@ -192,7 +192,7 @@ void Document::FrameAll() {
 void Document::FrameSelection() {
     if (_selection.empty()) {
         FrameAll();
-    } else if (_camera.Frame(ComputeBounds(_selection))) {
+    } else if (_camera.Frame(ComputeBounds(_selection), 1.1, _aspectRatio)) {
         _Notify(Camera);
     }
 }

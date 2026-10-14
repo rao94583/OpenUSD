@@ -32,6 +32,8 @@ struct View {
     // Whether dome light textures show in the background: on in usdview,
     // off in usdrecord.
     bool domeLightsVisible = true;
+    // Whether selected prims are drawn highlighted.
+    bool highlight = false;
 };
 
 class Renderer {

@@ -84,7 +84,8 @@ void FreeCamera::Dolly(double scaleFactor) {
                      std::numeric_limits<double>::epsilon() * _selSize);
 }
 
-bool FreeCamera::Frame(const GfBBox3d &bounds, double frameFit) {
+bool FreeCamera::Frame(const GfBBox3d &bounds, double frameFit,
+                       double aspectRatio) {
     const GfRange3d range = bounds.ComputeAlignedRange();
     if (range.IsEmpty()) {
         return false;
@@ -96,10 +97,27 @@ bool FreeCamera::Frame(const GfBBox3d &bounds, double frameFit) {
     }
     _selSize = selSize;
     _center = bounds.ComputeCentroid();
-    const double halfFov = GfDegreesToRadians(std::max(_fov, 1.0) * 0.5);
-    // Fit the bounding sphere, so the bounds fit from every direction.
-    const double radius = 0.5 * size.GetLength() * frameFit;
-    _dist = radius / std::sin(halfFov);
+    // Keep the current orientation and find the distance at which every
+    // corner of the bounds fits the view, horizontally and vertically.
+    // frameFit leaves a margin by narrowing the view.
+    const double tanV = std::tan(GfDegreesToRadians(std::max(_fov, 1.0) * 0.5)) /
+        std::max(frameFit, 1.0);
+    const double tanH = tanV * (aspectRatio > 0.0 ? aspectRatio : 1.0);
+    const GfMatrix4d transform = ComputeTransform();
+    const GfVec3d right = transform.TransformDir(GfVec3d::XAxis()).GetNormalized();
+    const GfVec3d up = transform.TransformDir(GfVec3d::YAxis()).GetNormalized();
+    const GfVec3d back = transform.TransformDir(GfVec3d::ZAxis()).GetNormalized();
+    double dist = 0.0;
+    for (int i = 0; i < 8; ++i) {
+        const GfVec3d offset =
+            bounds.GetMatrix().Transform(bounds.GetRange().GetCorner(i)) - _center;
+        // A corner at depth (dist - toward) must satisfy |x| <= depth * tan.
+        const double toward = GfDot(offset, back);
+        dist = std::max({dist,
+                         toward + std::abs(GfDot(offset, right)) / tanH,
+                         toward + std::abs(GfDot(offset, up)) / tanV});
+    }
+    _dist = dist;
     return true;
 }
 

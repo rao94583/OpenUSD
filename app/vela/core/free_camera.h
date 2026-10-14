@@ -46,9 +46,11 @@ public:
     void Track(double deltaRight, double deltaUp);
     // Scales the distance to the center of interest.
     void Dolly(double scaleFactor);
-    // Centers on the bounds and moves back until they fit the view.
-    // Returns false, changing nothing, for empty bounds.
-    bool Frame(const GfBBox3d &bounds, double frameFit = 1.1);
+    // Centers on the bounds and moves back until they fit a view of the
+    // given aspect ratio (width / height), in both directions. Returns
+    // false, changing nothing, for empty bounds.
+    bool Frame(const GfBBox3d &bounds, double frameFit = 1.1,
+               double aspectRatio = 1.0);
 
     // Applies a mouse drag of (dx, dy) pixels, y down, in a viewport
     // viewportHeight pixels high. Tracking moves the point under the cursor

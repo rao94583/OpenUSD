@@ -28,7 +28,11 @@ std::string Short(std::string text) {
 }
 std::string Value(const VtValue &value) {
     if (value.IsEmpty()) return "<no value>";
-    if (value.IsArrayValued()) return std::to_string(value.GetArraySize()) + " elements";
+    if (value.IsArrayValued()) {
+        const size_t n = value.GetArraySize();
+        return std::to_string(n) + (n == 1 ? " element" : " elements");
+    }
+    if (value.IsHolding<bool>()) return value.UncheckedGet<bool>() ? "true" : "false";
     if (value.IsHolding<VtDictionary>()) return std::to_string(value.UncheckedGet<VtDictionary>().size()) + " dictionary entries";
     if (value.IsHolding<TsSpline>()) return "spline";
     return Short(TfStringify(value));

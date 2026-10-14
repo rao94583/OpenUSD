@@ -72,9 +72,19 @@ PXR_NAMESPACE_USING_DIRECTIVE
     _outline.dataSource = self; _outline.delegate = self;
     _outline.allowsMultipleSelection = YES;
     _outline.columnAutoresizingStyle = NSTableViewNoColumnAutoresizing;
+    // Keep the Prim column's width as rows expand, so the other columns
+    // stay in view.
+    _outline.autoresizesOutlineColumn = NO;
+    _outline.intercellSpacing = NSMakeSize(6, _outline.intercellSpacing.height);
+    // Widths that fit the outline pane's default width.
+    NSDictionary<NSString *, NSNumber *> *outlineWidths =
+        @{@"Prim": @128, @"Type": @60, @"Visibility": @30, @"Draw Mode": @66};
     for (NSString *name in @[@"Prim", @"Type", @"Visibility", @"Draw Mode"]) {
         NSTableColumn *column = [[NSTableColumn alloc] initWithIdentifier:name];
-        column.title = name; column.width = [name isEqualToString:@"Prim"] ? 210 : 95;
+        // usdview's compact visibility column: V (visible) or I (invisible).
+        column.title = [name isEqualToString:@"Visibility"] ? @"Vis" : name;
+        column.headerToolTip = name;
+        column.width = outlineWidths[name].doubleValue;
         [_outline addTableColumn:column];
     }
     _outline.outlineTableColumn = _outline.tableColumns.firstObject;
@@ -152,9 +162,12 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSTableView *table = [NSTableView new];
     table.dataSource = self; table.delegate = self;
     table.columnAutoresizingStyle = NSTableViewNoColumnAutoresizing;
-    for (NSString *name in @[@"Name", @"Type", @"Value", @"Source"]) {
+    // Name and Value first, so values show at the inspector's default width.
+    NSDictionary<NSString *, NSNumber *> *widths =
+        @{@"Name": @150, @"Value": @190, @"Type": @110, @"Source": @260};
+    for (NSString *name in @[@"Name", @"Value", @"Type", @"Source"]) {
         NSTableColumn *column = [[NSTableColumn alloc] initWithIdentifier:name];
-        column.title = name; column.width = [name isEqualToString:@"Value"] ? 220 : 150;
+        column.title = name; column.width = widths[name].doubleValue;
         [table addTableColumn:column];
     }
     return table;
@@ -187,13 +200,15 @@ PXR_NAMESPACE_USING_DIRECTIVE
     std::string value;
     if ([column.identifier isEqualToString:@"Prim"]) value = summary.name;
     else if ([column.identifier isEqualToString:@"Type"]) value = summary.type;
-    else if ([column.identifier isEqualToString:@"Visibility"]) value = summary.visibility;
+    else if ([column.identifier isEqualToString:@"Visibility"])
+        value = summary.visibility.empty() ? "" : summary.visibility == "invisible" ? "I" : "V";
     else value = summary.drawMode;
     NSTextField *label = [view makeViewWithIdentifier:column.identifier owner:self];
     if (!label) { label = [NSTextField labelWithString:@""]; label.identifier = column.identifier; }
     label.stringValue = @(value.c_str()); label.lineBreakMode = NSLineBreakByTruncatingMiddle;
     label.textColor = summary.active && summary.loaded && !summary.inPrototype ? NSColor.labelColor : NSColor.secondaryLabelColor;
-    label.toolTip = [NSString stringWithFormat:@"%@%@%@%@", item,
+    label.toolTip = [NSString stringWithFormat:@"%@%@%@%@%@", item,
+        summary.visibility.empty() ? @"" : [@" (visibility: " stringByAppendingFormat:@"%s)", summary.visibility.c_str()],
         summary.inPrototype ? @" (USD prototype, read-only)" : @"",
         summary.active ? @"" : @" (inactive)", summary.instanceProxy ? @" (instance proxy)" : @""];
     return label;

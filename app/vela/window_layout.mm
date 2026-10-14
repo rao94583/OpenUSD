@@ -16,12 +16,17 @@ NSView *Pane(NSView *content, NSRect frame) {
 }
 NSView *VelaDocumentLayout(NSView *outline, NSView *viewport,
                            NSView *inspector, NSView *timeline) {
-    NSView *root = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1200, 800)];
-    NSSplitView *split = [[NSSplitView alloc] initWithFrame:NSMakeRect(0, 0, 1200, 760)];
+    NSView *root = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1440, 880)];
+    NSSplitView *split = [[NSSplitView alloc] initWithFrame:NSMakeRect(0, 0, 1440, 848)];
     split.vertical = YES; split.dividerStyle = NSSplitViewDividerStyleThin;
-    [split addSubview:Pane(outline, NSMakeRect(0, 0, 280, 760))];
-    [split addSubview:Pane(viewport, NSMakeRect(281, 0, 580, 760))];
-    [split addSubview:Pane(inspector, NSMakeRect(862, 0, 338, 760))];
+    [split addSubview:Pane(outline, NSMakeRect(0, 0, 340, 848))];
+    [split addSubview:Pane(viewport, NSMakeRect(341, 0, 718, 848))];
+    [split addSubview:Pane(inspector, NSMakeRect(1060, 0, 380, 848))];
+    // Resizing the window resizes the viewport; the sidebars keep their
+    // widths (the lowest holding priority gives way first).
+    [split setHoldingPriority:NSLayoutPriorityDefaultLow + 10 forSubviewAtIndex:0];
+    [split setHoldingPriority:NSLayoutPriorityDefaultLow - 10 forSubviewAtIndex:1];
+    [split setHoldingPriority:NSLayoutPriorityDefaultLow + 10 forSubviewAtIndex:2];
     split.translatesAutoresizingMaskIntoConstraints = NO;
     timeline.translatesAutoresizingMaskIntoConstraints = NO;
     [root addSubview:split]; [root addSubview:timeline];
@@ -41,22 +46,27 @@ BOOL VelaCheckDocumentLayout(NSView *outline, NSView *inspector) {
     [timeline.heightAnchor constraintEqualToConstant:32].active = YES;
     NSView *root = VelaDocumentLayout(outline, [NSView new], inspector, timeline);
     [root layoutSubtreeIfNeeded];
-    const CGFloat oldWidth = outline.frame.size.width;
+    const CGFloat outlineWidth = outline.frame.size.width;
+    const CGFloat inspectorWidth = inspector.frame.size.width;
+    NSView *viewportPane = ((NSSplitView *)root.subviews.firstObject).subviews[1];
+    const CGFloat viewportWidth = viewportPane.frame.size.width;
     root.frame = NSMakeRect(0, 0, 2000, 1100);
     [root layoutSubtreeIfNeeded];
     NSSplitView *split = (NSSplitView *)root.subviews.firstObject;
-    [split adjustSubviews]; [root layoutSubtreeIfNeeded];
     for (NSView *content in @[outline, inspector]) {
         const NSRect a = content.frame, b = content.superview.bounds;
         if (fabs(a.origin.x - b.origin.x) > 0.5 || fabs(a.origin.y - b.origin.y) > 0.5 ||
             fabs(a.size.width - b.size.width) > 0.5 || fabs(a.size.height - b.size.height) > 0.5)
             return NO;
     }
-    if (outline.frame.size.width <= oldWidth) return NO;
+    // The viewport takes the extra width; the sidebars keep theirs.
+    if (fabs(outline.frame.size.width - outlineWidth) > 0.5 ||
+        fabs(inspector.frame.size.width - inspectorWidth) > 0.5 ||
+        viewportPane.frame.size.width <= viewportWidth) return NO;
     if (fabs(split.frame.size.width - root.bounds.size.width) > 0.5) return NO;
     // Narrow again: panes must continue to fill their split-view regions.
     root.frame = NSMakeRect(0, 0, 1000, 650);
-    [root layoutSubtreeIfNeeded]; [split adjustSubviews]; [root layoutSubtreeIfNeeded];
+    [root layoutSubtreeIfNeeded];
     return fabs(outline.frame.size.width - outline.superview.bounds.size.width) < 0.5 &&
            fabs(inspector.frame.size.width - inspector.superview.bounds.size.width) < 0.5;
 }

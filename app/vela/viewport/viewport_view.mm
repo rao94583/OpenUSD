@@ -35,6 +35,9 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     vela::CameraDrag _drag;
     BOOL _dragged;
     double _frameMilliseconds;
+    // The document frames the stage before the view has a size; frame
+    // again once the viewport's shape is known.
+    BOOL _framedForSize;
     // Renders are requested by input and changes, and run at most once per
     // display refresh (macOS 14+) or main loop pass (macOS 13).
     BOOL _needsRender;
@@ -72,7 +75,8 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     if (changes & D::Selection) {
         _renderer->SetSelection(_document->GetSelection());
     }
-    if (changes & (D::StageContent | D::Selection | D::Time | D::Camera)) {
+    // Playback hides selection highlights while playing, as in usdview.
+    if (changes & (D::StageContent | D::Selection | D::Time | D::Camera | D::Playback)) {
         [self requestRender];
     }
     if (changes & D::Selection) {
@@ -180,6 +184,11 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     if (!drawable) {
         return;
     }
+    _document->SetViewportAspectRatio(double(size[0]) / size[1]);
+    if (!_framedForSize) {
+        _framedForSize = YES;
+        _document->FrameAll();
+    }
     const auto start = std::chrono::steady_clock::now();
     if (_benchmarkRemaining > 0) {
         _document->GetCamera().Tumble(360.0 / _benchmarkFrames, 0.0);
@@ -189,6 +198,7 @@ static const GfVec4f BackgroundColor(0.3f, 0.3f, 0.3f, 1.0f);
     view.time = _document->GetTime();
     view.size = size;
     view.clearColor = BackgroundColor;
+    view.highlight = !_document->IsPlaying();
     id<MTLCommandBuffer> commandBuffer = [_renderer->GetQueue() commandBuffer];
     if (!_renderer->Draw(view, drawable.texture, commandBuffer)) {
         return;

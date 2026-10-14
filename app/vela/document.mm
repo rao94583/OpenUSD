@@ -37,7 +37,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 - (instancetype)initWithDocument:(std::shared_ptr<vela::Document>)document
                        primCount:(size_t)count {
-    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 1200, 800)
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 1440, 880)
         styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
                   NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable
         backing:NSBackingStoreBuffered defer:NO];

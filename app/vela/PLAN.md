@@ -337,6 +337,23 @@ Review fixes (2026-10-14):
   at most four times a second; time changes no longer rebuild metadata,
   composition, layer or variant tabs.
 
+Window check (2026-10-14), driven through real input with screenshots:
+selection sync both ways, Maya camera, frame all/selected, playback,
+typing in search fields, property windows and Prim → Hide with undo all
+work. Fixed:
+
+- Selection highlights were never drawn (`highlight` render parameter).
+  They now draw as usdview's half-transparent yellow, except during
+  playback.
+- Framing fits the bounds' projected corners exactly in both directions
+  for the viewport's aspect ratio, instead of a vertical-only sphere fit
+  that cropped scenes in the narrow viewport between the sidebars.
+- Layout: 1440 × 880 default window with 340 / 380 pt sidebars that keep
+  their width when the window resizes. The inspector shows Name and Value
+  first; the outline's columns fit, with usdview's compact V / I
+  visibility.
+- Booleans show as true / false; counts read "1 element".
+
 ## Phase 5 progress
 
 Started with the independent authoring actions in `core/editing_actions.cpp`.

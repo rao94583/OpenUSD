@@ -133,13 +133,15 @@ static void TestFrameFitsBounds() {
     const GfBBox3d bounds(GfRange3d(GfVec3d(-10, 0, 5), GfVec3d(30, 2, 9)),
                           GfMatrix4d(1.0).SetRotate(
                               GfRotation(GfVec3d(1, 1, 0), 30)));
+    // Tall views (narrower horizontally) as well as square and wide ones.
+    for (double aspect : {1.0, 0.5, 2.0})
     for (bool zUp : {false, true}) {
         for (double theta : {0.0, 45.0, 135.0}) {
             FreeCamera camera(zUp, 50.0);
             camera.Tumble(theta, -30);
-            CHECK(camera.Frame(bounds));
+            CHECK(camera.Frame(bounds, 1.1, aspect));
             CHECK(Near(camera.GetCenter(), bounds.ComputeCentroid()));
-            const GfCamera gf = camera.ComputeGfCamera(1.0, bounds);
+            const GfCamera gf = camera.ComputeGfCamera(aspect, bounds);
             const GfFrustum frustum = gf.GetFrustum();
             const GfMatrix4d viewProj = frustum.ComputeViewMatrix() *
                 frustum.ComputeProjectionMatrix();
@@ -153,8 +155,9 @@ static void TestFrameFitsBounds() {
                 CHECK(ndc[2] >= -1.0 && ndc[2] <= 1.0);
                 extent = std::max({extent, std::abs(ndc[0]), std::abs(ndc[1])});
             }
-            // Tight enough to be useful.
-            CHECK(extent > 0.4);
+            // Exact: the outermost corner touches the margin frameFit
+            // leaves (1 / 1.1 of the view).
+            CHECK(std::abs(extent - 1.0 / 1.1) < 1e-6);
         }
     }
     FreeCamera camera(false);

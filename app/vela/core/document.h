@@ -79,6 +79,9 @@ public:
     // proxy purposes. The stage's bounds are cached.
     GfBBox3d ComputeBounds(const SdfPathVector &paths) const;
     const GfBBox3d &GetStageBounds() const;
+    // The viewport's aspect ratio (width / height), for framing.
+    void SetViewportAspectRatio(double aspectRatio) { _aspectRatio = aspectRatio; }
+    double GetViewportAspectRatio() const { return _aspectRatio; }
     void FrameAll();
     // Frames the selection, or everything when nothing is selected.
     void FrameSelection();
@@ -102,6 +105,7 @@ private:
     UsdTimeCode _time;
     bool _playing = false;
     FreeCamera _camera;
+    double _aspectRatio = 1.0;
     mutable GfBBox3d _stageBounds;
     mutable bool _stageBoundsValid = false;
     std::vector<std::pair<int, Observer>> _observers;
