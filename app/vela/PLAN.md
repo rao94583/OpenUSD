@@ -323,6 +323,20 @@ rendering of every discontinuity or extrapolation. Manual layout and picking
 checks remain for an awake display. The existing playback/timeline already
 uses the shared document and actions.
 
+Review fixes (2026-10-14):
+
+- Relationship details always start with a summary row ("No targets" or
+  the count), so an untargeted relationship no longer opens a blank window.
+  `browser_ui_test` also runs `--check-browser` on the snapshot test's real
+  scenes, where that case failed.
+- Change notifications distinguish resyncs (`Document::Resync`). The prim
+  count, the outline tree and most filters rebuild only on a resync; value
+  edits and time changes redraw the outline rows on screen. The Visible
+  filter rescans on time changes only when some visibility is animated.
+- During playback the outline and the inspector's property values refresh
+  at most four times a second; time changes no longer rebuild metadata,
+  composition, layer or variant tabs.
+
 ## Phase 5 progress
 
 Started with the independent authoring actions in `core/editing_actions.cpp`.

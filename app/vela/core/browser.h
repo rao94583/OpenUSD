@@ -60,6 +60,9 @@ private:
     PrimFilter _primFilter = PrimFilter::All;
     bool _showPrototypes = false;
     bool _matchesValid = false;
+    // Whether the Visible filter's matches can change with time: some
+    // matched prim's visibility (or an ancestor's) is time-varying.
+    bool _visibilityAnimated = false;
     std::set<SdfPath> _matches;
 };
 } // namespace vela

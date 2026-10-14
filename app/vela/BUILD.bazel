@@ -201,7 +201,13 @@ py_test(
     name = "browser_ui_test",
     srcs = ["test_browser.py"],
     main = "test_browser.py",
-    args = ["$(rootpath :archive)"],
-    data = [":archive"],
+    # Real scenes: typical schema prims (whose first property is often an
+    # untargeted relationship), native instancing, references and materials.
+    args = ["$(rootpath :archive)"] + SNAPSHOT_SCENES,
+    data = [
+        ":archive",
+        "//pxr/usdImaging/bin/usdrecord:test_tree",
+        "//pxr/usdImaging/usdImagingGL:test_tree",
+    ],
     tags = ["requires-darwin"],
 )

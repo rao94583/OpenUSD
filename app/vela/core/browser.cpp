@@ -69,9 +69,15 @@ bool Arrays(const VtValue &value, size_t offset, size_t limit, InspectorRows *ro
 } // namespace
 
 Browser::Browser(Document &document) : _document(document) {
+    // Paths, types, activation, load state and kind change only with a
+    // resync. Visibility is a value: authored edits invalidate the Visible
+    // filter, and time does only when some visibility is animated.
     _observer = document.AddObserver([this](unsigned changes) {
-        if (changes & Document::StageContent ||
-            ((changes & Document::Time) && _primFilter == PrimFilter::Visible)) _matchesValid = false;
+        const bool visible = _primFilter == PrimFilter::Visible;
+        if ((changes & Document::Resync) ||
+            (visible && (changes & Document::StageContent)) ||
+            (visible && (changes & Document::Time) && _visibilityAnimated))
+            _matchesValid = false;
     });
 }
 Browser::~Browser() { _document.RemoveObserver(_observer); }
@@ -94,6 +100,7 @@ SdfPath Browser::PrototypePath(const SdfPath &path) const {
 }
 void Browser::_BuildMatches() {
     _matches.clear();
+    _visibilityAnimated = false;
     std::vector<UsdPrim> roots{_document.GetStage()->GetPseudoRoot()};
     if (_showPrototypes) {
         const auto prototypes = _document.GetStage()->GetPrototypes();
@@ -101,6 +108,13 @@ void Browser::_BuildMatches() {
     }
     for (const auto &root : roots) {
         for (const auto &prim : UsdPrimRange(root, UsdTraverseInstanceProxies(UsdPrimAllPrimsPredicate))) {
+            // Every prim's visibility is inherited by its descendants, so
+            // check it whether or not the prim itself matches the search.
+            if (_primFilter == PrimFilter::Visible && !_visibilityAnimated) {
+                const UsdGeomImageable imageable(prim);
+                if (imageable && imageable.GetVisibilityAttr().ValueMightBeTimeVarying())
+                    _visibilityAnimated = true;
+            }
             if (Lower(prim.GetPath().GetString() + " " + prim.GetTypeName().GetString()).find(_query) == std::string::npos)
                 continue;
             if (_primFilter == PrimFilter::Active && !prim.IsActive()) continue;
@@ -311,7 +325,9 @@ InspectorRows Browser::PropertyDetails(const SdfPath &path, const std::string &p
         const auto rel = prim.GetRelationship(TfToken(property));
         if (!rel) return {};
         SdfPathVector targets; rel.GetTargets(&targets);
-        InspectorRows rows;
+        InspectorRows rows{{"Targets", "relationship",
+                            targets.empty() ? "No targets" : std::to_string(targets.size()) + " targets",
+                            Source(rel, _document.GetTime())}};
         const size_t end = offset + std::min(limit, targets.size() - std::min(offset, targets.size()));
         for (size_t i = offset; i < end; ++i) rows.push_back({std::to_string(i), "target", targets[i].GetString(), ""});
         return rows;

@@ -122,7 +122,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
 }
 
 - (void)documentChanged:(unsigned)changes {
-    if (changes & vela::Document::StageContent) {
+    // Only a resync adds or removes prims.
+    if (changes & vela::Document::Resync) {
         _primCount = 0;
         for (const auto &prim : _document->GetStage()->Traverse()) { (void)prim; ++_primCount; }
         [self showStatus];

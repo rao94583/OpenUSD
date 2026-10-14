@@ -30,6 +30,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSTextField *_selectionLabel;
     BOOL _syncing;
     BOOL _reloadScheduled;
+    BOOL _pendingResync;
+    BOOL _timeRefreshScheduled;
     NSWindow *_detailWindow;
     NSTableView *_detailTable;
     VelaSplineView *_splineView;
@@ -243,26 +245,66 @@ PXR_NAMESPACE_USING_DIRECTIVE
     [self syncSelection];
 }
 - (void)documentChanged:(unsigned)changes {
-    if (changes & vela::Document::StageContent) {
+    using D = vela::Document;
+    if (changes & D::StageContent) {
         // Coalesce synchronous USD notices. Reloading a tree inside a selection
-        // callback would invalidate AppKit's current row/items.
+        // callback would invalidate AppKit's current row/items. Only a resync
+        // changes the tree; value edits redraw the rows on screen.
+        _pendingResync |= (changes & D::Resync) != 0;
         if (!_reloadScheduled) {
             _reloadScheduled = YES;
             __weak VelaBrowserController *weakSelf = self;
             dispatch_async(dispatch_get_main_queue(), ^{
                 VelaBrowserController *s = weakSelf;
                 if (!s) return;
-                s->_reloadScheduled = NO; s->_syncing = YES;
-                [s->_children removeAllObjects]; [s->_outline reloadData]; s->_syncing = NO;
-                [s syncSelection]; [s refreshInspector];
+                s->_reloadScheduled = NO;
+                if (s->_pendingResync || [s visibleFilter]) {
+                    s->_pendingResync = NO;
+                    [s reloadOutline];
+                } else {
+                    [s reloadVisibleRows];
+                }
+                [s refreshInspector];
             });
         }
-    } else {
-        if (changes & vela::Document::Selection) [self syncSelection];
-        if (changes & (vela::Document::Selection | vela::Document::Time | vela::Document::EditTarget | vela::Document::UndoState)) [self refreshInspector];
-        if ((changes & vela::Document::Time) && _primFilter.indexOfSelectedItem == 4) [self applyFilter];
-        else if (changes & vela::Document::Time) { _syncing = YES; [_outline reloadData]; _syncing = NO; [self syncSelection]; }
+        return;
     }
+    if (changes & D::Selection) [self syncSelection];
+    if (changes & (D::Selection | D::EditTarget | D::UndoState)) [self refreshInspector];
+    if (changes & D::Time) [self scheduleTimeRefresh];
+}
+- (BOOL)visibleFilter { return _primFilter.indexOfSelectedItem == 4; }
+- (void)reloadOutline {
+    _syncing = YES; [_children removeAllObjects]; [_outline reloadData]; _syncing = NO;
+    [self syncSelection];
+}
+// Rows on screen show time-dependent visibility and draw modes.
+- (void)reloadVisibleRows {
+    const NSRange rows = [_outline rowsInRect:_outline.visibleRect];
+    if (!rows.length) return;
+    _syncing = YES;
+    [_outline reloadDataForRowIndexes:[NSIndexSet indexSetWithIndexesInRange:rows]
+                        columnIndexes:[NSIndexSet indexSetWithIndexesInRange:
+                                          NSMakeRange(0, _outline.numberOfColumns)]];
+    _syncing = NO;
+}
+// Time changes refresh only what depends on time: outline rows, the Visible
+// filter and property values. During playback this runs at most four times
+// a second; the last refresh shows the frame playback stopped on.
+- (void)scheduleTimeRefresh {
+    if (_timeRefreshScheduled) return;
+    _timeRefreshScheduled = YES;
+    const double delay = _document->IsPlaying() ? 0.25 : 0.0;
+    __weak VelaBrowserController *weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, int64_t(delay * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        VelaBrowserController *s = weakSelf;
+        if (!s) return;
+        s->_timeRefreshScheduled = NO;
+        if ([s visibleFilter]) [s applyFilter];
+        else [s reloadVisibleRows];
+        [s refreshProperties];
+    });
 }
 - (SdfPath)inspectedPath {
     const auto &selection = _document->GetSelection();
@@ -279,6 +321,13 @@ PXR_NAMESPACE_USING_DIRECTIVE
     for (NSTableView *table in _tables) [table reloadData];
     if (_detailWindow) [self refreshDetails];
     if (_layerWindow) { _layerRows = _browser->LayerDetails(_layerIdentifier); [_layerTable reloadData]; }
+}
+// The time-dependent part of the inspector: property values and an open
+// property window.
+- (void)refreshProperties {
+    _rows[0] = _browser->Properties([self inspectedPath], _propertySearch.stringValue.UTF8String);
+    [_tables[0] reloadData];
+    if (_detailWindow) [self refreshDetails];
 }
 - (const vela::InspectorRows &)rowsForTable:(NSTableView *)table {
     if (table == _detailTable) return _detailRows;

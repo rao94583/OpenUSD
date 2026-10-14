@@ -1,4 +1,5 @@
-"""Construct browsing controls and exercise selection without showing a window."""
+"""Construct browsing controls and exercise selection without showing a window,
+on a hand-written scene and on real test scenes (passed as arguments)."""
 from pathlib import Path
 import subprocess
 import sys
@@ -25,3 +26,8 @@ with tempfile.TemporaryDirectory(prefix='Vela browsing ') as temp:
     empty = Path(temp) / 'empty.usda'
     empty.write_text('#usda 1.0\n')
     subprocess.run([vela, '--check-browser', empty], check=True)
+    for scene in sys.argv[2:]:
+        result = subprocess.run([vela, '--check-browser', Path(scene).resolve()],
+                                text=True, capture_output=True)
+        assert result.returncode == 0, f'{scene}: {result.stdout}{result.stderr}'
+        print(f'{Path(scene).name}: passed')

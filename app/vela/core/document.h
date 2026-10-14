@@ -33,6 +33,9 @@ public:
         EditTarget = 1u << 4,
         UndoState = 1u << 5,
         Playback = 1u << 6,
+        // With StageContent: prims were added, removed or recomposed (a USD
+        // resync), not just property values or metadata changed.
+        Resync = 1u << 7,
     };
     using Observer = std::function<void(unsigned changes)>;
 

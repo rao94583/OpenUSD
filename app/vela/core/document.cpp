@@ -75,19 +75,21 @@ void Document::_OnObjectsChanged(const UsdNotice::ObjectsChanged &notice,
                   SdfPath::AbsoluteRootPath()) != infoPaths.end()) {
         _TrackLayers();
     }
-    if (!notice.GetResyncedPaths().empty()) {
-        // Drop selected prims that no longer exist.
-        SdfPathVector selection;
-        for (const SdfPath &path : _selection) {
-            if (_stage->GetPrimAtPath(path)) selection.push_back(path);
-        }
-        if (selection != _selection) {
-            _selection = selection;
-            _Notify(StageContent | Selection);
-            return;
-        }
+    if (notice.GetResyncedPaths().empty()) {
+        _Notify(StageContent);
+        return;
     }
-    _Notify(StageContent);
+    // Drop selected prims that no longer exist.
+    SdfPathVector selection;
+    for (const SdfPath &path : _selection) {
+        if (_stage->GetPrimAtPath(path)) selection.push_back(path);
+    }
+    unsigned changes = StageContent | Resync;
+    if (selection != _selection) {
+        _selection = selection;
+        changes |= Selection;
+    }
+    _Notify(changes);
 }
 
 // Every layer the stage uses can be edited, through an edit target or

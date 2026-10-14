@@ -84,6 +84,21 @@ void TestFiltersAndPrototypes() {
     cube.GetVisibilityAttr().Set(UsdGeomTokens->inherited, UsdTimeCode(2));
     d.SetTime(UsdTimeCode(1)); CHECK(b.Children(world.GetPath()).empty());
     d.SetTime(UsdTimeCode(2)); CHECK(b.Children(world.GetPath()).size() == 1);
+    // An ancestor's animated visibility hides matching descendants, even when
+    // the ancestor itself does not match the search.
+    cube.GetVisibilityAttr().Clear();
+    world.CreateVisibilityAttr().Set(UsdGeomTokens->invisible, UsdTimeCode(1));
+    world.GetVisibilityAttr().Set(UsdGeomTokens->inherited, UsdTimeCode(2));
+    b.SetFilter("cube");
+    d.SetTime(UsdTimeCode(1)); CHECK(b.Children(world.GetPath()).empty());
+    d.SetTime(UsdTimeCode(2)); CHECK(b.Children(world.GetPath()).size() == 1);
+    // Unanimated visibility: authored edits (not resyncs) still refilter.
+    world.GetVisibilityAttr().Clear();
+    world.GetVisibilityAttr().Set(UsdGeomTokens->invisible);
+    CHECK(b.Children(world.GetPath()).empty());
+    world.GetVisibilityAttr().Set(UsdGeomTokens->inherited);
+    CHECK(b.Children(world.GetPath()).size() == 1);
+    b.SetFilter("");
     // Generated prototypes can be selected for inspection but cannot be edited.
     auto &actions = ActionRegistry::Get();
     const auto protoChild = prototype.GetPath().AppendChild(TfToken("Cube"));
@@ -166,7 +181,13 @@ void TestInspector() {
     CHECK(details.size() == 17); CHECK(details[1].name == "[128]"); CHECK(details[1].value == "128");
     CHECK(b.PropertyDetails(path, "values", 20000).size() == 1);
     CHECK(b.PropertyDetails(path, "values", 0, 10000).size() == 257);
-    CHECK(b.PropertyDetails(path, "targets").size() == 2);
+    // A summary row, then one row per target.
+    auto targetRows = b.PropertyDetails(path, "targets");
+    CHECK(targetRows.size() == 3 && targetRows[0].value == "2 targets");
+    CHECK(targetRows[1].value == "/Cube");
+    cube.GetPrim().CreateRelationship(TfToken("empty"));
+    targetRows = b.PropertyDetails(path, "empty");
+    CHECK(targetRows.size() == 1 && targetRows[0].value == "No targets");
     CHECK(b.PropertyDetails(path, "size").size() == 4);
     auto metadata = b.Metadata(path);
     CHECK(Find(metadata, "customData.nested.answer"));
