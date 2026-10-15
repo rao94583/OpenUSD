@@ -125,6 +125,17 @@ JsValue Canonical(const RendererSetting &setting, const JsValue &value) {
     }
 }
 
+// Whether value is the setting's default. Float settings are floats in
+// Hydra, so they compare at float precision (a form shows 2.2f as
+// 2.200000048).
+bool IsDefault(const RendererSetting &setting, const JsValue &value) {
+    const JsValue fallback = Canonical(setting, setting.defaultValue);
+    if (setting.type == RendererSetting::Type::Float && value.IsReal() && fallback.IsReal()) {
+        return float(value.GetReal()) == float(fallback.GetReal());
+    }
+    return value == fallback;
+}
+
 // A path parameter naming a prim of the given kind, or empty.
 ActionResult CheckPrim(const Document &d, const std::string &path,
                        const SdfPathVector &prims, const char *kind) {
@@ -457,13 +468,66 @@ void RegisterViewActions(ActionRegistry &r) {
                 value = Canonical(*setting, given->second);
             }
             return Change(d, [&](ViewSettings &s) {
-                if (value.IsNull() || value == Canonical(*setting, setting->defaultValue)) {
+                if (value.IsNull() || IsDefault(*setting, value)) {
                     s.rendererSettings.erase(key);
                 } else {
                     s.rendererSettings[key] = value;
                 }
             });
         },
+    });
+    r.Register({
+        .name = "set_renderer_settings", .title = "Renderer Settings…",
+        .description = "Set several of the current renderer's settings at once: "
+                       "settings maps keys to values, as for set_renderer_setting "
+                       "(null restores a default). Every value is checked before "
+                       "any is applied. From the menu, a form shows them all.",
+        .parameters = ParameterSchema(R"({
+            "properties": {"settings": {"type": "object"}},
+            "required": ["settings"]
+        })"),
+        .menu = "Renderer",
+        .form = [](const Document &d) {
+            std::vector<FormField> fields;
+            for (const RendererSetting &setting : d.GetRendererInfo().settings) {
+                FormField field{.key = setting.key, .label = setting.name,
+                                .value = d.GetRendererSetting(setting.key)};
+                switch (setting.type) {
+                case RendererSetting::Type::Flag: field.type = FormField::Type::Bool; break;
+                case RendererSetting::Type::Int: field.type = FormField::Type::Int; break;
+                case RendererSetting::Type::Float: field.type = FormField::Type::Float; break;
+                case RendererSetting::Type::String: field.type = FormField::Type::String; break;
+                }
+                fields.push_back(std::move(field));
+            }
+            return fields;
+        },
+        .formParam = "settings",
+        .run = [](Document &d, const JsObject &p) {
+            std::map<std::string, JsValue> values;
+            for (const auto &[key, value] : p.at("settings").GetJsObject()) {
+                const RendererSetting *setting = FindSetting(d, key);
+                if (!setting) {
+                    return ActionResult::Error("Unknown renderer setting: " + key);
+                }
+                if (!value.IsNull() && !Suits(*setting, value)) {
+                    return ActionResult::Error(key + " takes a " +
+                                               TypeName(setting->type) + " value");
+                }
+                values[key] = value.IsNull() ? JsValue() : Canonical(*setting, value);
+            }
+            return Change(d, [&](ViewSettings &s) {
+                for (const auto &[key, value] : values) {
+                    const RendererSetting *setting = FindSetting(d, key);
+                    if (value.IsNull() || IsDefault(*setting, value)) {
+                        s.rendererSettings.erase(key);
+                    } else {
+                        s.rendererSettings[key] = value;
+                    }
+                }
+            });
+        },
+        .enabled = [](const Document &d) { return !d.GetRendererInfo().settings.empty(); },
     });
     r.Register({
         .name = "set_render_settings_prim", .title = "Render Settings Prim",

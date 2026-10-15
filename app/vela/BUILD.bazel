@@ -110,6 +110,8 @@ objc_library(
         "browser_view.mm",
         "document.h",
         "document.mm",
+        "form_sheet.h",
+        "form_sheet.mm",
         "main.mm",
         "menus.h",
         "menus.mm",

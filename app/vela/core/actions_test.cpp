@@ -358,6 +358,27 @@ void TestRendererActions() {
     CHECK(d.GetViewSettings().rendererSettings.empty());
     CHECK(registry.Run(d, "set_renderer_setting", Params(R"({"key": "spp", "value": 4})")).ok);
 
+    // Several at once, as the form sends them: checked first, so a bad
+    // value changes nothing.
+    const Action &settings = *registry.Find("set_renderer_settings");
+    const std::vector<FormField> fields = settings.form(d);
+    CHECK(fields.size() == 3);
+    CHECK(fields[0].type == FormField::Type::Int && fields[0].value == JsValue(int64_t(4)));
+    CHECK(fields[1].type == FormField::Type::Bool && fields[2].type == FormField::Type::Float);
+    CHECK(!registry.Run(d, "set_renderer_settings",
+                        Params(R"({"settings": {"ao": false, "spp": "many"}})")).ok);
+    CHECK(d.GetRendererSetting("ao") == JsValue(true));
+    CHECK(registry.Run(d, "set_renderer_settings",
+                       Params(R"({"settings": {"ao": false, "spp": 2, "gamma": 2.5}})")).ok);
+    CHECK(d.GetRendererSetting("ao") == JsValue(false));
+    CHECK(d.GetRendererSetting("spp") == JsValue(int64_t(2)));
+    CHECK(d.GetViewSettings().rendererSettings.size() == 3);
+    // A float default round-tripped through text (2.2f prints as
+    // 2.200000048) is still the default; null restores one.
+    CHECK(registry.Run(d, "set_renderer_settings", JsObject{{"settings", JsValue(JsObject{
+        {"gamma", JsValue(double(2.2f))}, {"ao", JsValue()}})}}).ok);
+    CHECK(d.GetViewSettings().rendererSettings.size() == 1);  // spp
+
     // Switching renderer resets the AOV and settings.
     CHECK(registry.Run(d, "set_renderer", Params(R"({"renderer": "GL"})")).ok);
     CHECK(d.GetViewSettings().aov == "color");

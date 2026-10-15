@@ -1,5 +1,6 @@
 #import "menus.h"
 #import "document.h"
+#import "form_sheet.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #include "app/vela/core/actions.h"
@@ -126,6 +127,22 @@ bool IsPlainKey(const vela::Action &action) {
     if (!document || !action) return;
     JsObject params = ActionParams(item.representedObject);
     NSWindow *window = NSApp.keyWindow ?: NSApp.mainWindow;
+    if (action->form) {
+        // Ask for the fields, then run with them under formParam.
+        const std::string name = action->name, param = action->formParam;
+        // The sheet's title is the item's, without its ellipsis.
+        NSString *title = [@(action->title.c_str())
+            stringByReplacingOccurrencesOfString:@"…" withString:@""];
+        VelaRunForm(window, title, action->form(*document),
+                    ^(const JsObject &values) {
+            vela::Document *current = CurrentDocument();
+            if (!current) return;
+            JsObject withValues = params;
+            withValues[param] = JsValue(values);
+            ShowResult(vela::ActionRegistry::Get().Run(*current, name, withValues), window);
+        });
+        return;
+    }
     if (action->savePathParam.empty()) {
         ShowResult(vela::ActionRegistry::Get().Run(*document, action->name, params), window);
         return;
