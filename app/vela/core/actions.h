@@ -92,6 +92,10 @@ struct Action {
     std::function<std::vector<FormField>(const Document &)> form;
     std::string formParam;
 
+    // Returns information without changing anything (e.g. get_settings):
+    // the palette leaves it out, and tools can mark it read-only.
+    bool query = false;
+
     // Edits made by the handler become one undo step named after the
     // title. Actions that only change the view leave undo alone.
     bool undoable = false;

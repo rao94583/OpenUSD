@@ -8,6 +8,11 @@
 // document.
 NSMenu *VelaBuildMainMenu();
 
+// Runs an action as its menu item does: asking first for a form's fields or
+// a file when the action has them, and showing errors on window.
+void VelaRunAction(const std::string &action, const PXR_NS::JsObject &params,
+                   NSWindow *window);
+
 // Runs the action bound to a key event, if one is bound and enabled.
 bool VelaRunShortcut(NSEvent *event, vela::Document &document);
 

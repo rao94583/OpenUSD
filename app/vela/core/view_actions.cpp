@@ -641,6 +641,7 @@ void RegisterViewActions(ActionRegistry &r) {
                        "its settings (key, name, type, default and current "
                        "value), and the view's renderer choices. Empty lists "
                        "until a viewport has drawn the stage.",
+        .query = true,
         .run = [](Document &d, const JsObject &) {
             const RendererInfo &info = d.GetRendererInfo();
             const ViewSettings &s = d.GetViewSettings();
@@ -688,7 +689,9 @@ void RegisterViewActions(ActionRegistry &r) {
         .name = "get_settings", .title = "Settings",
         .description = "The app's settings (the Settings window), as JSON: view "
                        "defaults for newly opened files under \"view\", and "
-                       "loadPayloads, usePrimaryCamera and threadLimit (0 for all threads; applies at next launch).",
+                       "loadPayloads, usePrimaryCamera and threadLimit (0 for "
+                       "all threads; applies at next launch).",
+        .query = true,
         .run = [](Document &, const JsObject &) {
             return ActionResult{true, JsValue(ToJson(AppSettingsStore::Get().GetSettings())), {}};
         },

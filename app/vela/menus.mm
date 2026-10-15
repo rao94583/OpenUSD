@@ -1,6 +1,7 @@
 #import "menus.h"
 #import "document.h"
 #import "form_sheet.h"
+#import "palette.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #include "app/vela/core/actions.h"
@@ -11,6 +12,12 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 #include <set>
 #include <string>
+
+@interface VelaPaletteTrampoline : NSObject
+@end
+@implementation VelaPaletteTrampoline
+- (void)toggle:(id)sender { [[VelaPaletteController shared] toggle:sender]; }
+@end
 
 namespace {
 
@@ -81,59 +88,23 @@ NSArray<UTType *> *UsdTypes() {
              [UTType typeWithFilenameExtension:@"usd"]];
 }
 
+// The palette, made when first shown (not while the menu is built, e.g.
+// for --describe-menus).
+id PaletteTarget() {
+    static id target = [VelaPaletteTrampoline new];
+    return target;
+}
+
 bool IsPlainKey(const vela::Action &action) {
     return !(action.modifiers & (vela::ModifierCommand | vela::ModifierControl));
 }
 
 } // namespace
 
-// Menu items carry the action name; this target runs and validates them.
-@interface VelaActionTarget : NSObject <NSMenuItemValidation, NSMenuDelegate>
-+ (instancetype)shared;
-@end
-
-@implementation VelaActionTarget
-
-+ (instancetype)shared {
-    static VelaActionTarget *target = [VelaActionTarget new];
-    return target;
-}
-
-// Items for one choice of an action.
-- (NSMenuItem *)itemForChoice:(const vela::MenuChoice &)choice
-                       action:(const vela::Action &)action {
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@(choice.title.c_str())
-        action:@selector(runAction:) keyEquivalent:@""];
-    item.target = self;
-    item.representedObject = @[@(action.name.c_str()),
-        @(JsWriteToString(JsValue(choice.params)).c_str())];
-    return item;
-}
-
-// Dynamic submenus are rebuilt from the current document as they open. The
-// parent item carries the action name.
-- (void)menuNeedsUpdate:(NSMenu *)menu {
-    [menu removeAllItems];
-    NSMenuItem *parent = nil;
-    for (NSMenuItem *item in menu.supermenu.itemArray) {
-        if (item.submenu == menu) parent = item;
-    }
-    const vela::Action *action = parent.representedObject
-        ? vela::ActionRegistry::Get().Find([parent.representedObject UTF8String]) : nullptr;
+void VelaRunAction(const std::string &actionName, const JsObject &params, NSWindow *window) {
     vela::Document *document = CurrentDocument();
-    if (!action || !action->dynamicChoices || !document) return;
-    for (const vela::MenuChoice &choice : action->dynamicChoices(*document)) {
-        [menu addItem:[self itemForChoice:choice action:*action]];
-    }
-}
-
-- (void)runAction:(NSMenuItem *)item {
-    vela::Document *document = CurrentDocument();
-    const vela::Action *action =
-        vela::ActionRegistry::Get().Find(ActionName(item.representedObject));
+    const vela::Action *action = vela::ActionRegistry::Get().Find(actionName);
     if (!document || !action) return;
-    JsObject params = ActionParams(item.representedObject);
-    NSWindow *window = NSApp.keyWindow ?: NSApp.mainWindow;
     if (action->form) {
         // Ask for the fields, then run with them under formParam.
         const std::string name = action->name, param = action->formParam;
@@ -187,6 +158,51 @@ bool IsPlainKey(const vela::Action &action) {
         withPath[param] = JsValue(std::string(panel.URL.fileSystemRepresentation));
         ShowResult(vela::ActionRegistry::Get().Run(*current, name, withPath), window);
     }];
+}
+
+// Menu items carry the action name; this target runs and validates them.
+@interface VelaActionTarget : NSObject <NSMenuItemValidation, NSMenuDelegate>
++ (instancetype)shared;
+@end
+
+@implementation VelaActionTarget
+
++ (instancetype)shared {
+    static VelaActionTarget *target = [VelaActionTarget new];
+    return target;
+}
+
+// Items for one choice of an action.
+- (NSMenuItem *)itemForChoice:(const vela::MenuChoice &)choice
+                       action:(const vela::Action &)action {
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@(choice.title.c_str())
+        action:@selector(runAction:) keyEquivalent:@""];
+    item.target = self;
+    item.representedObject = @[@(action.name.c_str()),
+        @(JsWriteToString(JsValue(choice.params)).c_str())];
+    return item;
+}
+
+// Dynamic submenus are rebuilt from the current document as they open. The
+// parent item carries the action name.
+- (void)menuNeedsUpdate:(NSMenu *)menu {
+    [menu removeAllItems];
+    NSMenuItem *parent = nil;
+    for (NSMenuItem *item in menu.supermenu.itemArray) {
+        if (item.submenu == menu) parent = item;
+    }
+    const vela::Action *action = parent.representedObject
+        ? vela::ActionRegistry::Get().Find([parent.representedObject UTF8String]) : nullptr;
+    vela::Document *document = CurrentDocument();
+    if (!action || !action->dynamicChoices || !document) return;
+    for (const vela::MenuChoice &choice : action->dynamicChoices(*document)) {
+        [menu addItem:[self itemForChoice:choice action:*action]];
+    }
+}
+
+- (void)runAction:(NSMenuItem *)item {
+    VelaRunAction(ActionName(item.representedObject), ActionParams(item.representedObject),
+                  NSApp.keyWindow ?: NSApp.mainWindow);
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
@@ -285,6 +301,13 @@ NSMenu *VelaBuildMainMenu() {
     }
 
     NSMenu *window = addMenu(@"Window");
+    // Everything Vela can do, searchable. ⌥Space works in text fields too:
+    // menu key equivalents come before typing.
+    NSMenuItem *palette = [window addItemWithTitle:@"Command Palette"
+        action:@selector(toggle:) keyEquivalent:@" "];
+    palette.keyEquivalentModifierMask = NSEventModifierFlagOption;
+    palette.target = PaletteTarget();
+    [window addItem:[NSMenuItem separatorItem]];
     [window addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:)
                keyEquivalent:@"m"];
     NSApp.windowsMenu = window;
