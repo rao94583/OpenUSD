@@ -1,4 +1,5 @@
 #import "viewport_view.h"
+#import "hud_view.h"
 #import <QuartzCore/QuartzCore.h>
 
 #include "app/vela/core/actions.h"
@@ -29,9 +30,18 @@ PXR_NAMESPACE_USING_DIRECTIVE
     std::shared_ptr<vela::Document> _document;
     int _observer;
     std::unique_ptr<vela::Renderer> _renderer;
+    // The renderer info version last published to the document.
+    unsigned _publishedRendererInfo;
     vela::CameraDrag _drag;
     BOOL _dragged;
     double _frameMilliseconds;
+    VelaHudView *_hudView;
+    // HUD Info counts, recomputed when they may have changed.
+    vela::HudStats _hudStats;
+    BOOL _hudStatsValid;
+    // Time between frames during playback, for the HUD.
+    double _playbackMilliseconds;
+    std::chrono::steady_clock::time_point _lastPlaybackFrame;
     // The document frames the stage before the view has a size; frame
     // again once the viewport's shape is known.
     BOOL _framedForSize;
@@ -62,6 +72,9 @@ PXR_NAMESPACE_USING_DIRECTIVE
         [weakSelf documentChanged:changes];
     });
     self.wantsLayer = YES;
+    _hudView = [[VelaHudView alloc] initWithFrame:self.bounds];
+    _hudView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    [self addSubview:_hudView];
     return self;
 }
 
@@ -81,6 +94,39 @@ PXR_NAMESPACE_USING_DIRECTIVE
     if (changes & D::Selection) {
         [self reportStatus];
     }
+    // Info counts follow the selection, the stage and (when paused) time.
+    if ((changes & (D::Selection | D::StageContent | D::Display)) ||
+        ((changes & D::Time) && !_document->IsPlaying())) {
+        _hudStatsValid = NO;
+    }
+    if ((changes & D::Time) && _document->IsPlaying()) {
+        const auto now = std::chrono::steady_clock::now();
+        const double ms = std::chrono::duration<double, std::milli>(now - _lastPlaybackFrame).count();
+        if (ms < 2000) _playbackMilliseconds = ms;
+        _lastPlaybackFrame = now;
+    }
+    if (changes & D::Playback) {
+        _playbackMilliseconds = 0;
+        _lastPlaybackFrame = std::chrono::steady_clock::now();
+        if (!_document->IsPlaying()) _hudStatsValid = NO;
+    }
+    if (changes & (D::Display | D::Camera | D::Playback | D::Renderer)) [self updateHud];
+}
+
+- (void)updateHud {
+    const vela::ViewSettings &settings = _document->GetViewSettings();
+    if (settings.showHUD && settings.hudInfo && !_hudStatsValid) {
+        _hudStats = vela::ComputeHudStats(_document->GetStage(), _document->GetSelection(),
+                                          _document->GetTime());
+        _hudStatsValid = YES;
+    }
+    vela::HudRenderInfo render;
+    render.renderer = _renderer->GetRendererName();
+    render.aov = settings.aov;
+    render.renderMilliseconds = _frameMilliseconds;
+    render.playbackMilliseconds = _document->IsPlaying() ? _playbackMilliseconds : 0.0;
+    if (settings.hudGPUStats) render.renderStats = _renderer->GetRenderStats();
+    [_hudView setHud:vela::ComposeHud(*_document, _hudStats, render)];
 }
 
 - (CALayer *)makeBackingLayer {
@@ -210,6 +256,15 @@ PXR_NAMESPACE_USING_DIRECTIVE
     view.size = size;
     view.settings = _document->GetViewSettings();
     view.clearColor = vela::BackgroundColor(view.settings.background);
+    const vela::ViewSettings &s = view.settings;
+    if (s.showBBoxes && (s.showBBoxesDuringPlayback || !_document->IsPlaying())) {
+        const GfBBox3d &bounds = _document->GetSelectionBounds();
+        if (!bounds.GetRange().IsEmpty()) {
+            if (s.showAlignedBBox) view.bboxes.push_back(GfBBox3d(bounds.ComputeAlignedRange()));
+            if (s.showOrientedBBox) view.bboxes.push_back(bounds);
+        }
+        view.bboxColor = vela::BBoxLineColor(s.background);
+    }
     switch (view.settings.highlightMode) {
     case vela::HighlightMode::Never: view.highlight = false; break;
     case vela::HighlightMode::WhenPaused: view.highlight = !_document->IsPlaying(); break;
@@ -218,6 +273,12 @@ PXR_NAMESPACE_USING_DIRECTIVE
     id<MTLCommandBuffer> commandBuffer = [_renderer->GetQueue() commandBuffer];
     if (!_renderer->Draw(view, drawable.texture, commandBuffer)) {
         return;
+    }
+    // Menus and scripts learn what the renderer offers (after Draw, which
+    // applies renderer changes).
+    if (_renderer->GetInfoVersion() != _publishedRendererInfo) {
+        _publishedRendererInfo = _renderer->GetInfoVersion();
+        _document->SetRendererInfo(_renderer->GetInfo());
     }
     __weak VelaViewportView *weakSelf = self;
     [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer>) {
@@ -228,6 +289,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
             if (strongSelf) {
                 strongSelf->_frameMilliseconds = ms;
                 [strongSelf reportStatus];
+                [strongSelf updateHud];
             }
         });
     }];

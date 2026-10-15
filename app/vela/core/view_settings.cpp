@@ -44,6 +44,15 @@ GfVec4f BackgroundColor(Background background) {
     return GfVec4f(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
+GfVec4f BBoxLineColor(Background background) {
+    const GfVec4f clear = BackgroundColor(background);
+    GfVec4f color(0.0f, 0.0f, 0.0f, 1.0f);
+    for (int i = 0; i < 3; ++i) {
+        color[i] = std::clamp(clear[i] > 0.5f ? clear[i] - 0.6f : clear[i] + 0.6f, 0.0f, 1.0f);
+    }
+    return color;
+}
+
 // In enum order.
 const std::vector<std::string> &DrawModeNames() {
     static const std::vector<std::string> names{
@@ -61,6 +70,15 @@ const std::vector<std::string> &BackgroundNames() {
 const std::vector<std::string> &HighlightModeNames() {
     static const std::vector<std::string> names{"never", "whenPaused", "always"};
     return names;
+}
+
+const std::vector<std::string> &ColorCorrectionNames() {
+    static const std::vector<std::string> names{"disabled", "sRGB", "openColorIO"};
+    return names;
+}
+std::string ToString(ColorCorrection mode) { return Name(ColorCorrectionNames(), mode); }
+bool Parse(const std::string &name, ColorCorrection *mode) {
+    return Find(ColorCorrectionNames(), name, mode);
 }
 
 const std::vector<std::string> &ComplexityNames() {

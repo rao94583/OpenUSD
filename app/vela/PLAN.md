@@ -398,6 +398,21 @@ the scene. Still pending: inspector editing for arrays and other types,
 HUD, bounding boxes, OCIO, render settings and AOVs, the validation panel
 and preferences.
 
+Phase 5, continued (2026-10-14, later): bounding boxes, the HUD
+(`core/hud.*`, `viewport/hud_view.*`), color management (OpenColorIO turned
+on in the USD build; `core/color_management.*`) and the Renderer menu
+(renderer, AOV, renderer settings, render settings and pass prims;
+`RendererInfo`, which the viewport publishes to the document for dynamic
+menus and `get_renderer_info`). The Bazel build gained Embree
+(`vendor/embree`) and the hdEmbree delegate, so Vela has a second renderer.
+Fixed along the way: with color correction disabled the image was blank,
+because HgiMetal had not yet committed Storm's render pass when Vela
+presented (it commits graphics work only after a blit); switching renderer
+plugins re-enabled the engine's OpenGL presentation (a crash in
+`glGetString`); and the HUD's per-frame font lookup could return nil while
+Embree kept every core busy. Still pending: inspector editing for arrays
+and other types, the validation panel, preferences, and a settings form.
+
 ## Testing
 
 - `cc_test` for the core: document, actions, undo, camera math

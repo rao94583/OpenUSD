@@ -27,6 +27,8 @@ def label(path, flags, frame=None):
 CASES = [
     ('AnimCube.usda', '/Cameras/main_cam', [1, 5, 10], []),
     ('AnimCube.usda', '/Cameras/main_cam', [5], ['--disableCameraLight']),
+    # hdEmbree, a CPU path tracer, through the same AOV presentation.
+    ('AnimCube.usda', '/Cameras/main_cam', [5], ['--renderer', 'Embree']),
     ('niSpheres.usda', '/main_cam', [0], []),
     ('testPreviewSurfaceTexture.usda', None, [0], []),
     ('testPreviewSurfaceNormalMap.usda', None, [0], []),
@@ -36,7 +38,13 @@ CASES = [
     ('purposes.usda', '/Camera', [0], []),
     ('purposes.usda', '/Camera', [0], ['--purposes', 'render,guide']),
     ('purposes.usda', '/Camera', [0], ['--purposes', 'proxy,render,guide']),
+    ('testPreviewSurfaceTexture.usda', None, [0], ['--colorCorrectionMode', 'disabled']),
+    ('testPreviewSurfaceTexture.usda', None, [0], ['--colorCorrectionMode', 'openColorIO']),
 ]
+
+# OpenColorIO's built-in default config (ACES), so results do not depend on
+# the machine's $OCIO.
+os.environ['OCIO'] = 'ocio://default'
 
 # One prim of each purpose, side by side.
 PURPOSES = """#usda 1.0
@@ -144,7 +152,12 @@ with tempfile.TemporaryDirectory(prefix='Vela snapshots ') as temp:
                  ('purposes.vela.0', 'purposes.purposesrender+guide.vela.0'),
                  ('purposes.purposesrender+guide.vela.0',
                   'purposes.purposesproxy+render+guide.vela.0'),
-                 ('AnimCube.vela.5', 'AnimCube.disableCameraLight.vela.5')]:
+                 ('AnimCube.vela.5', 'AnimCube.disableCameraLight.vela.5'),
+                 ('AnimCube.vela.5', 'AnimCube.rendererEmbree.vela.5'),
+                 ('testPreviewSurfaceTexture.camera.vela.0',
+                  'testPreviewSurfaceTexture.camera.colorCorrectionModeopenColorIO.vela.0'),
+                 ('testPreviewSurfaceTexture.camera.vela.0',
+                  'testPreviewSurfaceTexture.camera.colorCorrectionModedisabled.vela.0')]:
         assert not compare(temp / f'{a}.png', temp / f'{b}.png')[0], \
             f'idiff did not detect a change between {a} and {b}'
     # Draw modes have no usdrecord equivalent: each must differ from the
@@ -160,6 +173,15 @@ with tempfile.TemporaryDirectory(prefix='Vela snapshots ') as temp:
             assert not compare(temp / f'mode.{mode}.png', temp / f'mode.{other}.png')[0], \
                 (mode, other)
     print(f'{len(modes)} draw modes differ from shaded and from each other')
+    # AOVs have no usdrecord equivalent either: Storm's depth and primId,
+    # visualized, differ from color and from each other.
+    aovs = ['depth', 'primId']
+    for aov in aovs:
+        run(vela, '--snapshot', cube, temp / f'aov.{aov}.png',
+            '--camera', '/Cameras/main_cam', '--frame', 5, '--aov', aov)
+        assert not compare(temp / f'aov.{aov}.png', temp / 'AnimCube.vela.5.png')[0], aov
+    assert not compare(temp / 'aov.depth.png', temp / 'aov.primId.png')[0]
+    print(f'{len(aovs)} AOVs differ from color and from each other')
     outputs = os.environ.get('TEST_UNDECLARED_OUTPUTS_DIR')
     if outputs:
         for image in temp.glob('*.png'):

@@ -4,11 +4,14 @@
 
 #import <Metal/Metal.h>
 
+#include "app/vela/core/document.h"
 #include "app/vela/core/view_settings.h"
 
 #include "pxr/pxr.h"
+#include "pxr/base/gf/bbox3d.h"
 #include "pxr/base/gf/camera.h"
 #include "pxr/base/gf/vec2i.h"
+#include "pxr/base/vt/dictionary.h"
 #include "pxr/base/gf/vec4f.h"
 #include "pxr/usd/sdf/path.h"
 #include "pxr/usd/usd/stage.h"
@@ -36,6 +39,9 @@ struct View {
     ViewSettings settings;
     // Whether selected prims are drawn highlighted.
     bool highlight = false;
+    // Dashed bounding boxes to draw, and their color.
+    std::vector<GfBBox3d> bboxes;
+    GfVec4f bboxColor{1.0f};
 };
 
 class Renderer {
@@ -58,6 +64,17 @@ public:
               id<MTLCommandBuffer> commandBuffer);
     // False while a progressive renderer is still refining the image.
     bool IsConverged() const;
+    // What the renderer offers: plugins, the current one, its AOVs and
+    // settings. GetInfoVersion changes whenever the answer may have.
+    RendererInfo GetInfo() const;
+    unsigned GetInfoVersion() const;
+    // A renderer plugin id from an id or display name ("GL" and "Storm"
+    // both name Storm, as in usdview); empty if unknown.
+    static std::string ResolveRenderer(const std::string &name);
+
+    // The renderer's display name and statistics, for the HUD.
+    std::string GetRendererName() const;
+    VtDictionary GetRenderStats() const;
 
     // Renders until converged and writes the image Draw would show.
     bool WriteImage(const View &view, const std::string &path);

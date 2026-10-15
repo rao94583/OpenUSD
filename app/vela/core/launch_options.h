@@ -29,6 +29,7 @@ struct LaunchOptions {
     SdfPath select;                     // --select PRIM: select and frame
     std::string camera;                 // --camera PATH or camera name
     std::optional<double> complexity;   // --complexity low|medium|high|veryhigh
+    std::string renderer;               // --renderer NAME (e.g. GL, Embree)
     std::optional<double> firstFrame;   // --ff
     std::optional<double> lastFrame;    // --lf
     std::optional<double> currentFrame; // --cf

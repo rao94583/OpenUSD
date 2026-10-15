@@ -8,6 +8,8 @@
 #include "pxr/usd/usdGeom/bboxCache.h"
 #include "pxr/usd/usdGeom/metrics.h"
 #include "pxr/usd/usdGeom/tokens.h"
+#include "pxr/usd/usdRender/pass.h"
+#include "pxr/usd/usdRender/settings.h"
 
 #include <algorithm>
 #include <cmath>
@@ -70,7 +72,7 @@ void Document::_Notify(unsigned changes) {
 
 void Document::_OnObjectsChanged(const UsdNotice::ObjectsChanged &notice,
                                  const UsdStageWeakPtr &) {
-    _stageBoundsValid = false;
+    _stageBoundsValid = _selectionBoundsValid = false;
     // Recomposition, or a change to layer metadata such as subLayers, may
     // bring in layers. (An empty new sublayer resyncs nothing.)
     const auto &infoPaths = notice.GetChangedInfoOnlyPaths();
@@ -117,6 +119,7 @@ void Document::SetSelection(const SdfPathVector &paths) {
     }
     if (selection != _selection) {
         _selection = std::move(selection);
+        _selectionBoundsValid = false;
         _Notify(Selection);
     }
 }
@@ -148,7 +151,7 @@ double Document::GetFramesPerSecond() const {
 void Document::SetTime(UsdTimeCode time) {
     if (time != _time) {
         _time = time;
-        _stageBoundsValid = false;
+        _stageBoundsValid = _selectionBoundsValid = false;
         _Notify(Time);
     }
 }
@@ -236,9 +239,51 @@ SdfPathVector Document::GetSceneCameras() const {
 
 void Document::SetViewSettings(const ViewSettings &settings) {
     if (!(settings == _viewSettings)) {
+        // Bounds follow the purposes shown.
+        _stageBoundsValid = _selectionBoundsValid = false;
         _viewSettings = settings;
         _Notify(Display);
     }
+}
+
+SdfPath RenderPassSource(const UsdStageRefPtr &stage, const SdfPath &pass) {
+    SdfPathVector targets;
+    if (UsdRenderPass renderPass{stage->GetPrimAtPath(pass)}) {
+        renderPass.GetRenderSourceRel().GetForwardedTargets(&targets);
+    }
+    return targets.empty() ? SdfPath() : targets.front();
+}
+
+void Document::SetRendererInfo(const RendererInfo &info) {
+    if (!(info == _rendererInfo)) {
+        _rendererInfo = info;
+        _Notify(Renderer);
+    }
+}
+
+JsValue Document::GetRendererSetting(const std::string &key) const {
+    auto found = _viewSettings.rendererSettings.find(key);
+    if (found != _viewSettings.rendererSettings.end()) return found->second;
+    for (const RendererSetting &setting : _rendererInfo.settings) {
+        if (setting.key == key) return setting.defaultValue;
+    }
+    return JsValue();
+}
+
+SdfPathVector Document::GetRenderSettingsPrims() const {
+    SdfPathVector paths;
+    for (const UsdPrim &prim : _stage->Traverse()) {
+        if (prim.IsA<UsdRenderSettings>()) paths.push_back(prim.GetPath());
+    }
+    return paths;
+}
+
+SdfPathVector Document::GetRenderPassPrims() const {
+    SdfPathVector paths;
+    for (const UsdPrim &prim : _stage->Traverse()) {
+        if (prim.IsA<UsdRenderPass>()) paths.push_back(prim.GetPath());
+    }
+    return paths;
 }
 
 void Document::SetCamera(const FreeCamera &camera) {
@@ -251,8 +296,11 @@ void Document::CameraChanged() {
 }
 
 GfBBox3d Document::ComputeBounds(const SdfPathVector &paths) const {
-    UsdGeomBBoxCache cache(_time, {UsdGeomTokens->default_, UsdGeomTokens->proxy},
-                           /* useExtentsHint = */ true);
+    TfTokenVector purposes{UsdGeomTokens->default_};
+    if (_viewSettings.showProxy) purposes.push_back(UsdGeomTokens->proxy);
+    if (_viewSettings.showRender) purposes.push_back(UsdGeomTokens->render);
+    if (_viewSettings.showGuides) purposes.push_back(UsdGeomTokens->guide);
+    UsdGeomBBoxCache cache(_time, purposes, /* useExtentsHint = */ true);
     GfBBox3d bounds;
     for (const SdfPath &path : paths) {
         if (UsdPrim prim = _stage->GetPrimAtPath(path)) {
@@ -260,6 +308,15 @@ GfBBox3d Document::ComputeBounds(const SdfPathVector &paths) const {
         }
     }
     return bounds;
+}
+
+const GfBBox3d &Document::GetSelectionBounds() const {
+    if (_selection.empty()) return GetStageBounds();
+    if (!_selectionBoundsValid) {
+        _selectionBounds = ComputeBounds(_selection);
+        _selectionBoundsValid = true;
+    }
+    return _selectionBounds;
 }
 
 const GfBBox3d &Document::GetStageBounds() const {

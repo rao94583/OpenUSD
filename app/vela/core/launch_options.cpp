@@ -53,6 +53,7 @@ const char *LaunchUsage() {
         "  --sessionLayer FILE      use FILE as the session layer\n"
         "  --mute LAYER[,LAYER...]  mute layers\n"
         "  --complexity LEVEL       low, medium, high or veryhigh\n"
+        "  --renderer NAME          Hydra renderer, e.g. GL (Storm) or Embree\n"
         "  --ff/--lf FRAME          first and last frame of the playback range\n"
         "  --cf FRAME               the current frame\n"
         "  --numThreads N           thread limit (0: all, negative: all but N)\n"
@@ -131,6 +132,8 @@ bool ParseLaunchOptions(const std::vector<std::string> &args,
                 return false;
             }
             options->complexity = complexity;
+        } else if (arg == "--renderer" || arg == "-r") {
+            if (!value(&options->renderer)) return false;
         } else if (arg == "--ff") {
             if (!number(&options->firstFrame)) return false;
         } else if (arg == "--lf") {
@@ -237,9 +240,11 @@ std::vector<std::string> ApplyLaunchOptions(const LaunchOptions &options,
     if (options.currentFrame) {
         document.SetTime(UsdTimeCode(*options.currentFrame));
     }
-    if (options.complexity) {
+    if (options.complexity || !options.renderer.empty()) {
         ViewSettings settings = document.GetViewSettings();
-        settings.complexity = *options.complexity;
+        if (options.complexity) settings.complexity = *options.complexity;
+        // Resolved (and warned about if unknown) by the viewport's renderer.
+        if (!options.renderer.empty()) settings.renderer = options.renderer;
         document.SetViewSettings(settings);
     }
     const std::string camera = options.camera.empty()

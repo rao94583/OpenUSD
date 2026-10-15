@@ -5,6 +5,8 @@
 #include "pxr/base/js/json.h"
 #include "pxr/usd/usd/prim.h"
 #include "pxr/usd/usdGeom/cube.h"
+#include "pxr/usd/usdRender/pass.h"
+#include "pxr/usd/usdRender/settings.h"
 
 #include <set>
 
@@ -276,6 +278,111 @@ void TestViewActions() {
     CHECK(after == before);
 }
 
+void TestRendererActions() {
+    ActionRegistry &registry = ActionRegistry::Get();
+    UsdStageRefPtr stage = MakeStage();
+    UsdRenderSettings::Define(stage, SdfPath("/Render/Settings"));
+    UsdRenderSettings::Define(stage, SdfPath("/Render/Other"));
+    UsdRenderPass pass = UsdRenderPass::Define(stage, SdfPath("/Render/Pass"));
+    pass.CreateRenderSourceRel().AddTarget(SdfPath("/Render/Other"));
+    UsdRenderPass::Define(stage, SdfPath("/Render/Sourceless"));
+    Document d(stage);
+    unsigned seen = 0;
+    d.AddObserver([&](unsigned changes) { seen |= changes; });
+
+    // Before a viewport publishes what the renderer offers: any renderer
+    // name is accepted (the renderer resolves it), settings are unknown.
+    CHECK(d.GetRendererInfo().plugins.empty());
+    CHECK(registry.Run(d, "set_renderer", Params(R"({"renderer": "Embree"})")).ok);
+    CHECK(d.GetViewSettings().renderer == "Embree");
+    CHECK(!registry.Run(d, "set_renderer_setting", Params(R"({"key": "x"})")).ok);
+
+    RendererInfo info;
+    info.plugins = {{"HdStormRendererPlugin", "GL"}, {"HdEmbreeRendererPlugin", "Embree"}};
+    info.current = "HdEmbreeRendererPlugin";
+    info.aovs = {"color", "depth"};
+    info.settings = {
+        {"spp", "Samples per pixel", RendererSetting::Type::Int, JsValue(int64_t(1))},
+        {"ao", "Ambient occlusion", RendererSetting::Type::Flag, JsValue(true)},
+        {"gamma", "Gamma", RendererSetting::Type::Float, JsValue(2.2)},
+    };
+    seen = 0;
+    d.SetRendererInfo(info);
+    CHECK(seen == Document::Renderer);
+    seen = 0;
+    d.SetRendererInfo(info);
+    CHECK(seen == 0);
+
+    // Renderers: menu choices by display name, chosen by the current id.
+    const Action &renderer = *registry.Find("set_renderer");
+    const std::vector<MenuChoice> renderers = renderer.dynamicChoices(d);
+    CHECK(renderers.size() == 2 && renderers[1].title == "Embree");
+    CHECK(renderer.chosen(d, renderers[1].params));
+    CHECK(!renderer.chosen(d, renderers[0].params));
+    CHECK(!registry.Run(d, "set_renderer", Params(R"({"renderer": "Cycles"})")).ok);
+
+    // AOVs, and settings: flags toggle, others take values of their type.
+    CHECK(registry.Find("set_aov")->dynamicChoices(d).size() == 2);
+    CHECK(registry.Run(d, "set_aov", Params(R"({"aov": "primvars:st"})")).ok);
+    CHECK(d.GetViewSettings().aov == "primvars:st");
+    const Action &setting = *registry.Find("set_renderer_setting");
+    CHECK(setting.dynamicChoices(d).size() == 1);  // the flag
+    CHECK(setting.chosen(d, Params(R"({"key": "ao"})")));
+    CHECK(registry.Run(d, "set_renderer_setting", Params(R"({"key": "ao"})")).ok);
+    CHECK(d.GetRendererSetting("ao") == JsValue(false));
+    CHECK(!setting.chosen(d, Params(R"({"key": "ao"})")));
+    CHECK(registry.Run(d, "set_renderer_setting", Params(R"({"key": "spp", "value": 8})")).ok);
+    CHECK(d.GetRendererSetting("spp") == JsValue(int64_t(8)));
+    CHECK(registry.Run(d, "set_renderer_setting", Params(R"({"key": "gamma", "value": 1})")).ok);
+    CHECK(!registry.Run(d, "set_renderer_setting", Params(R"({"key": "spp", "value": 1.5})")).ok);
+    CHECK(!registry.Run(d, "set_renderer_setting", Params(R"({"key": "spp"})")).ok);
+    CHECK(!registry.Run(d, "set_renderer_setting", Params(R"({"key": "nope", "value": 1})")).ok);
+    // Back to the default (by value or null) drops the override.
+    CHECK(registry.Run(d, "set_renderer_setting", Params(R"({"key": "ao"})")).ok);
+    CHECK(registry.Run(d, "set_renderer_setting", Params(R"({"key": "spp", "value": 1})")).ok);
+    CHECK(d.GetViewSettings().rendererSettings.size() == 1);  // gamma
+
+    // get_renderer_info reports it all.
+    ActionResult result = registry.Run(d, "get_renderer_info");
+    CHECK(result.ok);
+    const JsObject &reported = result.value.GetJsObject();
+    CHECK(reported.at("current").GetString() == "HdEmbreeRendererPlugin");
+    CHECK(reported.at("renderers").GetJsArray().size() == 2);
+    CHECK(reported.at("aov").GetString() == "primvars:st");
+    const JsObject &gamma = reported.at("settings").GetJsArray()[2].GetJsObject();
+    CHECK(gamma.at("type").GetString() == "float");
+    CHECK(gamma.at("value") == JsValue(1.0));
+
+    CHECK(registry.Run(d, "set_renderer_setting",
+                       Params(R"({"key": "gamma", "value": null})")).ok);
+    CHECK(d.GetViewSettings().rendererSettings.empty());
+    CHECK(registry.Run(d, "set_renderer_setting", Params(R"({"key": "spp", "value": 4})")).ok);
+
+    // Switching renderer resets the AOV and settings.
+    CHECK(registry.Run(d, "set_renderer", Params(R"({"renderer": "GL"})")).ok);
+    CHECK(d.GetViewSettings().aov == "color");
+    CHECK(d.GetViewSettings().rendererSettings.empty());
+
+    // Render settings and passes; a pass brings its render source.
+    const Action &settingsPrim = *registry.Find("set_render_settings_prim");
+    CHECK(settingsPrim.dynamicChoices(d).size() == 3);  // stage default + 2
+    CHECK(settingsPrim.chosen(d, Params(R"({"path": ""})")));
+    CHECK(registry.Run(d, "set_render_settings_prim",
+                       Params(R"({"path": "/Render/Settings"})")).ok);
+    CHECK(d.GetViewSettings().renderSettingsPrim == SdfPath("/Render/Settings"));
+    CHECK(!registry.Run(d, "set_render_settings_prim", Params(R"({"path": "/A"})")).ok);
+    CHECK(!registry.Run(d, "set_render_settings_prim", Params(R"({"path": "bad path"})")).ok);
+    CHECK(registry.Run(d, "set_render_pass_prim", Params(R"({"path": "/Render/Pass"})")).ok);
+    CHECK(d.GetViewSettings().renderPassPrim == SdfPath("/Render/Pass"));
+    CHECK(d.GetViewSettings().renderSettingsPrim == SdfPath("/Render/Other"));
+    CHECK(registry.Run(d, "set_render_pass_prim",
+                       Params(R"({"path": "/Render/Sourceless"})")).ok);
+    CHECK(d.GetViewSettings().renderSettingsPrim.IsEmpty());
+    CHECK(registry.Run(d, "set_render_pass_prim", Params(R"({"path": ""})")).ok);
+    CHECK(d.GetViewSettings().renderPassPrim.IsEmpty());
+    CHECK(!d.GetUndoStack().CanUndo());
+}
+
 } // namespace
 
 int main() {
@@ -284,5 +391,6 @@ int main() {
     TestRegistry();
     TestStandardActions();
     TestViewActions();
+    TestRendererActions();
     return test::Finish("action");
 }

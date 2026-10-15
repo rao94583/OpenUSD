@@ -18,6 +18,9 @@
 #include "pxr/usd/usdGeom/camera.h"
 #include "pxr/usd/usdGeom/metrics.h"
 #include "pxr/usd/usdGeom/tokens.h"
+#include "pxr/usd/usdRender/pass.h"
+#include "pxr/usd/usdRender/settings.h"
+#include "pxr/usd/usdRender/tokens.h"
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -104,8 +107,21 @@ static bool ParseRenderOptions(int argc, const char *argv[], int first, RenderOp
             if (!vela::ParseComplexity(argv[++i], &options->settings.complexity)) return false;
         } else if (arg == "--drawMode" && hasValue) {
             if (!vela::Parse(argv[++i], &options->settings.drawMode)) return false;
+        } else if (arg == "--colorCorrectionMode" && hasValue) {
+            if (!vela::Parse(argv[++i], &options->settings.colorCorrection)) return false;
         } else if (arg == "--disableCameraLight") options->settings.cameraLight = false;
         else if (arg == "--enableDomeLightVisibility") options->settings.domeLightTexturesVisible = true;
+        else if ((arg == "--renderer" || arg == "-r") && hasValue) {
+            options->settings.renderer = argv[++i];
+            if (vela::Renderer::ResolveRenderer(options->settings.renderer).empty()) {
+                fprintf(stderr, "Unknown renderer %s\n", argv[i]);
+                return false;
+            }
+        } else if ((arg == "--renderSettingsPrimPath" || arg == "-rs") && hasValue) {
+            options->settings.renderSettingsPrim = SdfPath(argv[++i]);
+        } else if ((arg == "--renderPassPrimPath" || arg == "-rp") && hasValue) {
+            options->settings.renderPassPrim = SdfPath(argv[++i]);
+        } else if (arg == "--aov" && hasValue) options->settings.aov = argv[++i];
         else if (arg.rfind("--", 0) == 0) return false;
         else if (options->scene.empty()) options->scene = arg;
         else if (options->output.empty()) options->output = arg;
@@ -154,11 +170,48 @@ static bool MakeView(const UsdStageRefPtr &stage, const RenderOptions &options,
 }
 
 // Writes the image the viewport would show, for comparison with usdrecord.
-static int Snapshot(const RenderOptions &options) {
+static int Snapshot(const RenderOptions &givenOptions) {
+    RenderOptions options = givenOptions;
     UsdStageRefPtr stage = UsdStage::Open(options.scene);
     if (!stage || options.output.empty()) {
         fprintf(stderr, "Could not open %s\n", options.scene.c_str());
         return 1;
+    }
+    // usdrecord's render settings: from a render pass's render source, the
+    // flag, or (in the renderer) the stage's metadata; the camera from the
+    // settings when none is given.
+    vela::ViewSettings &settings = options.settings;
+    if (!settings.renderPassPrim.IsEmpty()) {
+        if (!settings.renderSettingsPrim.IsEmpty()) {
+            fprintf(stderr, "Cannot specify both --renderSettingsPrimPath and "
+                            "--renderPassPrimPath\n");
+            return 1;
+        }
+        if (!UsdRenderPass(stage->GetPrimAtPath(settings.renderPassPrim))) {
+            fprintf(stderr, "Unknown render pass <%s>\n", settings.renderPassPrim.GetText());
+            return 1;
+        }
+        settings.renderSettingsPrim = vela::RenderPassSource(stage, settings.renderPassPrim);
+        if (settings.renderSettingsPrim.IsEmpty()) {
+            fprintf(stderr, "Render source not authored on %s\n",
+                    settings.renderPassPrim.GetText());
+            return 1;
+        }
+    }
+    SdfPath settingsPrim = settings.renderSettingsPrim;
+    if (settingsPrim.IsEmpty()) {
+        std::string path;
+        if (stage->GetMetadata(UsdRenderTokens->renderSettingsPrimPath, &path) &&
+            SdfPath::IsValidPathString(path)) {
+            settingsPrim = SdfPath(path);
+        }
+    }
+    if (options.camera.IsEmpty() && !settingsPrim.IsEmpty()) {
+        SdfPathVector cameras;
+        if (UsdRenderSettings rs{stage->GetPrimAtPath(settingsPrim)}) {
+            rs.GetCameraRel().GetForwardedTargets(&cameras);
+        }
+        if (cameras.size() == 1) options.camera = cameras.front();
     }
     vela::FreeCamera freeCamera;
     vela::View view;
@@ -286,6 +339,9 @@ static void Usage() {
         "                       [--width W] [--height H] [--purposes P[,P...]]\n"
         "                       [--complexity low|medium|high|veryhigh] [--drawMode MODE]\n"
         "                       [--disableCameraLight] [--enableDomeLightVisibility]\n"
+        "                       [--colorCorrectionMode disabled|sRGB|openColorIO]\n"
+        "                       [--renderer NAME] [--aov NAME]\n"
+        "                       [--renderSettingsPrimPath PATH | --renderPassPrimPath PATH]\n"
         "       Vela --benchmark FILE [--frames N] [--frame TIME] [--width W] [--height H]\n"
         "       Vela --benchmark FILE --window [--frames N]\n");
 }

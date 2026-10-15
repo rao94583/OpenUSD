@@ -23,6 +23,36 @@ namespace vela {
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+// What the current renderer offers, published by the viewport (which owns
+// the Hydra engine) for menus, actions and scripts.
+struct RendererSetting {
+    enum class Type { Flag, Int, Float, String };
+    std::string key;
+    std::string name;
+    Type type = Type::Flag;
+    JsValue defaultValue;
+
+    bool operator==(const RendererSetting &other) const = default;
+};
+
+struct RendererInfo {
+    struct Plugin {
+        std::string id;
+        std::string name;  // display name, e.g. "GL" for Storm
+        bool operator==(const Plugin &other) const = default;
+    };
+    std::vector<Plugin> plugins;
+    std::string current;  // the current plugin's id
+    std::vector<std::string> aovs;
+    std::vector<RendererSetting> settings;
+
+    bool operator==(const RendererInfo &other) const = default;
+};
+
+// A UsdRenderPass prim's render settings prim (the first target of its
+// renderSource relationship), or empty.
+SdfPath RenderPassSource(const UsdStageRefPtr &stage, const SdfPath &pass);
+
 class Document : public TfWeakBase {
 public:
     // What changed, for observers.
@@ -42,6 +72,8 @@ public:
         // Layers were saved or reverted (unsaved state changed without an
         // edit).
         Saved = 1u << 9,
+        // The renderer's offerings (RendererInfo) changed.
+        Renderer = 1u << 10,
     };
     using Observer = std::function<void(unsigned changes)>;
 
@@ -97,10 +129,13 @@ public:
     void SetCamera(const FreeCamera &camera);
     void CameraChanged();
 
-    // World bounds of prims at the current time, with the default and
-    // proxy purposes. The stage's bounds are cached.
+    // World bounds of prims at the current time, for the default purpose and
+    // the purposes the view settings show. The stage's bounds and the
+    // selection's are cached.
     GfBBox3d ComputeBounds(const SdfPathVector &paths) const;
     const GfBBox3d &GetStageBounds() const;
+    // The selection's bounds, or the stage's when nothing is selected.
+    const GfBBox3d &GetSelectionBounds() const;
     // The viewport's aspect ratio (width / height), for framing.
     void SetViewportAspectRatio(double aspectRatio) { _aspectRatio = aspectRatio; }
     double GetViewportAspectRatio() const { return _aspectRatio; }
@@ -110,6 +145,16 @@ public:
 
     const ViewSettings &GetViewSettings() const { return _viewSettings; }
     void SetViewSettings(const ViewSettings &settings);
+
+    // Empty until a viewport has drawn the document.
+    const RendererInfo &GetRendererInfo() const { return _rendererInfo; }
+    void SetRendererInfo(const RendererInfo &info);
+    // The setting's current value: the view settings' override or the
+    // renderer's default. Null for unknown keys.
+    JsValue GetRendererSetting(const std::string &key) const;
+    // UsdRenderSettings and UsdRenderPass prims, in traversal order.
+    SdfPathVector GetRenderSettingsPrims() const;
+    SdfPathVector GetRenderPassPrims() const;
 
     // The layer edits go to: one in the stage's layer stack.
     SdfLayerHandle GetEditTarget() const;
@@ -144,8 +189,11 @@ private:
     SdfPath _viewCamera;
     double _aspectRatio = 1.0;
     ViewSettings _viewSettings;
+    RendererInfo _rendererInfo;
     mutable GfBBox3d _stageBounds;
     mutable bool _stageBoundsValid = false;
+    mutable GfBBox3d _selectionBounds;
+    mutable bool _selectionBoundsValid = false;
     std::vector<std::pair<int, Observer>> _observers;
     int _nextObserver = 1;
     TfNotice::Key _objectsChangedKey;

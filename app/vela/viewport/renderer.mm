@@ -14,12 +14,15 @@
 #include "pxr/imaging/hgiMetal/texture.h"
 #include "pxr/imaging/hio/image.h"
 #include "pxr/usd/usdGeom/tokens.h"
+#include "pxr/usd/usdRender/tokens.h"
 #include "pxr/usd/usd/prim.h"
 #include "pxr/usd/usdGeom/metrics.h"
 #include "pxr/usd/usdGeom/tokens.h"
 #include "pxr/usdImaging/usdImagingGL/engine.h"
 
 #include <chrono>
+#include <map>
+#include <optional>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -70,7 +73,11 @@ UsdImagingGLRenderParams MakeRenderParams(UsdTimeCode time, const ViewSettings &
     params.frame = time;
     params.complexity = float(settings.complexity);
     params.drawMode = HydraDrawMode(settings.drawMode);
-    params.colorCorrectionMode = HdxColorCorrectionTokens->sRGB;
+    params.colorCorrectionMode = TfToken(ToString(settings.colorCorrection));
+    params.ocioDisplay = TfToken(settings.ocioDisplay);
+    params.ocioView = TfToken(settings.ocioView);
+    params.ocioColorSpace = TfToken(settings.ocioColorSpace);
+    params.ocioLook = TfToken(settings.ocioLook);
     params.showProxy = settings.showProxy;
     params.showRender = settings.showRender;
     params.showGuides = settings.showGuides;
@@ -80,6 +87,52 @@ UsdImagingGLRenderParams MakeRenderParams(UsdTimeCode time, const ViewSettings &
     params.enableSceneLights = settings.sceneLights;
     params.enableSceneMaterials = settings.sceneMaterials;
     return params;
+}
+
+TfToken ResolveRendererId(const std::string &name) {
+    for (const TfToken &id : UsdImagingGLEngine::GetRendererPlugins()) {
+        if (id.GetString() == name ||
+            UsdImagingGLEngine::GetRendererDisplayName(id) == name) {
+            return id;
+        }
+    }
+    if (name == "Storm") return TfToken("HdStormRendererPlugin");
+    return TfToken();
+}
+
+VtValue ToVtValue(const RendererSetting::Type type, const JsValue &value) {
+    switch (type) {
+    case RendererSetting::Type::Flag: return VtValue(value.GetBool());
+    case RendererSetting::Type::Int: return VtValue(int(value.GetInt64()));
+    case RendererSetting::Type::Float: return VtValue(float(value.GetReal()));
+    case RendererSetting::Type::String: return VtValue(value.GetString());
+    }
+    return VtValue();
+}
+
+JsValue ToJsValue(const VtValue &value) {
+    if (value.IsHolding<bool>()) return JsValue(value.UncheckedGet<bool>());
+    if (value.IsHolding<int>()) return JsValue(int64_t(value.UncheckedGet<int>()));
+    if (value.IsHolding<float>()) return JsValue(double(value.UncheckedGet<float>()));
+    if (value.IsHolding<double>()) return JsValue(value.UncheckedGet<double>());
+    if (value.IsHolding<std::string>()) return JsValue(value.UncheckedGet<std::string>());
+    if (value.IsHolding<TfToken>()) return JsValue(value.UncheckedGet<TfToken>().GetString());
+    return JsValue();
+}
+
+RendererSetting::Type SettingType(UsdImagingGLRendererSetting::Type type) {
+    switch (type) {
+    case UsdImagingGLRendererSetting::TYPE_FLAG: return RendererSetting::Type::Flag;
+    case UsdImagingGLRendererSetting::TYPE_INT: return RendererSetting::Type::Int;
+    case UsdImagingGLRendererSetting::TYPE_FLOAT: return RendererSetting::Type::Float;
+    case UsdImagingGLRendererSetting::TYPE_STRING: return RendererSetting::Type::String;
+    }
+    return RendererSetting::Type::String;
+}
+
+JsValue Lookup(const std::map<std::string, JsValue> &settings, const std::string &key) {
+    auto found = settings.find(key);
+    return found == settings.end() ? JsValue() : found->second;
 }
 
 } // namespace
@@ -96,11 +149,91 @@ struct Renderer::Impl {
     bool selectionPending = false;
     id<MTLLibrary> library;
     std::unordered_map<NSUInteger, id<MTLRenderPipelineState>> pipelines;
+    // Renderer choices applied to the engine; reset with the engine.
+    TfToken defaultRenderer;
+    std::string unknownRenderer;  // warned about once
+    std::string appliedAov;
+    std::optional<std::map<std::string, JsValue>> appliedSettings;
+    std::optional<SdfPath> appliedSettingsPrim, appliedPassPrim;
+    unsigned infoVersion = 0;
 
     HgiMetal *Metal() const { return static_cast<HgiMetal *>(hgi.get()); }
     id<MTLRenderPipelineState> Pipeline(MTLPixelFormat format);
+    void ConfigureEngine();
+    void ApplyRendererChoices(const ViewSettings &settings);
     void Render(const View &view);
 };
+
+// Settings the engine forgets when it switches renderer plugins (which
+// rebuilds its task controller).
+void Renderer::Impl::ConfigureEngine() {
+    // Vela draws the AOV itself, so no OpenGL interop is needed.
+    engine->SetEnablePresentation(false);
+    engine->SetRendererAov(HdAovTokens->color);
+    // usdview's default: a half-transparent yellow tint.
+    engine->SetSelectionColor(GfVec4f(1.0f, 1.0f, 0.0f, 0.5f));
+}
+
+void Renderer::Impl::ApplyRendererChoices(const ViewSettings &s) {
+    TfToken id = defaultRenderer;
+    if (!s.renderer.empty()) {
+        id = ResolveRendererId(s.renderer);
+        if (id.IsEmpty()) {
+            if (unknownRenderer != s.renderer) {
+                TF_WARN("Unknown renderer '%s'", s.renderer.c_str());
+                unknownRenderer = s.renderer;
+            }
+            id = engine->GetCurrentRendererId();
+        }
+    }
+    if (id != engine->GetCurrentRendererId()) {
+        if (engine->SetRendererPlugin(id)) {
+            // A new render delegate: AOV, settings and selection again.
+            ConfigureEngine();
+            appliedAov = HdAovTokens->color.GetString();
+            appliedSettings.reset();
+            appliedSettingsPrim.reset();
+            appliedPassPrim.reset();
+            populated = false;
+            selectionPending = true;
+        } else {
+            TF_WARN("Renderer '%s' is not supported", id.GetText());
+        }
+        ++infoVersion;
+    }
+    if (s.aov != appliedAov) {
+        engine->SetRendererAov(TfToken(s.aov));
+        appliedAov = s.aov;
+    }
+    if (!appliedSettings || *appliedSettings != s.rendererSettings) {
+        for (const UsdImagingGLRendererSetting &setting : engine->GetRendererSettingsList()) {
+            const std::string &key = setting.key.GetString();
+            const JsValue now = Lookup(s.rendererSettings, key);
+            const JsValue before = appliedSettings ? Lookup(*appliedSettings, key) : JsValue();
+            if (now == before) continue;
+            engine->SetRendererSetting(setting.key, now.IsNull() ? setting.defValue
+                                       : ToVtValue(SettingType(setting.type), now));
+        }
+        appliedSettings = s.rendererSettings;
+    }
+    // As usdrecord: the stage's metadata when no settings prim is chosen.
+    SdfPath settingsPrim = s.renderSettingsPrim;
+    if (settingsPrim.IsEmpty()) {
+        std::string path;
+        if (stage->GetMetadata(UsdRenderTokens->renderSettingsPrimPath, &path) &&
+            SdfPath::IsValidPathString(path)) {
+            settingsPrim = SdfPath(path);
+        }
+    }
+    if (appliedSettingsPrim != settingsPrim) {
+        engine->SetActiveRenderSettingsPrimPath(settingsPrim);
+        appliedSettingsPrim = settingsPrim;
+    }
+    if (appliedPassPrim != s.renderPassPrim) {
+        engine->SetActiveRenderPassPrimPath(s.renderPassPrim);
+        appliedPassPrim = s.renderPassPrim;
+    }
+}
 
 id<MTLRenderPipelineState> Renderer::Impl::Pipeline(MTLPixelFormat format) {
     auto found = pipelines.find(format);
@@ -125,6 +258,7 @@ id<MTLRenderPipelineState> Renderer::Impl::Pipeline(MTLPixelFormat format) {
 }
 
 void Renderer::Impl::Render(const View &view) {
+    ApplyRendererChoices(view.settings);
     const GfFrustum frustum = view.camera.GetFrustum();
     if (view.cameraPath.IsEmpty()) {
         engine->SetCameraState(frustum.ComputeViewMatrix(),
@@ -167,6 +301,9 @@ void Renderer::Impl::Render(const View &view) {
     UsdImagingGLRenderParams params = MakeRenderParams(view.time, settings);
     params.clearColor = view.clearColor;
     params.highlight = view.highlight;
+    params.bboxes = view.bboxes;
+    params.bboxLineColor = view.bboxColor;
+    params.bboxLineDashSize = 3;  // usdview's
     if (!populated) {
         engine->Render(stage->GetPseudoRoot(), params);
         populated = true;
@@ -214,13 +351,42 @@ void Renderer::SetStage(const UsdStageRefPtr &stage, bool unloadedAsBounds) {
     params.gpuEnabled = true;
     params.displayUnloadedPrimsWithBounds = unloadedAsBounds;
     _impl->engine = std::make_unique<UsdImagingGLEngine>(params);
-    // Vela draws the AOV itself, so no OpenGL interop is needed.
-    _impl->engine->SetEnablePresentation(false);
-    _impl->engine->SetRendererAov(HdAovTokens->color);
-    // usdview's default: a half-transparent yellow tint.
-    _impl->engine->SetSelectionColor(GfVec4f(1.0f, 1.0f, 0.0f, 0.5f));
+    _impl->ConfigureEngine();
     _impl->populated = false;
     _impl->selectionPending = !_impl->selection.empty();
+    _impl->defaultRenderer = _impl->engine->GetCurrentRendererId();
+    _impl->appliedAov = HdAovTokens->color.GetString();
+    _impl->appliedSettings.reset();
+    _impl->appliedSettingsPrim.reset();
+    _impl->appliedPassPrim.reset();
+    ++_impl->infoVersion;
+}
+
+RendererInfo Renderer::GetInfo() const {
+    RendererInfo info;
+    for (const TfToken &id : UsdImagingGLEngine::GetRendererPlugins()) {
+        info.plugins.push_back({id.GetString(), UsdImagingGLEngine::GetRendererDisplayName(id)});
+    }
+    if (!_impl->engine) return info;
+    info.current = _impl->engine->GetCurrentRendererId().GetString();
+    for (const TfToken &aov : _impl->engine->GetRendererAovs()) {
+        info.aovs.push_back(aov.GetString());
+    }
+    for (const UsdImagingGLRendererSetting &setting : _impl->engine->GetRendererSettingsList()) {
+        // View > Dome Light Textures Visible owns this one; Render sets it.
+        if (setting.key == HdRenderSettingsTokens->domeLightCameraVisibility) continue;
+        info.settings.push_back({setting.key.GetString(), setting.name,
+                                 SettingType(setting.type), ToJsValue(setting.defValue)});
+    }
+    return info;
+}
+
+unsigned Renderer::GetInfoVersion() const {
+    return _impl->infoVersion;
+}
+
+std::string Renderer::ResolveRenderer(const std::string &name) {
+    return ResolveRendererId(name).GetString();
 }
 
 void Renderer::SetSelection(const SdfPathVector &paths) {
@@ -238,6 +404,11 @@ bool Renderer::Draw(const View &view, id<MTLTexture> target,
         return false;
     }
     _impl->Render(view);
+    // HgiMetal leaves render passes in its primary command buffer and
+    // commits it only after a blit (color correction does one), so commit it
+    // now: our pass, later on the same queue, then runs after Storm's.
+    _impl->Metal()->CommitPrimaryCommandBuffer(
+        HgiMetal::CommitCommandBuffer_NoWait, /*forceNewBuffer=*/true);
     HgiTextureHandle color = _impl->engine->GetAovTexture(HdAovTokens->color);
     auto *metalColor = static_cast<HgiMetalTexture *>(color.Get());
     id<MTLRenderPipelineState> pipeline = _impl->Pipeline(target.pixelFormat);
@@ -255,6 +426,15 @@ bool Renderer::Draw(const View &view, id<MTLTexture> target,
     [encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
     [encoder endEncoding];
     return true;
+}
+
+std::string Renderer::GetRendererName() const {
+    if (!_impl->engine) return std::string();
+    return UsdImagingGLEngine::GetRendererDisplayName(_impl->engine->GetCurrentRendererId());
+}
+
+VtDictionary Renderer::GetRenderStats() const {
+    return _impl->engine ? _impl->engine->GetRenderStats() : VtDictionary();
 }
 
 bool Renderer::IsConverged() const {

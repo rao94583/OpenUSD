@@ -15,9 +15,15 @@ usd_headers(
         "//pxr/imaging/hio",
         "//pxr/usd/usd",
         "//pxr/usd/usdGeom",
+        "//pxr/usd/usdRender",
         "//pxr/usd/usdUtils",
         "//pxr/usdImaging/usdImagingGL",
     ],
+)
+
+cc_import(
+    name = "opencolorio_shared",
+    shared_library = "//bazel/install:opencolorio",
 )
 
 cc_import(
@@ -31,10 +37,12 @@ cc_library(
     srcs = [
         "core/actions.cpp",
         "core/browser.cpp",
+        "core/color_management.cpp",
         "core/document.cpp",
         "core/editing_actions.cpp",
         "core/file_actions.cpp",
         "core/free_camera.cpp",
+        "core/hud.cpp",
         "core/launch_options.cpp",
         "core/standard_actions.cpp",
         "core/undo.cpp",
@@ -45,8 +53,10 @@ cc_library(
     hdrs = [
         "core/actions.h",
         "core/browser.h",
+        "core/color_management.h",
         "core/document.h",
         "core/free_camera.h",
+        "core/hud.h",
         "core/launch_options.h",
         "core/undo.h",
         "core/value_text.h",
@@ -56,6 +66,10 @@ cc_library(
     deps = [
         ":usd_headers",
         ":usd_shared",
+        # For listing OCIO config choices, from the same shared OpenColorIO
+        # library Storm uses.
+        ":opencolorio_shared",
+        "//vendor/opencolorio:headers",
         "@rules_python//python/cc:current_py_cc_libs",
     ],
 )
@@ -82,6 +96,7 @@ cc_test(
     "browser_test",
     "editing_actions_test",
     "file_actions_test",
+    "hud_test",
     "launch_options_test",
     "document_test",
     "undo_test",
@@ -102,6 +117,8 @@ objc_library(
         "spline_view.mm",
         "window_layout.h",
         "window_layout.mm",
+        "viewport/hud_view.h",
+        "viewport/hud_view.mm",
         "viewport/renderer.h",
         "viewport/renderer.mm",
         "viewport/viewport_view.h",

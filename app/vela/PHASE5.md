@@ -18,27 +18,27 @@ undo step. Payload loading changes stage load rules, without layer edits.
 | Load / unload | Actions for a prim/subtree and the selection; Prim menu. |
 | Activation | Actions for a prim and selection; Prim menu; undo across recomposition. |
 | Visibility | Inherited/invisible authoring at default or time sample; Hide/Show Selected menu. This does not make an invisible ancestor visible. |
-| Purposes | Authoring action for default/proxy/render/guide. View → Display shows proxy, render and guide purposes (`set_view_option`); snapshots match usdrecord's `--purposes`. Bounds that follow the shown purposes pending. |
+| Purposes | Authoring action for default/proxy/render/guide. View → Display shows proxy, render and guide purposes (`set_view_option`); snapshots match usdrecord's `--purposes`; framing and bounding boxes follow the shown purposes. |
 | Model draw modes | Author model:drawMode; default/inherited/origin/bounds/cards. Inspector controls and applyDrawMode editing pending. |
 | View draw modes | Done: View → Draw Mode (`set_draw_mode`): points, wireframe, wireframe on surface, flat and smooth shaded, geom only/flat/smooth. usdview's hidden-surface wireframe (a two-pass GL trick) is not reproduced. |
 | Scene cameras | Done: View → Camera lists the stage's cameras (`set_view_camera`), fitted to the viewport as usdview does, following animation; navigating or framing detaches a free copy. The viewport's route matches usdrecord's images. Orthographic free cameras pending. |
-| Render settings / AOVs | Renderer choice, render-settings prim, renderer settings, AOV chooser and visualization pending. |
+| Render settings / AOVs | Done: the Renderer menu chooses the Hydra renderer (`set_renderer`; Storm and Embree, which the Bazel build now includes), the AOV shown (`set_aov`, any name, e.g. `primvars:st`), renderer settings (`set_renderer_setting`; flags toggle in the menu, other types by value, no form yet), the render settings prim (`set_render_settings_prim`, default from stage metadata) and render pass prim (`set_render_pass_prim`, which also activates its render source, as usdview). `get_renderer_info` returns the renderers, AOVs and settings as JSON. `--snapshot` takes usdrecord's `--renderer`, `--renderSettingsPrimPath`/`-rs`, `--renderPassPrimPath`/`-rp` (the settings prim's camera when no `--camera`) and `--aov`. A form for non-flag settings, and pause/stop for progressive renderers, pending. |
 | Lighting / material | Done: View → Display toggles the camera light, usdview's default dome light, dome light textures, scene lights, scene materials and backface culling; lights apply to shaded draw modes, as in usdview. View → Background and Selection Highlighting as usdview's. Default material ambient/specular controls pending. |
-| HUD | Frame/render statistics, prim/geometry counts and toggles pending. |
-| Color management | OCIO display/view/look/colorspace, raw/sRGB, consistent presentation pending. |
-| Bounding boxes | World/selection bounds, oriented/aligned, visibility and purpose consistency pending. |
+| HUD | Done: usdview's four corners (renderer, Hgi and AOV; prim and geometry counts, off by default; render time, playback rate, optional GPU statistics; complexity and camera), toggled in View → Display (`set_view_option`). |
+| Color management | Done: OpenColorIO is enabled in the USD build; View → Color Correction (`set_color_correction`: disabled, sRGB, openColorIO) and View → OCIO Display/View from the config (`set_ocio`, which also takes color space and look). `--snapshot --colorCorrectionMode` matches usdrecord for all three modes. Menus for OCIO color spaces and looks pending (actions accept them). |
+| Bounding boxes | Done: dashed axis-aligned and oriented boxes around the selection (or the stage), not during playback by default, in usdview's line color; bounds follow the purposes shown (View → Display). |
 | Validation | Validation panel, validators, severity, navigation to offending objects pending. |
 | Preferences | Persistence, reset, navigation/selection/display settings pending. |
 | Saving | Done: File → Save (⌘S) writes the layer stack's edited layers in place, except the session layer; Export Flattened…, Export Session Layer… and Revert to Saved. The window shows unsaved edits and closing asks to save. In-memory layers can only be exported. |
-| Launcher flags | Done: `--select`, `--camera` (path or name; default main_cam), `--mask`, `--unloaded`, `--sessionLayer`, `--mute`, `--complexity`, `--ff`/`--lf`/`--cf`, `--numThreads`, `--viewportSize`, `--norender`, `--bboxStandin`, `--timing`, `--quitAfterStartup`. Accepted and ignored until Vela has settings files: `--clearsettings`, `--defaultsettings`, `--config`, `--noplugins`. Rejected with a message: `--allow-async`, trace and memory statistics flags, `--dumpFirstImage` (use `--snapshot`), `--detachLayers*`. |
+| Launcher flags | Done: `--select`, `--camera` (path or name; default main_cam), `--mask`, `--unloaded`, `--sessionLayer`, `--mute`, `--complexity`, `--ff`/`--lf`/`--cf`, `--numThreads`, `--renderer`/`-r`, `--viewportSize`, `--norender`, `--bboxStandin`, `--timing`, `--quitAfterStartup`. Accepted and ignored until Vela has settings files: `--clearsettings`, `--defaultsettings`, `--config`, `--noplugins`. Rejected with a message: `--allow-async`, trace and memory statistics flags, `--dumpFirstImage` (use `--snapshot`), `--detachLayers*`. |
 
 Tests for the view settings, cameras, saving and launch options:
 `actions_test`, `document_test`, `file_actions_test`,
 `launch_options_test`, `saving_test` (through the AppKit document),
 `launch_test` (a real launch) and `snapshot_test`, which compares Vela's
 images with usdrecord's for purposes, complexity, the camera light, dome
-light visibility and the viewport's scene camera route, and checks that
-each draw mode changes the image.
+light visibility, color correction modes, Embree and the viewport's scene
+camera route, and checks that each draw mode and AOV changes the image.
 
 Headless tests in `core/editing_actions_test.cpp` adapt the authored
 visibility behavior from `testUsdviewInstancingEdits` and the parent/child
