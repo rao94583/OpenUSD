@@ -1,0 +1,70 @@
+# Generated from pxr/imaging/plugin/hdEmbree/CMakeLists.txt by bazel/tools/cmake2bazel.py; do not edit.
+# Regenerate with: python3 bazel/tools/cmake2bazel.py --write
+load("//bazel:pxr_library.bzl", "pxr_library")
+load("//bazel:pxr_test.bzl", "pxr_test_program", "pxr_test_tree")
+
+pxr_library(
+    name = "hdEmbree",
+    plugin = True,
+    libraries = [
+        "//pxr/base/tf",
+        "//pxr/base/vt",
+        "//pxr/base/gf",
+        "//pxr/base/work",
+        "//pxr/imaging/hd",
+        "//pxr/imaging/hdsi",
+        "//pxr/imaging/hio",
+        "//vendor/embree",
+    ],
+    private_classes = [
+        "config",
+        "debugCodes",
+        "implicitSurfaceSceneIndexPlugin",
+        "instancer",
+        "light",
+        "lightSamplers",
+        "mesh",
+        "meshSamplers",
+        "pxrIES/ies",
+        "pxrIES/pxrIES",
+        "renderBuffer",
+        "renderer",
+        "rendererPlugin",
+        "renderDelegate",
+        "renderPass",
+        "sampler",
+    ],
+    private_headers = [
+        "context.h",
+        "renderParam.h",
+        "pxrPbrt/pbrtUtils.h",
+    ],
+    resource_files = [
+        "plugInfo.json",
+    ],
+    doxygen_files = [
+        "overview.dox",
+    ],
+)
+
+pxr_test_program(
+    name = "testHdEmbree",
+    srcs = [
+        "testenv/testHdEmbree.cpp",
+    ],
+    libraries = [
+        "//pxr/base/arch",
+        "//pxr/imaging/garch",
+        "//pxr/imaging/plugin/hdEmbree",
+        "//pxr/imaging/hdSt",
+        "//pxr/imaging/hdx",
+        "//pxr/imaging/hio",
+    ],
+)
+
+pxr_test_tree(
+    name = "test_tree",
+    srcs = [
+        ":tests/testHdEmbree",
+    ],
+)

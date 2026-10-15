@@ -1,0 +1,227 @@
+# Embree, for the hdEmbree render delegate (see README.md). Mirrors
+# kernels/CMakeLists.txt and common/*/CMakeLists.txt for a static library
+# with one ISA and TBB tasking, as build_scripts/build_usd.py configures it
+# on Apple arm64 (EMBREE_MAX_ISA=NEON): NEON runs Embree's SSE2 code paths
+# through common/simd/arm/sse2neon.h, so there is no per-ISA dispatch.
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel:cmake_configure_file.bzl", "cmake_configure_file")
+
+package(default_visibility = ["//visibility:public"])
+
+# CMakeLists.txt option defaults, with EMBREE_ISPC_SUPPORT=OFF and
+# EMBREE_TUTORIALS=OFF (build_usd.py) and a static library.
+_CONFIG = {
+    "EMBREE_VERSION_MAJOR": "4",
+    "EMBREE_VERSION_MINOR": "3",
+    "EMBREE_VERSION_PATCH": "3",
+    "EMBREE_VERSION_NOTE": "",
+    "EMBREE_VERSION_NUMBER": "40303",
+    "EMBREE_MAX_INSTANCE_LEVEL_COUNT": "1",
+    "EMBREE_CURVE_SELF_INTERSECTION_AVOIDANCE_FACTOR": "2.0",
+    "EMBREE_STATIC_LIB": "ON",
+    "EMBREE_RAY_MASK": "ON",
+    "EMBREE_FILTER_FUNCTION": "ON",
+    "EMBREE_GEOMETRY_TRIANGLE": "ON",
+    "EMBREE_GEOMETRY_QUAD": "ON",
+    "EMBREE_GEOMETRY_CURVE": "ON",
+    "EMBREE_GEOMETRY_SUBDIVISION": "ON",
+    "EMBREE_GEOMETRY_USER": "ON",
+    "EMBREE_GEOMETRY_INSTANCE": "ON",
+    "EMBREE_GEOMETRY_INSTANCE_ARRAY": "ON",
+    "EMBREE_GEOMETRY_GRID": "ON",
+    "EMBREE_GEOMETRY_POINT": "ON",
+    "EMBREE_RAY_PACKETS": "ON",
+    "EMBREE_DISC_POINT_SELF_INTERSECTION_AVOIDANCE": "ON",
+    # The git hash of a source checkout; release tarballs have none.
+    "EMBREE_HASH": "0",
+}
+
+cmake_configure_file(
+    name = "rtcore_config",
+    src = "kernels/rtcore_config.h.in",
+    out = "include/embree4/rtcore_config.h",
+    values = _CONFIG,
+)
+
+cmake_configure_file(
+    name = "config",
+    src = "kernels/config.h.in",
+    out = "kernels/config.h",
+    values = _CONFIG,
+)
+
+cmake_configure_file(
+    name = "hash",
+    src = "kernels/hash.h.in",
+    out = "kernels/hash.h",
+    values = _CONFIG,
+)
+
+# The public API. EMBREE_STATIC_LIB is also in rtcore_config.h.
+cc_library(
+    name = "headers",
+    hdrs = glob(["include/embree4/*.h"]) + [":rtcore_config"],
+    defines = ["EMBREE_STATIC_LIB"],
+    # rtcore.h includes "rtcore_config.h", which is generated.
+    includes = [
+        "include",
+        "include/embree4",
+    ],
+)
+
+# Definitions every Embree file is compiled with (ADD_DEFINITIONS and the
+# lowest ISA's flags, FLAGS_SSE2 for EMBREE_ARM).
+_DEFINES = [
+    "TASKING_TBB",
+    "EMBREE_TARGET_SSE2",
+    "__SSE__",
+    "__SSE2__",
+]
+
+# common/cmake/clang.cmake, less warnings and security flags; Embree's
+# code is not warning-clean under our toolchain's -Wall.
+_COPTS = [
+    "-w",
+    # Optimized in every compilation mode, as clang.cmake does even for
+    # CMAKE_BUILD_TYPE=Debug; unoptimized Embree is ~10x slower.
+    "-O3",
+    "-fsigned-char",
+    "-fno-strict-aliasing",
+    "-fvisibility=hidden",
+    "-fvisibility-inlines-hidden",
+] + ["-D" + d for d in _DEFINES] + [
+    # For the generated headers (see :generated_common_dir). Not
+    # `includes`, which would reach dependents (hdEmbree has its own
+    # config.h).
+    "-Ivendor/embree/kernels/common",
+    "-I$(GENDIR)/vendor/embree/kernels/common",
+]
+
+# kernels/common/*.{h,cpp} include the generated ../config.h and ../hash.h,
+# found through -I$(GENDIR)/vendor/embree/kernels/common (see _COPTS). That
+# directory must exist for ".." to resolve, so it gets a placeholder.
+genrule(
+    name = "generated_common_dir",
+    outs = ["kernels/common/bazel_generated_dir.h"],
+    cmd = "touch $@",
+    visibility = ["//visibility:private"],
+)
+
+_COMMON_HDRS = glob([
+    "common/**/*.h",
+    "kernels/**/*.h",
+]) + [
+    ":config",
+    ":generated_common_dir",
+    ":hash",
+]
+
+# The static libraries under common/: sys, math, simd, lexers and tasking.
+cc_library(
+    name = "common",
+    srcs = [
+        "common/lexers/stringstream.cpp",
+        "common/lexers/tokenstream.cpp",
+        "common/math/constants.cpp",
+        "common/simd/sse.cpp",
+        "common/sys/alloc.cpp",
+        "common/sys/barrier.cpp",
+        "common/sys/condition.cpp",
+        "common/sys/estring.cpp",
+        "common/sys/filename.cpp",
+        "common/sys/library.cpp",
+        "common/sys/mutex.cpp",
+        "common/sys/regression.cpp",
+        "common/sys/sysinfo.cpp",
+        "common/sys/thread.cpp",
+        "common/tasking/taskschedulertbb.cpp",
+    ] + _COMMON_HDRS,
+    copts = _COPTS,
+    linkopts = select({
+        "@platforms//os:linux": ["-ldl", "-lpthread"],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:private"],
+    deps = [
+        ":headers",
+        "//vendor/onetbb:tbb",
+    ],
+)
+
+# EMBREE_LIBRARY_FILES with EMBREE_GEOMETRY_SUBDIVISION and
+# EMBREE_RAY_PACKETS; one ISA, so no embree_<isa> libraries.
+cc_library(
+    name = "embree",
+    srcs = [
+        "kernels/" + f
+        for f in [
+            "bvh/bvh.cpp",
+            "bvh/bvh4_factory.cpp",
+            "bvh/bvh8_factory.cpp",
+            "bvh/bvh_builder.cpp",
+            "bvh/bvh_builder_hair.cpp",
+            "bvh/bvh_builder_hair_mb.cpp",
+            "bvh/bvh_builder_morton.cpp",
+            "bvh/bvh_builder_sah.cpp",
+            "bvh/bvh_builder_sah_mb.cpp",
+            "bvh/bvh_builder_sah_spatial.cpp",
+            "bvh/bvh_builder_subdiv.cpp",
+            "bvh/bvh_builder_twolevel.cpp",
+            "bvh/bvh_collider.cpp",
+            "bvh/bvh_intersector1_bvh4.cpp",
+            "bvh/bvh_intersector_hybrid4_bvh4.cpp",
+            "bvh/bvh_refit.cpp",
+            "bvh/bvh_rotate.cpp",
+            "bvh/bvh_statistics.cpp",
+            "builders/primrefgen.cpp",
+            "common/acceln.cpp",
+            "common/accelset.cpp",
+            "common/alloc.cpp",
+            "common/device.cpp",
+            "common/geometry.cpp",
+            "common/motion_derivative.cpp",
+            "common/rtcore.cpp",
+            "common/rtcore_builder.cpp",
+            "common/scene.cpp",
+            "common/scene_curves.cpp",
+            "common/scene_grid_mesh.cpp",
+            "common/scene_instance.cpp",
+            "common/scene_instance_array.cpp",
+            "common/scene_line_segments.cpp",
+            "common/scene_points.cpp",
+            "common/scene_quad_mesh.cpp",
+            "common/scene_subdiv_mesh.cpp",
+            "common/scene_triangle_mesh.cpp",
+            "common/scene_user_geometry.cpp",
+            "common/scene_verify.cpp",
+            "common/stat.cpp",
+            "common/state.cpp",
+            "geometry/curve_intersector_virtual_4i.cpp",
+            "geometry/curve_intersector_virtual_4i_mb.cpp",
+            "geometry/curve_intersector_virtual_4v.cpp",
+            "geometry/curve_intersector_virtual_8i.cpp",
+            "geometry/curve_intersector_virtual_8i_mb.cpp",
+            "geometry/curve_intersector_virtual_8v.cpp",
+            "geometry/grid_soa.cpp",
+            "geometry/instance_array_intersector.cpp",
+            "geometry/instance_intersector.cpp",
+            "geometry/primitive4.cpp",
+            "subdiv/bezier_curve.cpp",
+            "subdiv/bspline_curve.cpp",
+            "subdiv/catmullclark_coefficients.cpp",
+            "subdiv/catmullrom_curve.cpp",
+            "subdiv/subdivpatch1base.cpp",
+            "subdiv/subdivpatch1base_eval.cpp",
+            "subdiv/tessellation_cache.cpp",
+        ]
+    ] + _COMMON_HDRS,
+    copts = _COPTS + ["-DEMBREE_LOWEST_ISA"],
+    # Some kernels #include other .cpp files to instantiate them.
+    textual_hdrs = glob(["kernels/**/*.cpp"]),
+    deps = [
+        ":common",
+        ":headers",
+        "//vendor/onetbb:tbb",
+    ],
+)

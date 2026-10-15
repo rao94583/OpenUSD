@@ -74,6 +74,62 @@ pxr_test(
 )
 
 pxr_test(
+    name = "testUsdRecordSingleFrame_NoGpu",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord --disableGpu AnimCube.usda AnimCubeNoGpu.1.png",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCubeNoGpu.1.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+        "ENV": [
+            "RMANTREE=",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdRecordMultipleFrames_NoGpu",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord --disableGpu AnimCube.usda AnimCubeNoGpu.#.png --frames 1,5,10",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCubeNoGpu.1.png",
+            "AnimCubeNoGpu.5.png",
+            "AnimCubeNoGpu.10.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+        "ENV": [
+            "RMANTREE=",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
     name = "testUsdRecordSessionLayer",
     arguments = {
         "PYTHON": True,
@@ -161,6 +217,62 @@ pxr_test(
         "WARN_PERCENT": "0.0075",
         "EXPECTED_RETURN_CODE": "0",
         "TESTENV": "testenv/RecordTest",
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdRecordSingleFrame_SceneIndex_NoGpu",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord --disableGpu AnimCube.usda AnimCubeNoGpu.1.png",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCubeNoGpu.1.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+        "ENV": [
+            "RMANTREE=",
+        ],
+    },
+    test_trees = [
+        ":test_tree",
+    ],
+    python_tools = {
+        "//pxr/usdImaging/bin/usdrecord:usdrecord.py": "usdrecord",
+    },
+    image_diff_tool = "//vendor/openimageio:idiff",
+)
+
+pxr_test(
+    name = "testUsdRecordMultipleFrames_SceneIndex_NoGpu",
+    arguments = {
+        "PYTHON": True,
+        "COMMAND": "<prefix>/bin/usdrecord AnimCube.usda --disableGpu AnimCubeNoGpu.#.png --frames 1,5,10",
+        "IMAGE_DIFF_COMPARE": [
+            "AnimCubeNoGpu.1.png",
+            "AnimCubeNoGpu.5.png",
+            "AnimCubeNoGpu.10.png",
+        ],
+        "FAIL": "0.5",
+        "FAIL_PERCENT": "0.005",
+        "WARN": "0.05",
+        "WARN_PERCENT": "0.0075",
+        "EXPECTED_RETURN_CODE": "0",
+        "TESTENV": "testenv/RecordTest",
+        "ENV": [
+            "RMANTREE=",
+        ],
     },
     test_trees = [
         ":test_tree",

@@ -26,6 +26,7 @@ PXR_DYNAMIC_DEPS = [
     "//bazel/install:tbb",
     "//bazel/install:opensubdiv",
     "//bazel/install:materialx",
+    "//bazel/install:opencolorio",
 ]
 _RESOURCES = "//bazel/install:resources"
 

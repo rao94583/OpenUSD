@@ -59,6 +59,14 @@ _COMMON_VARS = {
     # MaterialX is vendored (//vendor/materialx). //pxr defines
     # PXR_MATERIALX_SUPPORT_ENABLED to match (Packages.cmake).
     "PXR_ENABLE_MATERIALX_SUPPORT": "ON",
+    # Off by default in Options.cmake and build_usd.py; on here so Storm can
+    # color correct with OpenColorIO, as usdview's OCIO view settings need.
+    # OpenColorIO is vendored (//vendor/opencolorio). //pxr defines
+    # PXR_OCIO_PLUGIN_ENABLED to match (Packages.cmake).
+    "PXR_BUILD_OPENCOLORIO_PLUGIN": "ON",
+    # Off by default in Options.cmake and build_usd.py; on here so usdview
+    # and Vela have a second renderer. Embree is vendored (//vendor/embree).
+    "PXR_BUILD_EMBREE_PLUGIN": "ON",
     # find_package(MaterialX). MATERIALX_STDLIB_DIR stays unset: the data
     # library is installed through RESOURCE_TREES instead, and nothing
     # points at the build machine (PXR_MATERIALX_STDLIB_DIR).
@@ -98,6 +106,8 @@ EXTERNAL_LABELS = {
     # (PXR_PY_UNDEFINED_DYNAMIC_LOOKUP), so only the headers are needed;
     # executables link libpython themselves.
     "Python3::Python": "@rules_python//python/cc:current_py_cc_headers",
+    "OpenColorIO::OpenColorIO": "//vendor/opencolorio",
+    "Embree::embree": "//vendor/embree",
 }
 EXTERNAL_LABELS.update({
     name: "//vendor/materialx:" + name

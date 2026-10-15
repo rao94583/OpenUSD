@@ -39,12 +39,12 @@ Status
 | Core | `pxr/base`, `pxr/usd`, `usdValidation`, schema code generators |
 | Python | Bindings for every module, using a hermetic Python 3.11 |
 | Tools | usdcat, usdtree, usddiff, usdchecker, usdrecord, usdresolve, sdfdump, ... |
-| Imaging | Hydra, Storm rendering through Metal, usdImaging, OpenSubdiv |
+| Imaging | Hydra, Storm rendering through Metal, usdImaging, OpenSubdiv, OpenColorIO color correction, the hdEmbree CPU renderer |
 | MaterialX | MaterialX 1.39.5: usdMtlx, hdMtlx, MaterialX materials in Storm |
 | usdview | Built and tested, with PySide6 6.11.2 |
 | Tests | Pixar's CMake test suite, ported: about 1,650 tests. All tests that apply to macOS pass. Storm render tests compare images with OpenImageIO's `idiff`, as in Pixar's CI. |
 | Packaging | A pip-installable wheel; fully offline builds |
-| Not yet built | `exec` and the optional plugins Pixar's default build leaves off (OSL, Ptex, Embree, Alembic, Draco, OpenVDB, RenderMan) |
+| Not yet built | `exec` and the optional plugins Pixar's default build leaves off (OSL, Ptex, Alembic, Draco, OpenVDB, RenderMan) |
 | CI | None yet |
 
 Where this is going
@@ -287,7 +287,9 @@ All built from source in `vendor/` unless noted.
 | OpenSubdiv | 3.6.1 | Subdivision surfaces (pxOsd, Storm) |
 | MaterialX | 1.39.5 | MaterialX shading (usdMtlx, hdMtlx, Storm) |
 | OpenImageIO | 3.1.8.0 | `idiff` for image comparison tests |
-| OpenColorIO, OpenEXR, Imath, libpng, libjpeg-turbo, libtiff, zlib, libdeflate, expat, yaml-cpp, pystring, minizip-ng, fmt, robin-map | as pinned by OpenImageIO / `VERSIONS.md` | OpenImageIO's dependencies |
+| Embree | 4.3.3 (NEON only) | The hdEmbree renderer |
+| OpenColorIO | 2.4.2 | Storm's color correction (a shared library, also used by Vela); OpenImageIO |
+| OpenEXR, Imath, libpng, libjpeg-turbo, libtiff, zlib, libdeflate, expat, yaml-cpp, pystring, minizip-ng, fmt, robin-map | as pinned by OpenImageIO / `VERSIONS.md` | OpenImageIO's dependencies |
 | Jinja2, MarkupSafe | 3.1.6, 3.0.3 | Schema code generators (usdGenSchema) |
 | Python | 3.11 (hermetic, from Bazel's rules_python) | Bindings, tools, tests |
 | PySide6-Essentials, shiboken6, PyOpenGL | 6.11.2, 6.11.2, 3.1.5 (PyPI, hash-pinned) | usdview |

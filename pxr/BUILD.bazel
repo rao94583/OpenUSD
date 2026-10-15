@@ -46,6 +46,9 @@ cc_library(
         # Packages.cmake, with PXR_ENABLE_MATERIALX_SUPPORT (on in
         # cmake2bazel.py, as in build_scripts/build_usd.py).
         "PXR_MATERIALX_SUPPORT_ENABLED",
+        # Packages.cmake, with PXR_BUILD_OPENCOLORIO_PLUGIN (on in
+        # cmake2bazel.py).
+        "PXR_OCIO_PLUGIN_ENABLED",
     ] + select({
         # Packages.cmake (imaging): OpenGL and Metal on macOS; OpenGL and X11
         # on Linux. Must match PXR_ENABLE_*_SUPPORT in cmake2bazel.py.

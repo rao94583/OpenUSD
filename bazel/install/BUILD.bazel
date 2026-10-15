@@ -58,6 +58,18 @@ cc_shared_library(
     ],
 )
 
+# OpenColorIO as its own shared library, as in CMake builds, for Storm's
+# color correction (hdx) and for apps that list the config's choices. One
+# copy per process: two static copies conflict.
+cc_shared_library(
+    name = "opencolorio",
+    shared_lib_name = select({
+        "@platforms//os:macos": "lib/libOpenColorIO.dylib",
+        "//conditions:default": "lib/libOpenColorIO.so",
+    }),
+    deps = ["//vendor/opencolorio"],
+)
+
 # The monolithic library (CMake's PXR_BUILD_MONOLITHIC usd_ms): every pxr
 # library, so that Python extensions and programs share one copy of each
 # registry.
@@ -70,6 +82,7 @@ cc_shared_library(
     deps = PXR_LIBRARIES,
     dynamic_deps = [
         ":materialx",
+        ":opencolorio",
         ":opensubdiv",
         ":tbb",
     ],
@@ -91,6 +104,7 @@ pxr_python_package(
         ":tbb",
         ":opensubdiv",
         ":materialx",
+        ":opencolorio",
     ],
     runtime = [":resources"],
 )
