@@ -102,8 +102,11 @@ public:
     double GetStartTime() const;
     double GetEndTime() const;
     double GetFramesPerSecond() const;
-    // Overrides the stage's time range for playback (usdview's --ff/--lf).
+    // Overrides the stage's time range for playback (usdview's --ff/--lf),
+    // or returns to the stage's.
     void SetPlaybackRange(double start, double end);
+    void ClearPlaybackRange();
+    bool HasPlaybackRange() const { return _hasPlaybackRange; }
     // Moves by whole frames, wrapping around the time range.
     void StepTime(int frames);
     bool IsPlaying() const { return _playing; }
@@ -169,6 +172,16 @@ public:
     // Called after saving or reverting layers.
     void LayersSaved() { _Notify(Saved); }
 
+    // How long opening the stage took and, from the start of opening, when
+    // the first frame was drawn, in seconds (0 until known). The app
+    // measures them; the HUD's Info shows them (usdview's --timing).
+    struct LoadStatistics {
+        double open = 0.0;
+        double firstFrame = 0.0;
+    };
+    const LoadStatistics &GetLoadStatistics() const { return _loadStatistics; }
+    void SetLoadStatistics(const LoadStatistics &statistics) { _loadStatistics = statistics; }
+
     UndoStack &GetUndoStack() { return *_undo; }
     const UndoStack &GetUndoStack() const { return *_undo; }
 
@@ -190,6 +203,7 @@ private:
     double _aspectRatio = 1.0;
     ViewSettings _viewSettings;
     RendererInfo _rendererInfo;
+    LoadStatistics _loadStatistics;
     mutable GfBBox3d _stageBounds;
     mutable bool _stageBoundsValid = false;
     mutable GfBBox3d _selectionBounds;

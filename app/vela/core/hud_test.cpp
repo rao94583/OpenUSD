@@ -63,6 +63,12 @@ void Test() {
     CHECK(Find(hud.bottomLeft, "Playback") == "40.00 ms (25.00 FPS)");
     CHECK(Find(hud.bottomRight, "Complexity") == "Very High");
     CHECK(Find(hud.bottomRight, "Camera") == "Cam");
+    // Load statistics once the app has measured them.
+    CHECK(Find(hud.topLeft, "Open") == "<missing>");
+    d.SetLoadStatistics({.open = 0.5, .firstFrame = 1.25});
+    hud = ComposeHud(d, all, render);
+    CHECK(Find(hud.topLeft, "Open") == "0.50 s");
+    CHECK(Find(hud.topLeft, "First frame") == "1.25 s");
 
     s.showHUD = false;
     d.SetViewSettings(s);

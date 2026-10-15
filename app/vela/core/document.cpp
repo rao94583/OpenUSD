@@ -143,6 +143,11 @@ void Document::SetPlaybackRange(double start, double end) {
     _Notify(Time);
 }
 
+void Document::ClearPlaybackRange() {
+    _hasPlaybackRange = false;
+    _Notify(Time);
+}
+
 double Document::GetFramesPerSecond() const {
     const double fps = _stage->GetFramesPerSecond();
     return fps > 0.0 ? fps : 24.0;

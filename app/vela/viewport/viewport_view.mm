@@ -32,6 +32,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
     std::unique_ptr<vela::Renderer> _renderer;
     // The renderer info version last published to the document.
     unsigned _publishedRendererInfo;
+    // The renderer's stage draws unloaded prims as boxes.
+    BOOL _unloadedAsBounds;
     vela::CameraDrag _drag;
     BOOL _dragged;
     double _frameMilliseconds;
@@ -64,7 +66,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
     }
     _document = std::move(document);
     _renderer = std::make_unique<vela::Renderer>();
-    _renderer->SetStage(_document->GetStage());
+    _unloadedAsBounds = _document->GetViewSettings().unloadedAsBounds;
+    _renderer->SetStage(_document->GetStage(), _unloadedAsBounds);
     // The document may already have a selection, e.g. from --select.
     _renderer->SetSelection(_document->GetSelection());
     __weak VelaViewportView *weakSelf = self;
@@ -85,6 +88,13 @@ PXR_NAMESPACE_USING_DIRECTIVE
 - (void)documentChanged:(unsigned)changes {
     using D = vela::Document;
     if (changes & D::Selection) {
+        _renderer->SetSelection(_document->GetSelection());
+    }
+    // Unloaded prims as boxes is an engine parameter: a new engine.
+    if ((changes & D::Display) &&
+        _document->GetViewSettings().unloadedAsBounds != _unloadedAsBounds) {
+        _unloadedAsBounds = _document->GetViewSettings().unloadedAsBounds;
+        _renderer->SetStage(_document->GetStage(), _unloadedAsBounds);
         _renderer->SetSelection(_document->GetSelection());
     }
     // Playback hides selection highlights while playing, as in usdview.
@@ -220,14 +230,9 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 #pragma mark Drawing
 
-- (void)setDrawsUnloadedAsBounds:(BOOL)bounds {
-    _renderer->SetStage(_document->GetStage(), bounds);
-    _renderer->SetSelection(_document->GetSelection());
-    [self requestRender];
-}
-
 - (void)render {
-    if (self.renderingDisabled) {
+    // View → Display → Pause Viewport Drawing (usdview's --norender).
+    if (_document->GetViewSettings().pauseDrawing) {
         return;
     }
     CAMetalLayer *layer = (CAMetalLayer *)self.layer;

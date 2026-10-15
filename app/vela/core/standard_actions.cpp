@@ -12,7 +12,8 @@ namespace vela {
 namespace {
 
 double Number(const JsValue &value) {
-    return value.IsReal() ? value.GetReal() : double(value.GetInt64());
+    return value.IsReal() ? value.GetReal()
+         : value.IsUInt64() ? double(value.GetUInt64()) : double(value.GetInt64());
 }
 
 GfVec3d Vector(const JsValue &value) {
@@ -115,6 +116,34 @@ void RegisterEdit(ActionRegistry &r) {
             return Done();
         },
         .enabled = [](const Document &d) { return !d.GetSelection().empty(); },
+    });
+    r.Register({
+        .name = "select_path",
+        .title = "Select Path…",
+        .description = "Select one prim by absolute path and frame it, as usdview's "
+                       "--select does.",
+        .parameters = ParameterSchema(R"({
+            "properties": {"path": {"type": "string"}},
+            "required": ["path"]
+        })"),
+        .menu = "Edit",
+        .form = [](const Document &d) {
+            const SdfPathVector &selection = d.GetSelection();
+            return std::vector<FormField>{{
+                .key = "path", .label = "Prim path", .type = FormField::Type::String,
+                .value = JsValue(selection.empty() ? std::string("/")
+                                                   : selection.front().GetString())}};
+        },
+        .run = [](Document &d, const JsObject &params) {
+            const std::string &text = params.at("path").GetString();
+            if (!SdfPath::IsValidPathString(text) || !SdfPath(text).IsAbsolutePath() ||
+                !SdfPath(text).IsPrimPath() || !d.GetStage()->GetPrimAtPath(SdfPath(text))) {
+                return ActionResult::Error("No prim at '" + text + "'");
+            }
+            d.SetSelection({SdfPath(text)});
+            d.FrameSelection();
+            return Done();
+        },
     });
     r.Register({
         .name = "set_edit_target",
@@ -264,6 +293,45 @@ void RegisterPlayback(ActionRegistry &r) {
             return Done();
         },
         .enabled = animated,
+    });
+    r.Register({
+        .name = "set_playback_range",
+        .title = "Set Playback Range…",
+        .description = "Play and step between start and end time codes instead "
+                       "of the stage's range (usdview's --ff and --lf). The "
+                       "current time moves into the range if it is outside.",
+        .parameters = ParameterSchema(R"({
+            "properties": {"start": {"type": "number"}, "end": {"type": "number"}},
+            "required": ["start", "end"]
+        })"),
+        .menu = "Playback", .separatorBefore = true,
+        .form = [](const Document &d) {
+            return std::vector<FormField>{
+                {.key = "start", .label = "Start", .type = FormField::Type::Float,
+                 .value = JsValue(d.GetStartTime())},
+                {.key = "end", .label = "End", .type = FormField::Type::Float,
+                 .value = JsValue(d.GetEndTime())},
+            };
+        },
+        .run = [](Document &d, const JsObject &params) {
+            const double start = Number(params.at("start")), end = Number(params.at("end"));
+            if (end < start) return ActionResult::Error("The end is before the start");
+            d.SetPlaybackRange(start, end);
+            const double time = d.GetTime().IsDefault() ? start : d.GetTime().GetValue();
+            if (time < start || time > end) d.SetTime(UsdTimeCode(start));
+            return Done();
+        },
+    });
+    r.Register({
+        .name = "reset_playback_range",
+        .title = "Reset Playback Range",
+        .description = "Play the stage's own time range again.",
+        .menu = "Playback",
+        .run = [](Document &d, const JsObject &) {
+            d.ClearPlaybackRange();
+            return Done();
+        },
+        .enabled = [](const Document &d) { return d.HasPlaybackRange(); },
     });
     r.Register({
         .name = "set_time",

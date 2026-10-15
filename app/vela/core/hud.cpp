@@ -20,6 +20,12 @@ std::string Milliseconds(double ms) {
 }
 
 // Bytes as usdview's ReportMetricSize: B, KB, MB or GB.
+std::string Seconds(double seconds) {
+    char text[32];
+    std::snprintf(text, sizeof(text), "%.2f s", seconds);
+    return text;
+}
+
 std::string Size(double bytes) {
     const char *units[] = {"B", "KB", "MB", "GB"};
     int unit = 0;
@@ -88,6 +94,10 @@ Hud ComposeHud(const Document &document, const HudStats &stats,
         hud.topLeft.emplace_back("CVs", Count(stats.cvs));
         hud.topLeft.emplace_back("Verts", Count(stats.verts));
         hud.topLeft.emplace_back("Faces", Count(stats.faces));
+        // usdview's --timing, as the window shows it.
+        const Document::LoadStatistics &load = document.GetLoadStatistics();
+        if (load.open > 0.0) hud.topLeft.emplace_back("Open", Seconds(load.open));
+        if (load.firstFrame > 0.0) hud.topLeft.emplace_back("First frame", Seconds(load.firstFrame));
     }
     hud.topRight.emplace_back("Hydra", render.renderer);
     if (!render.hgi.empty()) hud.topRight.emplace_back("  Hgi", render.hgi);

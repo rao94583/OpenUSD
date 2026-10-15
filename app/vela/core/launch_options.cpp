@@ -197,10 +197,9 @@ bool ParseLaunchOptions(const std::vector<std::string> &args,
 
 LaunchOptions DefaultLaunchOptions(const AppSettings &settings) {
     LaunchOptions options;
-    options.view = WithoutSceneSpecific(settings.view);
+    options.view = AsDefaults(settings.view);
     options.usePrimaryCamera = settings.usePrimaryCamera;
     options.unloaded = !settings.loadPayloads;
-    options.bboxStandin = settings.unloadedAsBounds;
     return options;
 }
 
@@ -258,6 +257,8 @@ std::vector<std::string> ApplyLaunchOptions(const LaunchOptions &options,
     }
     ViewSettings settings = options.view;
     if (options.complexity) settings.complexity = *options.complexity;
+    if (options.bboxStandin) settings.unloadedAsBounds = true;
+    if (options.norender) settings.pauseDrawing = true;
     // Resolved (and warned about if unknown) by the viewport's renderer.
     if (!options.renderer.empty()) settings.renderer = options.renderer;
     document.SetViewSettings(settings);

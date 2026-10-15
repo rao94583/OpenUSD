@@ -92,9 +92,9 @@ and actions.
 | `--renderer` | Live: Renderer menu (done). Setting: default renderer |
 | `--numThreads` | Setting: thread limit, at next launch |
 | `--viewportSize` | Not needed: windows resize and remember their frames |
-| `--norender` | Live: View → Pause Viewport Drawing |
+| `--norender` | Live: View → Display → Pause Viewport Drawing |
 | `--bboxStandin` | Live: View → Display → Unloaded Prims as Bounding Boxes. Setting: its default |
-| `--timing` | Live: Window → Load Statistics (open and first-frame times, also in the HUD's Info) |
+| `--timing` | Live: the HUD's Info shows open and first-frame times (View → Display → HUD Prim Info) |
 | `--clearsettings`, `--defaultsettings` | Settings → Reset to Defaults |
 | `--config` | Not needed: settings persist (NSUserDefaults) |
 | `--quitAfterStartup` | Tests only; stays a flag |

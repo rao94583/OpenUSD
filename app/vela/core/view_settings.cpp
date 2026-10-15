@@ -125,6 +125,8 @@ const std::vector<BoolField> &BoolFields() {
         {"hudComplexity", &ViewSettings::hudComplexity},
         {"hudPerformance", &ViewSettings::hudPerformance},
         {"hudGPUStats", &ViewSettings::hudGPUStats},
+        {"unloadedAsBounds", &ViewSettings::unloadedAsBounds},
+        {"pauseDrawing", &ViewSettings::pauseDrawing},
     };
     return fields;
 }
@@ -215,13 +217,14 @@ void FromJson(const JsObject &json, ViewSettings *s) {
     number("defaultMaterialSpecular", &s->defaultMaterialSpecular);
 }
 
-ViewSettings WithoutSceneSpecific(const ViewSettings &settings) {
+ViewSettings AsDefaults(const ViewSettings &settings) {
     ViewSettings result = settings;
     const ViewSettings defaults;
     result.aov = defaults.aov;
     result.rendererSettings.clear();
     result.renderSettingsPrim = SdfPath();
     result.renderPassPrim = SdfPath();
+    result.pauseDrawing = false;
     return result;
 }
 

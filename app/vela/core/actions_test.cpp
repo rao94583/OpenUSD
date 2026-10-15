@@ -5,6 +5,8 @@
 
 #include "pxr/base/js/json.h"
 #include "pxr/usd/usd/prim.h"
+#include "pxr/usd/sdf/layer.h"
+#include "pxr/usd/usd/editTarget.h"
 #include "pxr/usd/usdGeom/cube.h"
 #include "pxr/usd/usdRender/pass.h"
 #include "pxr/usd/usdRender/settings.h"
@@ -405,6 +407,62 @@ void TestRendererActions() {
     CHECK(!d.GetUndoStack().CanUndo());
 }
 
+void TestLiveCommands() {
+    ActionRegistry &registry = ActionRegistry::Get();
+    // A sublayer that adds /Extra, to mute.
+    SdfLayerRefPtr extra = SdfLayer::CreateAnonymous("extra");
+    UsdStageRefPtr stage = MakeStage();
+    stage->GetRootLayer()->GetSubLayerPaths().push_back(extra->GetIdentifier());
+    stage->SetEditTarget(UsdEditTarget(extra));
+    UsdGeomCube::Define(stage, SdfPath("/Extra"));
+    stage->SetEditTarget(UsdEditTarget(stage->GetRootLayer()));
+    Document d(stage);
+
+    // Select Path… selects and frames.
+    CHECK(registry.Find("select_path")->form(d)[0].value == JsValue(std::string("/")));
+    CHECK(registry.Run(d, "select_path", Params(R"({"path": "/B"})")).ok);
+    CHECK(d.GetSelection() == Paths({"/B"}));
+    CHECK(registry.Find("select_path")->form(d)[0].value == JsValue(std::string("/B")));
+    for (const char *bad : {R"({"path": "/Nope"})", R"({"path": "B"})", R"({"path": "/B.size"})"}) {
+        CHECK(!registry.Run(d, "select_path", Params(bad)).ok);
+    }
+
+    // Playback range: set (moving the time into it), checked, reset.
+    registry.Run(d, "set_time", Params(R"({"time": 9})"));
+    CHECK(!registry.IsEnabled(*registry.Find("reset_playback_range"), d));
+    CHECK(registry.Run(d, "set_playback_range", Params(R"({"start": 2, "end": 5})")).ok);
+    CHECK(d.GetStartTime() == 2 && d.GetEndTime() == 5 && d.GetTime() == UsdTimeCode(2));
+    CHECK(!registry.Run(d, "set_playback_range", Params(R"({"start": 5, "end": 2})")).ok);
+    CHECK(registry.Run(d, "reset_playback_range").ok);
+    CHECK(d.GetStartTime() == 1 && d.GetEndTime() == 10);
+
+    // Muting: listed, toggled, explicit; root refused; muted layers stay
+    // listed so they can be unmuted.
+    const Action &mute = *registry.Find("set_layer_muted");
+    CHECK(mute.dynamicChoices(d).size() == 1);
+    const JsObject layer{{"layer", JsValue(extra->GetIdentifier())}};
+    CHECK(registry.Run(d, "set_layer_muted", layer).ok);
+    CHECK(!stage->GetPrimAtPath(SdfPath("/Extra")) && mute.chosen(d, layer));
+    CHECK(mute.dynamicChoices(d).size() == 1);
+    CHECK(registry.Run(d, "set_layer_muted", layer).ok);
+    CHECK(stage->GetPrimAtPath(SdfPath("/Extra")));
+    JsObject explicitMute = layer;
+    explicitMute["muted"] = JsValue(true);
+    registry.Run(d, "set_layer_muted", explicitMute);
+    registry.Run(d, "set_layer_muted", explicitMute);
+    CHECK(stage->IsLayerMuted(extra->GetIdentifier()));
+    CHECK(!registry.Run(d, "set_layer_muted",
+                        JsObject{{"layer", JsValue(stage->GetRootLayer()->GetIdentifier())}}).ok);
+    CHECK(!d.GetUndoStack().CanUndo());  // no layer edits
+
+    // Drawing options from the View menu.
+    CHECK(registry.Run(d, "set_view_option", Params(R"({"option": "pauseDrawing"})")).ok);
+    CHECK(d.GetViewSettings().pauseDrawing);
+    CHECK(AsDefaults(d.GetViewSettings()).pauseDrawing == false);
+    CHECK(registry.Run(d, "set_view_option", Params(R"({"option": "unloadedAsBounds"})")).ok);
+    CHECK(AsDefaults(d.GetViewSettings()).unloadedAsBounds);
+}
+
 void TestSettingsActions() {
     ActionRegistry &registry = ActionRegistry::Get();
     Document d(MakeStage());
@@ -454,6 +512,7 @@ int main() {
     TestStandardActions();
     TestViewActions();
     TestRendererActions();
+    TestLiveCommands();
     TestSettingsActions();
     return test::Finish("action");
 }

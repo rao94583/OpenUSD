@@ -5,8 +5,12 @@
 
 #include "pxr/base/js/json.h"
 #include "pxr/base/tf/errorMark.h"
+#include "pxr/base/tf/stringUtils.h"
 #include "pxr/usd/sdf/fileFormat.h"
 #include "pxr/usd/sdf/layer.h"
+#include "pxr/usd/usd/stage.h"
+
+#include <algorithm>
 
 namespace vela {
 
@@ -117,6 +121,54 @@ void RegisterFileActions(ActionRegistry &r) {
             return Done();
         },
         .enabled = [](const Document &d) { return !d.GetLayersToSave().empty(); },
+    });
+    r.Register({
+        .name = "set_layer_muted", .title = "Muted Layers",
+        .description = "Mute or unmute a layer by identifier (usdview's --mute): a "
+                       "muted layer's opinions are ignored, without editing any "
+                       "layer, and the stage recomposes. Toggles when muted is "
+                       "omitted. The root and session layers cannot be muted.",
+        .parameters = ParameterSchema(R"({
+            "properties": {"layer": {"type": "string"}, "muted": {"type": "boolean"}},
+            "required": ["layer"]
+        })"),
+        .menu = "File", .separatorBefore = true,
+        .dynamicChoices = [](const Document &d) {
+            // The sublayers, and muted layers (no longer in the stack).
+            const UsdStageRefPtr &stage = d.GetStage();
+            std::vector<std::string> identifiers;
+            for (const SdfLayerHandle &layer : stage->GetLayerStack(false)) {
+                if (layer != stage->GetRootLayer()) identifiers.push_back(layer->GetIdentifier());
+            }
+            for (const std::string &muted : stage->GetMutedLayers()) {
+                if (std::find(identifiers.begin(), identifiers.end(), muted) == identifiers.end()) {
+                    identifiers.push_back(muted);
+                }
+            }
+            std::vector<MenuChoice> choices;
+            for (const std::string &identifier : identifiers) {
+                choices.push_back({TfGetBaseName(identifier),
+                                   JsObject{{"layer", JsValue(identifier)}}});
+            }
+            return choices;
+        },
+        .chosen = [](const Document &d, const JsObject &p) {
+            return d.GetStage()->IsLayerMuted(p.at("layer").GetString());
+        },
+        .run = [](Document &d, const JsObject &p) {
+            const UsdStageRefPtr &stage = d.GetStage();
+            const std::string &identifier = p.at("layer").GetString();
+            if (identifier == stage->GetRootLayer()->GetIdentifier() ||
+                identifier == stage->GetSessionLayer()->GetIdentifier()) {
+                return ActionResult::Error("The root and session layers cannot be muted");
+            }
+            auto given = p.find("muted");
+            const bool mute = given == p.end() ? !stage->IsLayerMuted(identifier)
+                                               : given->second.GetBool();
+            if (mute) stage->MuteLayer(identifier);
+            else stage->UnmuteLayer(identifier);
+            return Done();
+        },
     });
 }
 

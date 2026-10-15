@@ -143,12 +143,14 @@ void TestOpenAndApply(const fs::path &dir) {
     AppSettings settings;
     settings.loadPayloads = false;
     settings.usePrimaryCamera = false;
-    settings.unloadedAsBounds = true;
+    settings.view.unloadedAsBounds = true;
+    settings.view.pauseDrawing = true;  // never a default
     settings.view.drawMode = DrawMode::Wireframe;
     settings.view.complexity = 1.1;
     settings.view.aov = "depth";  // scene-specific: not a default
     o = DefaultLaunchOptions(settings);
-    CHECK(o.unloaded && o.bboxStandin && !o.usePrimaryCamera);
+    CHECK(o.unloaded && !o.usePrimaryCamera);
+    CHECK(o.view.unloadedAsBounds && !o.view.pauseDrawing);
     std::string parseError;
     CHECK(ParseLaunchOptions({scene.string(), "--complexity", "high"}, &o, &parseError));
     d = OpenDocument(o, &error);

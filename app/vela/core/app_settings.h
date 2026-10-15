@@ -17,15 +17,14 @@ namespace vela {
 PXR_NAMESPACE_USING_DIRECTIVE
 
 struct AppSettings {
-    // View settings newly opened documents start with (without the
-    // scene-specific ones; see WithoutSceneSpecific).
+    // View settings newly opened documents start with (see AsDefaults),
+    // including drawing unloaded prims as bounding boxes (--bboxStandin).
     ViewSettings view;
     // Opening files: load payloads (usdview's --unloaded turns this off),
-    // look through the stage's primary camera (main_cam) when it has one,
-    // and draw unloaded prims as bounding boxes (--bboxStandin).
+    // and look through the stage's primary camera (main_cam) when it has
+    // one.
     bool loadPayloads = true;
     bool usePrimaryCamera = true;
-    bool unloadedAsBounds = false;
     // Worker threads: 0 for all, negative for all but that many
     // (--numThreads). Applies at the next launch.
     int threadLimit = 0;

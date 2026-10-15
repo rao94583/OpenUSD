@@ -209,6 +209,7 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     std::shared_ptr<vela::Document> _core;
     int _observer;
     vela::LaunchOptions _launch;
+    double _openStart;  // for the load statistics
 }
 
 + (BOOL)autosavesInPlace { return NO; }
@@ -240,10 +241,14 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
         _launch = vela::DefaultLaunchOptions(vela::AppSettingsStore::Get().GetSettings());
     }
     _launch.file = url.fileSystemRepresentation;
-    const double start = Now();
+    _openStart = Now();
     _core = vela::OpenDocument(_launch, &message);
-    if (_core && _launch.timing) {
-        printf("Opened %s in %.3f s\n", url.lastPathComponent.UTF8String, Now() - start);
+    if (_core) {
+        const double seconds = Now() - _openStart;
+        _core->SetLoadStatistics({.open = seconds});
+        if (_launch.timing) {
+            printf("Opened %s in %.3f s\n", url.lastPathComponent.UTF8String, seconds);
+        }
     }
     if (_core) {
         for (const std::string &warning : vela::ApplyLaunchOptions(_launch, *_core)) {
@@ -319,8 +324,6 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     [self addWindowController:controller];
     // Window-level launch options.
     VelaViewportView *viewport = controller.viewport;
-    viewport.renderingDisabled = _launch.norender;
-    if (_launch.bboxStandin) [viewport setDrawsUnloadedAsBounds:YES];
     if (_launch.viewportWidth > 0) {
         // Grow or shrink the window by the difference.
         [controller.window.contentView layoutSubtreeIfNeeded];
@@ -332,18 +335,24 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     }
     const bool timing = _launch.timing, quit = _launch.quitAfterStartup,
                norender = _launch.norender;
-    if (timing || quit) {
-        auto report = ^{
-            if (timing) printf("%s %.3f s after launch\n",
-                               norender ? "Started" : "First frame", Now() - LaunchTime());
-            fflush(stdout);
-            if (quit) [NSApp terminate:nil];
+    auto report = ^{
+        if (timing) printf("%s %.3f s after launch\n",
+                           norender ? "Started" : "First frame", Now() - LaunchTime());
+        fflush(stdout);
+        if (quit) [NSApp terminate:nil];
+    };
+    if (norender) {
+        if (timing || quit) dispatch_async(dispatch_get_main_queue(), report);
+    } else {
+        // The first frame completes the load statistics (HUD Info).
+        const std::shared_ptr<vela::Document> core = _core;
+        const double openStart = _openStart;
+        viewport.firstFrameDrawn = ^{
+            vela::Document::LoadStatistics statistics = core->GetLoadStatistics();
+            statistics.firstFrame = Now() - openStart;
+            core->SetLoadStatistics(statistics);
+            if (timing || quit) report();
         };
-        if (_launch.norender) {
-            dispatch_async(dispatch_get_main_queue(), report);
-        } else {
-            viewport.firstFrameDrawn = report;
-        }
     }
 }
 

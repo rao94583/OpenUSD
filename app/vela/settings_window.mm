@@ -127,7 +127,7 @@ vela::Document *FrontDocument() {
     const vela::AppSettings &s = vela::AppSettingsStore::Get().GetSettings();
     _loadPayloads.state = s.loadPayloads ? NSControlStateValueOn : NSControlStateValueOff;
     _primaryCamera.state = s.usePrimaryCamera ? NSControlStateValueOn : NSControlStateValueOff;
-    _unloadedAsBounds.state = s.unloadedAsBounds ? NSControlStateValueOn : NSControlStateValueOff;
+    _unloadedAsBounds.state = s.view.unloadedAsBounds ? NSControlStateValueOn : NSControlStateValueOff;
     const std::vector<std::string> changes = vela::DescribeChanges(s.view);
     _viewSummary.stringValue = changes.empty()
         ? @"New windows start with usdview's view settings."
@@ -150,7 +150,7 @@ vela::Document *FrontDocument() {
     [self update:^(vela::AppSettings &s) {
         s.loadPayloads = payloads;
         s.usePrimaryCamera = camera;
-        s.unloadedAsBounds = bounds;
+        s.view.unloadedAsBounds = bounds;
     }];
 }
 

@@ -9,7 +9,6 @@ JsObject ToJson(const AppSettings &settings) {
         {"view", JsValue(ToJson(settings.view))},
         {"loadPayloads", JsValue(settings.loadPayloads)},
         {"usePrimaryCamera", JsValue(settings.usePrimaryCamera)},
-        {"unloadedAsBounds", JsValue(settings.unloadedAsBounds)},
         {"threadLimit", JsValue(settings.threadLimit)},
     };
 }
@@ -27,7 +26,6 @@ void FromJson(const JsObject &json, AppSettings *settings) {
     };
     flag("loadPayloads", &settings->loadPayloads);
     flag("usePrimaryCamera", &settings->usePrimaryCamera);
-    flag("unloadedAsBounds", &settings->unloadedAsBounds);
     if (const JsValue *v = get("threadLimit"); v && (v->IsInt() || v->IsUInt64())) {
         settings->threadLimit = int(v->IsUInt64() ? int64_t(v->GetUInt64()) : v->GetInt64());
     }

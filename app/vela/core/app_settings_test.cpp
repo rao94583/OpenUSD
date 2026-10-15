@@ -36,7 +36,7 @@ void TestViewSettingsJson() {
     CHECK(lenient == expected);
 
     // Defaults for any file drop what belongs to one scene.
-    const ViewSettings general = WithoutSceneSpecific(s);
+    const ViewSettings general = AsDefaults(s);
     CHECK(general.aov == "color" && general.rendererSettings.empty());
     CHECK(general.renderSettingsPrim.IsEmpty());
     CHECK(general.drawMode == DrawMode::Points && general.renderer == "Embree");

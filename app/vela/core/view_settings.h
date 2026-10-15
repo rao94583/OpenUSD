@@ -81,6 +81,10 @@ struct ViewSettings {
     // Adjust Default Material (gray levels).
     double defaultMaterialAmbient = 0.2;
     double defaultMaterialSpecular = 0.1;
+    // Draw unloaded prims as their bounding boxes (usdview's --bboxStandin),
+    // and pause viewport drawing (--norender).
+    bool unloadedAsBounds = false;
+    bool pauseDrawing = false;
 
     bool operator==(const ViewSettings &other) const = default;
 };
@@ -91,10 +95,10 @@ struct ViewSettings {
 // still load.
 JsObject ToJson(const ViewSettings &settings);
 void FromJson(const JsObject &json, ViewSettings *settings);
-// Settings that describe the scene being viewed rather than how to view it
-// (AOV, renderer setting overrides, render settings and pass prims) reset,
-// for defaults that apply to any file.
-ViewSettings WithoutSceneSpecific(const ViewSettings &settings);
+// The settings as defaults for newly opened files: what describes one scene
+// rather than how to view any (AOV, renderer setting overrides, render
+// settings and pass prims) and paused drawing are reset.
+ViewSettings AsDefaults(const ViewSettings &settings);
 // What differs from the defaults (usdview's), as "name: value" in ToJson's
 // names and order, e.g. {"background: white", "drawMode: wireframe"}.
 std::vector<std::string> DescribeChanges(const ViewSettings &settings);

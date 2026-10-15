@@ -14,10 +14,6 @@
 @property (nonatomic, copy) void (^statusChanged)(NSString *status);
 // Called once, when the first frame has been drawn.
 @property (nonatomic, copy) void (^firstFrameDrawn)(void);
-// usdview's --norender: draw nothing.
-@property (nonatomic) BOOL renderingDisabled;
-// usdview's --bboxStandin: draw unloaded prims as bounding boxes.
-- (void)setDrawsUnloadedAsBounds:(BOOL)bounds;
 
 // Tumbles once around the center of interest over the given number of
 // presented frames, then calls completion with the elapsed time.

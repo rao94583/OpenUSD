@@ -73,6 +73,9 @@ const std::vector<Option> &Options() {
         {"hudComplexity", "HUD Complexity and Camera", &ViewSettings::hudComplexity},
         {"hudPerformance", "HUD Performance", &ViewSettings::hudPerformance},
         {"hudGPUStats", "HUD GPU Statistics", &ViewSettings::hudGPUStats},
+        {"unloadedAsBounds", "Unloaded Prims as Bounding Boxes",
+         &ViewSettings::unloadedAsBounds},
+        {"pauseDrawing", "Pause Viewport Drawing", &ViewSettings::pauseDrawing},
     };
     return options;
 }
@@ -212,7 +215,9 @@ void RegisterViewActions(ActionRegistry &r) {
                            "stage: bboxes, alignedBBox, orientedBBox, "
                            "bboxesDuringPlayback; the heads-up display: hud, "
                            "hudInfo (prim and geometry counts), hudComplexity, "
-                           "hudPerformance, hudGPUStats.",
+                           "hudPerformance, hudGPUStats; unloadedAsBounds "
+                           "(unloaded prims as bounding boxes) and pauseDrawing "
+                           "(the viewport stops drawing).",
             .parameters = ParameterSchema(JsWriteToString(JsValue(JsObject{
                 {"properties", JsValue(JsObject{
                     {"option", JsValue(JsObject{{"type", JsValue("string")},
@@ -674,7 +679,7 @@ void RegisterViewActions(ActionRegistry &r) {
         .run = [](Document &d, const JsObject &) {
             AppSettingsStore &store = AppSettingsStore::Get();
             AppSettings settings = store.GetSettings();
-            settings.view = WithoutSceneSpecific(d.GetViewSettings());
+            settings.view = AsDefaults(d.GetViewSettings());
             store.SetSettings(settings);
             return Done();
         },
@@ -683,8 +688,7 @@ void RegisterViewActions(ActionRegistry &r) {
         .name = "get_settings", .title = "Settings",
         .description = "The app's settings (the Settings window), as JSON: view "
                        "defaults for newly opened files under \"view\", and "
-                       "loadPayloads, usePrimaryCamera, unloadedAsBounds and "
-                       "threadLimit (0 for all threads; applies at next launch).",
+                       "loadPayloads, usePrimaryCamera and threadLimit (0 for all threads; applies at next launch).",
         .run = [](Document &, const JsObject &) {
             return ActionResult{true, JsValue(ToJson(AppSettingsStore::Get().GetSettings())), {}};
         },
@@ -715,7 +719,7 @@ void RegisterViewActions(ActionRegistry &r) {
             }
             AppSettings settings = AppSettingsStore::Get().GetSettings();
             FromJson(given, &settings);
-            settings.view = WithoutSceneSpecific(settings.view);
+            settings.view = AsDefaults(settings.view);
             AppSettingsStore::Get().SetSettings(settings);
             return Done();
         },
