@@ -84,6 +84,8 @@ struct Action {
     // When set, the menu item first asks for a file to write, with a save
     // panel, and passes its path in this parameter.
     std::string savePathParam;
+    // Likewise with an open panel, for a USD file to read.
+    std::string openPathParam;
     // When set, the menu item opens a form with these fields and runs the
     // action with every field's value: as {formParam: {key: value, ...}},
     // or, without formParam, as the parameters themselves.

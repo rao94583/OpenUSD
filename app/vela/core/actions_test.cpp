@@ -455,6 +455,15 @@ void TestLiveCommands() {
                         JsObject{{"layer", JsValue(stage->GetRootLayer()->GetIdentifier())}}).ok);
     CHECK(!d.GetUndoStack().CanUndo());  // no layer edits
 
+    // Replace Session Layer… takes another file's contents, unchanged.
+    SdfLayerRefPtr source = SdfLayer::CreateAnonymous("source.usda");
+    source->SetComment("from a file");
+    CHECK(registry.Run(d, "replace_session_layer",
+                       JsObject{{"path", JsValue(source->GetIdentifier())}}).ok);
+    CHECK(stage->GetSessionLayer()->GetComment() == "from a file");
+    CHECK(!registry.Run(d, "replace_session_layer",
+                        Params(R"({"path": "/no/such/file.usda"})")).ok);
+
     // Drawing options from the View menu.
     CHECK(registry.Run(d, "set_view_option", Params(R"({"option": "pauseDrawing"})")).ok);
     CHECK(d.GetViewSettings().pauseDrawing);

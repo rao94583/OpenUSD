@@ -1,4 +1,5 @@
 #import "document.h"
+#import "form_sheet.h"
 #import "browser_view.h"
 #import "window_layout.h"
 #import "menus.h"
@@ -200,6 +201,27 @@ double Now() {
 }
 } // namespace
 
+BOOL VelaOpenWithOptions(NSURL *url, vela::LaunchOptions options) {
+    NSDocumentController *controller = NSDocumentController.sharedDocumentController;
+    if ([controller documentForURL:url]) {
+        // Opening would only bring it forward, without the options.
+        NSAlert *alert = [NSAlert new];
+        alert.messageText = [NSString stringWithFormat:@"%@ is already open.",
+                             url.lastPathComponent];
+        alert.informativeText = @"Use File → Reopen with Options… in its window.";
+        [alert runModal];
+        return NO;
+    }
+    options.file = url.fileSystemRepresentation;
+    VelaSetLaunchOptions(options);
+    [controller openDocumentWithContentsOfURL:url display:YES
+                            completionHandler:^(NSDocument *, BOOL, NSError *error) {
+        PendingLaunchOptions().reset();  // used, or the open failed
+        if (error) [NSApp presentError:error];
+    }];
+    return YES;
+}
+
 void VelaSetLaunchOptions(const vela::LaunchOptions &options) {
     PendingLaunchOptions() = options;
 }
@@ -310,6 +332,52 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     }
     [self showEditedState];
     completionHandler(nil);
+}
+
+// File → Reopen with Options…: the stage options in a form, then the file
+// opens again with them, keeping the window's view settings.
+- (void)reopenWithOptions:(id)sender {
+    NSWindow *window = self.windowControllers.firstObject.window;
+    __weak VelaDocument *weakSelf = self;
+    VelaRunForm(window, @"Reopen with Options", vela::OpeningFields(_launch),
+                ^(const JsObject &values) {
+        VelaDocument *strongSelf = weakSelf;
+        if (!strongSelf) return;
+        vela::LaunchOptions options =
+            vela::DefaultLaunchOptions(vela::AppSettingsStore::Get().GetSettings());
+        options.view = strongSelf->_core->GetViewSettings();
+        std::string error;
+        if (!vela::ApplyOpeningFields(values, &options, &error)) {
+            NSAlert *alert = [NSAlert new];
+            alert.messageText = @(error.c_str());
+            [alert beginSheetModalForWindow:window completionHandler:nil];
+            return;
+        }
+        auto reopen = ^{
+            NSURL *url = strongSelf.fileURL;
+            [strongSelf close];
+            VelaOpenWithOptions(url, options);
+        };
+        if (!strongSelf.documentEdited) {
+            reopen();
+            return;
+        }
+        NSAlert *confirm = [NSAlert new];
+        confirm.messageText = @"Reopening discards unsaved edits.";
+        [confirm addButtonWithTitle:@"Reopen"];
+        [confirm addButtonWithTitle:@"Cancel"];
+        // After the form's sheet has gone.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [confirm beginSheetModalForWindow:window completionHandler:^(NSModalResponse r) {
+                if (r == NSAlertFirstButtonReturn) reopen();
+            }];
+        });
+    });
+}
+
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item {
+    if (item.action == @selector(reopenWithOptions:)) return self.fileURL != nil;
+    return [super validateUserInterfaceItem:item];
 }
 
 - (size_t)primCount {

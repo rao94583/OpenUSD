@@ -167,6 +167,25 @@ void TestOpenAndApply(const fs::path &dir) {
     ApplyLaunchOptions(o, *d);
     CHECK(d->GetViewCamera() == SdfPath("/Cameras/Shots/shot"));
 
+    // The opening options form: shows options, sets them back.
+    o = Parse({scene.string(), "--mask", "/World/A,/World/B", "--unloaded"});
+    std::vector<FormField> fields = OpeningFields(o);
+    CHECK(fields.size() == 4 && fields[0].value == JsValue(false));
+    CHECK(fields[1].value == JsValue(std::string("/World/A, /World/B")));
+    o = LaunchOptions();
+    CHECK(ApplyOpeningFields(JsObject{
+        {"loadPayloads", JsValue(false)}, {"mask", JsValue(" /World/B , ")},
+        {"sessionLayer", JsValue((dir / "session.usda").string())},
+        {"mute", JsValue("a.usda, b.usda")}}, &o, &error));
+    CHECK(o.unloaded && o.mask == std::vector<SdfPath>{SdfPath("/World/B")});
+    CHECK(o.mute == (std::vector<std::string>{"a.usda", "b.usda"}));
+    o.file = scene.string();
+    d = OpenDocument(o, &error);
+    CHECK(d && d->GetStage()->GetSessionLayer()->GetComment() == "session");
+    CHECK(!d->GetStage()->GetPrimAtPath(SdfPath("/World/A")));
+    CHECK(!ApplyOpeningFields(JsObject{{"mask", JsValue("World")}}, &o, &error));
+    CHECK(error.find("absolute") != std::string::npos);
+
     // Threads.
     o = Parse({scene.string(), "--numThreads", "1"});
     d = OpenDocument(o, &error);

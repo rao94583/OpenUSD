@@ -123,6 +123,31 @@ void RegisterFileActions(ActionRegistry &r) {
         .enabled = [](const Document &d) { return !d.GetLayersToSave().empty(); },
     });
     r.Register({
+        .name = "replace_session_layer", .title = "Replace Session Layer…",
+        .description = "Replace the session layer's contents with a USD file's "
+                       "(usdview's --sessionLayer, on the open stage). The file "
+                       "is not changed; Export Session Layer… writes the result.",
+        .parameters = ParameterSchema(R"({
+            "properties": {"path": {"type": "string"}},
+            "required": ["path"]
+        })"),
+        .menu = "File",
+        .openPathParam = "path",
+        .run = [](Document &d, const JsObject &p) {
+            const std::string &path = p.at("path").GetString();
+            TfErrorMark mark;
+            SdfLayerRefPtr source = SdfLayer::FindOrOpen(path);
+            if (!source) {
+                std::string error = "Could not open " + path;
+                for (const TfError &e : mark) error += "\n" + e.GetCommentary();
+                mark.Clear();
+                return ActionResult::Error(error);
+            }
+            d.GetStage()->GetSessionLayer()->TransferContent(source);
+            return Done();
+        },
+    });
+    r.Register({
         .name = "set_layer_muted", .title = "Muted Layers",
         .description = "Mute or unmute a layer by identifier (usdview's --mute): a "
                        "muted layer's opinions are ignored, without editing any "

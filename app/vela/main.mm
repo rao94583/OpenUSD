@@ -1,4 +1,5 @@
 #import <AppKit/AppKit.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
@@ -7,6 +8,7 @@
 #include <string>
 #import "document.h"
 #import "browser_view.h"
+#import "form_sheet.h"
 #import "menus.h"
 #import "settings_window.h"
 #import "viewport/viewport_view.h"
@@ -38,6 +40,31 @@ PXR_NAMESPACE_USING_DIRECTIVE
     if ((self = [super init])) _launchFile = file;
     return self;
 }
+// File → Open with Options…: a file, then usdview's stage options.
+- (void)openWithOptions:(id)sender {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.allowedContentTypes = @[[UTType typeWithFilenameExtension:@"usda"],
+                                  [UTType typeWithFilenameExtension:@"usdc"],
+                                  [UTType typeWithFilenameExtension:@"usd"],
+                                  [UTType typeWithFilenameExtension:@"usdz"]];
+    if ([panel runModal] != NSModalResponseOK) return;
+    NSURL *url = panel.URL;
+    const vela::LaunchOptions defaults =
+        vela::DefaultLaunchOptions(vela::AppSettingsStore::Get().GetSettings());
+    VelaRunForm(nil, [NSString stringWithFormat:@"Open %@", url.lastPathComponent],
+                vela::OpeningFields(defaults), ^(const JsObject &values) {
+        vela::LaunchOptions options = defaults;
+        std::string error;
+        if (!vela::ApplyOpeningFields(values, &options, &error)) {
+            NSAlert *alert = [NSAlert new];
+            alert.messageText = @(error.c_str());
+            [alert runModal];
+            return;
+        }
+        VelaOpenWithOptions(url, options);
+    });
+}
+
 // Vela → Settings… (the window is made on first use).
 - (void)showSettings:(id)sender {
     [[VelaSettingsWindowController shared] showWindow:sender];

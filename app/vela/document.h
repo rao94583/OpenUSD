@@ -10,6 +10,9 @@
 // usdview's flags from the command line, for the document that opens their
 // file. Other documents open with the defaults.
 void VelaSetLaunchOptions(const vela::LaunchOptions &options);
+// Opens url with options (its file is set from url), unless it is already
+// open; then shows an alert and returns NO.
+BOOL VelaOpenWithOptions(NSURL *url, vela::LaunchOptions options);
 // When the app started, for --timing.
 void VelaSetLaunchTime(double seconds);
 

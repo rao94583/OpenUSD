@@ -4,6 +4,7 @@
 // that concern windows (see AppOptions).
 #pragma once
 
+#include "actions.h"
 #include "app_settings.h"
 #include "document.h"
 
@@ -77,6 +78,15 @@ std::shared_ptr<Document> OpenDocument(const LaunchOptions &options,
 // prim is a warning (returned), not an error.
 std::vector<std::string> ApplyLaunchOptions(const LaunchOptions &options,
                                             Document &document);
+
+// The opening options as form fields (File → Open with Options… and
+// Reopen with Options…): load payloads, population mask, session layer and
+// muted layers, showing options' values. Lists are comma-separated.
+std::vector<FormField> OpeningFields(const LaunchOptions &options);
+// Sets options from the form's values; false with a message in error for a
+// prim path that is not absolute.
+bool ApplyOpeningFields(const JsObject &values, LaunchOptions *options,
+                        std::string *error);
 
 // The flags, for usage messages.
 const char *LaunchUsage();

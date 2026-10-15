@@ -195,6 +195,53 @@ bool ParseLaunchOptions(const std::vector<std::string> &args,
     return true;
 }
 
+std::vector<FormField> OpeningFields(const LaunchOptions &options) {
+    std::vector<std::string> mask;
+    for (const SdfPath &path : options.mask) mask.push_back(path.GetString());
+    return {
+        {.key = "loadPayloads", .label = "Load payloads", .type = FormField::Type::Bool,
+         .value = JsValue(!options.unloaded)},
+        {.key = "mask", .label = "Population mask (prim paths)",
+         .value = JsValue(TfStringJoin(mask, ", "))},
+        {.key = "sessionLayer", .label = "Session layer file",
+         .value = JsValue(options.sessionLayer)},
+        {.key = "mute", .label = "Muted layers",
+         .value = JsValue(TfStringJoin(options.mute, ", "))},
+    };
+}
+
+bool ApplyOpeningFields(const JsObject &values, LaunchOptions *options,
+                        std::string *error) {
+    auto text = [&](const char *key) {
+        auto found = values.find(key);
+        return found != values.end() && found->second.IsString()
+            ? TfStringTrim(found->second.GetString()) : std::string();
+    };
+    auto list = [&](const char *key) {
+        std::vector<std::string> items;
+        for (const std::string &item : TfStringSplit(text(key), ",")) {
+            if (!TfStringTrim(item).empty()) items.push_back(TfStringTrim(item));
+        }
+        return items;
+    };
+    std::vector<SdfPath> mask;
+    for (const std::string &item : list("mask")) {
+        if (!SdfPath::IsValidPathString(item) || !SdfPath(item).IsAbsolutePath()) {
+            if (error) *error = "Not an absolute prim path: " + item;
+            return false;
+        }
+        mask.emplace_back(item);
+    }
+    if (auto found = values.find("loadPayloads");
+        found != values.end() && found->second.IsBool()) {
+        options->unloaded = !found->second.GetBool();
+    }
+    options->mask = mask;
+    options->sessionLayer = text("sessionLayer");
+    options->mute = list("mute");
+    return true;
+}
+
 LaunchOptions DefaultLaunchOptions(const AppSettings &settings) {
     LaunchOptions options;
     options.view = AsDefaults(settings.view);

@@ -74,6 +74,13 @@ void ShowResult(const vela::ActionResult &result, NSWindow *window) {
     else [alert runModal];
 }
 
+// Files a panel offers: .usda, .usdc and .usd.
+NSArray<UTType *> *UsdTypes() {
+    return @[[UTType typeWithFilenameExtension:@"usda"],
+             [UTType typeWithFilenameExtension:@"usdc"],
+             [UTType typeWithFilenameExtension:@"usd"]];
+}
+
 bool IsPlainKey(const vela::Action &action) {
     return !(action.modifiers & (vela::ModifierCommand | vela::ModifierControl));
 }
@@ -147,6 +154,22 @@ bool IsPlainKey(const vela::Action &action) {
         });
         return;
     }
+    if (!action->openPathParam.empty()) {
+        // Ask for a USD file to read.
+        NSOpenPanel *panel = [NSOpenPanel openPanel];
+        panel.title = [@(action->title.c_str())
+            stringByReplacingOccurrencesOfString:@"…" withString:@""];
+        panel.allowedContentTypes = UsdTypes();
+        const std::string name = action->name, param = action->openPathParam;
+        [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
+            vela::Document *current = CurrentDocument();
+            if (response != NSModalResponseOK || !current) return;
+            JsObject withPath = params;
+            withPath[param] = JsValue(std::string(panel.URL.fileSystemRepresentation));
+            ShowResult(vela::ActionRegistry::Get().Run(*current, name, withPath), window);
+        }];
+        return;
+    }
     if (action->savePathParam.empty()) {
         ShowResult(vela::ActionRegistry::Get().Run(*document, action->name, params), window);
         return;
@@ -154,9 +177,7 @@ bool IsPlainKey(const vela::Action &action) {
     // Ask for the file first.
     NSSavePanel *panel = [NSSavePanel savePanel];
     panel.title = @(action->title.c_str());
-    panel.allowedContentTypes = @[[UTType typeWithFilenameExtension:@"usda"],
-                                  [UTType typeWithFilenameExtension:@"usdc"],
-                                  [UTType typeWithFilenameExtension:@"usd"]];
+    panel.allowedContentTypes = UsdTypes();
     panel.allowsOtherFileTypes = NO;
     const std::string name = action->name, param = action->savePathParam;
     [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
@@ -216,6 +237,12 @@ NSMenu *VelaBuildMainMenu() {
 
     NSMenu *file = addMenu(@"File");
     [file addItemWithTitle:@"Open…" action:@selector(openDocument:) keyEquivalent:@"o"];
+    // usdview's stage options: the app delegate opens, the front document
+    // reopens.
+    [file addItemWithTitle:@"Open with Options…" action:@selector(openWithOptions:)
+             keyEquivalent:@""];
+    [file addItemWithTitle:@"Reopen with Options…" action:@selector(reopenWithOptions:)
+             keyEquivalent:@""];
     [file addItemWithTitle:@"Close" action:@selector(performClose:) keyEquivalent:@"w"];
 
     // Menus named by actions, in the order they first appear.

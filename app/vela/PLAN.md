@@ -83,10 +83,10 @@ and actions.
 |---|---|
 | `--select PRIM` | Live: Edit → Select Path… (`select`), also from the palette |
 | `--camera CAMERA` | Live: View → Camera (done). Setting: open through the primary camera (main_cam) when present (on by default, as usdview) |
-| `--mask PRIM,...` | Per file: File → Open with Options… (population mask); live: File → Reopen with Mask… (reopens the stage) |
+| `--mask PRIM,...` | Per file: File → Open with Options… (population mask) and Reopen with Options… (reopens the stage) |
 | `--unloaded` | Setting: load payloads when opening (on by default); also in Open with Options…; live: Prim → Load/Unload (done) |
 | `--sessionLayer FILE` | Per file: Open with Options…; live: File → Replace Session Layer… |
-| `--mute LAYER,...` | Live: mute toggles in the Layers tab (`set_layer_muted`); also in Open with Options… |
+| `--mute LAYER,...` | Live: File → Muted Layers (`set_layer_muted`); also in Open with Options… |
 | `--complexity` | Live: View → Complexity (done). Setting: default complexity |
 | `--ff`, `--lf`, `--cf` | Live: Playback → Set Playback Range… (a form) and the timeline (done for the current frame) |
 | `--renderer` | Live: Renderer menu (done). Setting: default renderer |
