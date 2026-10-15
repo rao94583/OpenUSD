@@ -138,7 +138,11 @@ bool IsPlainKey(const vela::Action &action) {
             vela::Document *current = CurrentDocument();
             if (!current) return;
             JsObject withValues = params;
-            withValues[param] = JsValue(values);
+            if (param.empty()) {
+                for (const auto &[key, value] : values) withValues[key] = value;
+            } else {
+                withValues[param] = JsValue(values);
+            }
             ShowResult(vela::ActionRegistry::Get().Run(*current, name, withValues), window);
         });
         return;
@@ -203,6 +207,9 @@ NSMenu *VelaBuildMainMenu() {
     };
 
     NSMenu *app = addMenu(@"Vela");
+    // The app delegate shows the window.
+    [app addItemWithTitle:@"Settings…" action:@selector(showSettings:) keyEquivalent:@","];
+    [app addItem:[NSMenuItem separatorItem]];
     [app addItemWithTitle:@"Hide Vela" action:@selector(hide:) keyEquivalent:@"h"];
     [app addItem:[NSMenuItem separatorItem]];
     [app addItemWithTitle:@"Quit Vela" action:@selector(terminate:) keyEquivalent:@"q"];

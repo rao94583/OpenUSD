@@ -1,6 +1,7 @@
 // View settings: how the viewport draws, not what the stage contains. None
 // of these author scene data or create undo steps.
 #include "actions.h"
+#include "app_settings.h"
 #include "color_management.h"
 #include "document.h"
 
@@ -340,6 +341,41 @@ void RegisterViewActions(ActionRegistry &r) {
         },
     });
     r.Register({
+        .name = "set_default_material", .title = "Default Material…",
+        .description = "The material for geometry without one: ambient and specular "
+                       "gray levels from 0 to 1 (usdview's defaults: 0.2 and 0.1). "
+                       "Either may be omitted.",
+        .parameters = ParameterSchema(R"({"properties": {
+            "ambient": {"type": "number"}, "specular": {"type": "number"}}})"),
+        .menu = "View",
+        .form = [](const Document &d) {
+            const ViewSettings &s = d.GetViewSettings();
+            return std::vector<FormField>{
+                {.key = "ambient", .label = "Ambient", .type = FormField::Type::Float,
+                 .value = JsValue(s.defaultMaterialAmbient)},
+                {.key = "specular", .label = "Specular", .type = FormField::Type::Float,
+                 .value = JsValue(s.defaultMaterialSpecular)},
+            };
+        },
+        .run = [](Document &d, const JsObject &p) {
+            ViewSettings s = d.GetViewSettings();
+            for (const auto &[key, field] : {std::pair{"ambient", &ViewSettings::defaultMaterialAmbient},
+                                             std::pair{"specular", &ViewSettings::defaultMaterialSpecular}}) {
+                auto found = p.find(key);
+                if (found == p.end()) continue;
+                const JsValue &v = found->second;
+                const double value = v.IsReal() ? v.GetReal()
+                    : v.IsUInt64() ? double(v.GetUInt64()) : v.IsInt() ? double(v.GetInt64()) : -1.0;
+                if (value < 0.0 || value > 1.0) {
+                    return ActionResult::Error(std::string(key) + " must be a number from 0 to 1");
+                }
+                s.*field = value;
+            }
+            d.SetViewSettings(s);
+            return Done();
+        },
+    });
+    r.Register({
         .name = "set_selection_highlighting", .title = "Selection Highlighting",
         .description = "When the viewport highlights selected prims: never, "
                        "whenPaused (the default; not during playback) or always.",
@@ -625,6 +661,73 @@ void RegisterViewActions(ActionRegistry &r) {
                 {"settings", JsValue(settings)},
                 {"renderSettingsPrim", JsValue(s.renderSettingsPrim.GetString())},
                 {"renderPassPrim", JsValue(s.renderPassPrim.GetString())}}), {}};
+        },
+    });
+    r.Register({
+        .name = "use_view_as_default", .title = "Use as Default View Settings",
+        .description = "Make this window's view settings (draw mode, lights, HUD, "
+                       "color correction, renderer and so on) the ones newly "
+                       "opened files start with. Scene-specific choices (AOV, "
+                       "renderer setting overrides, render settings and pass "
+                       "prims) are not kept.",
+        .menu = "View", .separatorBefore = true,
+        .run = [](Document &d, const JsObject &) {
+            AppSettingsStore &store = AppSettingsStore::Get();
+            AppSettings settings = store.GetSettings();
+            settings.view = WithoutSceneSpecific(d.GetViewSettings());
+            store.SetSettings(settings);
+            return Done();
+        },
+    });
+    r.Register({
+        .name = "get_settings", .title = "Settings",
+        .description = "The app's settings (the Settings window), as JSON: view "
+                       "defaults for newly opened files under \"view\", and "
+                       "loadPayloads, usePrimaryCamera, unloadedAsBounds and "
+                       "threadLimit (0 for all threads; applies at next launch).",
+        .run = [](Document &, const JsObject &) {
+            return ActionResult{true, JsValue(ToJson(AppSettingsStore::Get().GetSettings())), {}};
+        },
+    });
+    r.Register({
+        .name = "set_settings", .title = "Change Settings",
+        .description = "Change the app's settings: an object with any of the keys "
+                       "get_settings returns (a partial \"view\" object changes "
+                       "only the view defaults it names). Unknown keys are errors.",
+        .parameters = ParameterSchema(R"({
+            "properties": {"settings": {"type": "object"}},
+            "required": ["settings"]
+        })"),
+        .run = [](Document &, const JsObject &p) {
+            const JsObject &given = p.at("settings").GetJsObject();
+            const JsObject known = ToJson(AppSettings());
+            for (const auto &[key, value] : given) {
+                if (!known.count(key)) return ActionResult::Error("Unknown setting: " + key);
+                if (key == "view") {
+                    if (!value.IsObject()) return ActionResult::Error("view must be an object");
+                    const JsObject knownView = known.at("view").GetJsObject();
+                    for (const auto &[viewKey, unused] : value.GetJsObject()) {
+                        if (!knownView.count(viewKey)) {
+                            return ActionResult::Error("Unknown view setting: " + viewKey);
+                        }
+                    }
+                }
+            }
+            AppSettings settings = AppSettingsStore::Get().GetSettings();
+            FromJson(given, &settings);
+            settings.view = WithoutSceneSpecific(settings.view);
+            AppSettingsStore::Get().SetSettings(settings);
+            return Done();
+        },
+    });
+    r.Register({
+        .name = "reset_settings", .title = "Reset Settings",
+        .description = "Restore every app setting to its default (usdview's "
+                       "defaults for the view). Open windows keep their view "
+                       "settings.",
+        .run = [](Document &, const JsObject &) {
+            AppSettingsStore::Get().Reset();
+            return Done();
         },
     });
 }

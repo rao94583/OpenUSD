@@ -54,6 +54,8 @@ const char *LaunchUsage() {
         "  --mute LAYER[,LAYER...]  mute layers\n"
         "  --complexity LEVEL       low, medium, high or veryhigh\n"
         "  --renderer NAME          Hydra renderer, e.g. GL (Storm) or Embree\n"
+        "  --clearsettings          reset the saved settings\n"
+        "  --defaultsettings        use default settings, without saving changes\n"
         "  --ff/--lf FRAME          first and last frame of the playback range\n"
         "  --cf FRAME               the current frame\n"
         "  --numThreads N           thread limit (0: all, negative: all but N)\n"
@@ -68,8 +70,9 @@ bool ParseLaunchOptions(const std::vector<std::string> &args,
                         LaunchOptions *options, std::string *error) {
     // usdview flags with no meaning in Vela yet (they configure usdview's
     // settings files or Python plugins), accepted so scripts keep working.
-    static const std::vector<std::string> ignored{
-        "--clearsettings", "--defaultsettings", "--noplugins"};
+    // Accepted so scripts keep working: usdview's plugins and settings files
+    // (Vela's settings persist on their own).
+    static const std::vector<std::string> ignored{"--noplugins"};
     static const std::vector<std::string> ignoredWithValue{"--config"};
     static const std::vector<std::string> unsupported{
         "--allow-async", "--traceToFile", "--traceFormat", "--tracePython",
@@ -132,6 +135,10 @@ bool ParseLaunchOptions(const std::vector<std::string> &args,
                 return false;
             }
             options->complexity = complexity;
+        } else if (arg == "--clearsettings") {
+            options->clearSettings = true;
+        } else if (arg == "--defaultsettings") {
+            options->defaultSettings = true;
         } else if (arg == "--renderer" || arg == "-r") {
             if (!value(&options->renderer)) return false;
         } else if (arg == "--ff") {
@@ -188,6 +195,15 @@ bool ParseLaunchOptions(const std::vector<std::string> &args,
     return true;
 }
 
+LaunchOptions DefaultLaunchOptions(const AppSettings &settings) {
+    LaunchOptions options;
+    options.view = WithoutSceneSpecific(settings.view);
+    options.usePrimaryCamera = settings.usePrimaryCamera;
+    options.unloaded = !settings.loadPayloads;
+    options.bboxStandin = settings.unloadedAsBounds;
+    return options;
+}
+
 std::shared_ptr<Document> OpenDocument(const LaunchOptions &options,
                                        std::string *error) {
     if (options.numThreads != 0) {
@@ -240,16 +256,16 @@ std::vector<std::string> ApplyLaunchOptions(const LaunchOptions &options,
     if (options.currentFrame) {
         document.SetTime(UsdTimeCode(*options.currentFrame));
     }
-    if (options.complexity || !options.renderer.empty()) {
-        ViewSettings settings = document.GetViewSettings();
-        if (options.complexity) settings.complexity = *options.complexity;
-        // Resolved (and warned about if unknown) by the viewport's renderer.
-        if (!options.renderer.empty()) settings.renderer = options.renderer;
-        document.SetViewSettings(settings);
+    ViewSettings settings = options.view;
+    if (options.complexity) settings.complexity = *options.complexity;
+    // Resolved (and warned about if unknown) by the viewport's renderer.
+    if (!options.renderer.empty()) settings.renderer = options.renderer;
+    document.SetViewSettings(settings);
+    std::string camera = options.camera;
+    if (camera.empty() && options.usePrimaryCamera) {
+        camera = UsdUtilsGetPrimaryCameraName().GetString();
     }
-    const std::string camera = options.camera.empty()
-        ? UsdUtilsGetPrimaryCameraName().GetString() : options.camera;
-    const SdfPath cameraPath = FindCamera(stage, camera);
+    const SdfPath cameraPath = camera.empty() ? SdfPath() : FindCamera(stage, camera);
     if (!cameraPath.IsEmpty()) {
         document.SetViewCamera(cameraPath);
     } else if (!options.camera.empty()) {

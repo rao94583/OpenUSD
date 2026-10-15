@@ -14,14 +14,15 @@ with tempfile.TemporaryDirectory(prefix='Vela launch ') as temp:
                      'def Xform "World" {\n    def Cube "Cube" {}\n}\n'
                      'def Camera "main_cam" {}\n')
 
+    # --defaultsettings: never read or write the user's saved settings.
     def launch(*args):
-        return subprocess.run([vela, scene, '--norender', '--quitAfterStartup', *args],
+        return subprocess.run([vela, scene, '--norender', '--quitAfterStartup',
+                               '--defaultsettings', *args],
                               capture_output=True, text=True, timeout=120)
 
     result = launch('--timing', '--select', '/World/Cube', '--ff', '2', '--lf', '5',
                     '--cf', '3', '--complexity', 'high', '--mask', '/World',
-                    '--unloaded', '--numThreads', '2', '--viewportSize', '320x240',
-                    '--clearsettings')
+                    '--unloaded', '--numThreads', '2', '--viewportSize', '320x240')
     assert result.returncode == 0, result.stdout + result.stderr
     assert 'Opened scene.usda in' in result.stdout, result.stdout
     assert 'Started' in result.stdout, result.stdout
@@ -38,7 +39,8 @@ with tempfile.TemporaryDirectory(prefix='Vela launch ') as temp:
         assert result.returncode == 2 and 'Usage: Vela' in result.stderr, (bad, result.stderr)
 
     # A missing file fails.
-    result = subprocess.run([vela, temp / 'missing.usda', '--norender', '--quitAfterStartup'],
+    result = subprocess.run([vela, temp / 'missing.usda', '--norender', '--quitAfterStartup',
+                             '--defaultsettings'],
                             capture_output=True, text=True, timeout=120)
     assert result.returncode != 0 or 'missing.usda' in result.stderr, result
     print('Launch options checks passed')

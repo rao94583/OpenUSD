@@ -1,4 +1,5 @@
 #include "actions.h"
+#include "app_settings.h"
 #include "document.h"
 #include "test_support.h"
 
@@ -404,6 +405,46 @@ void TestRendererActions() {
     CHECK(!d.GetUndoStack().CanUndo());
 }
 
+void TestSettingsActions() {
+    ActionRegistry &registry = ActionRegistry::Get();
+    Document d(MakeStage());
+    AppSettingsStore &store = AppSettingsStore::Get();
+    store.Reset();
+
+    // Default material: both or either, from 0 to 1, all or nothing.
+    CHECK(registry.Find("set_default_material")->form(d).size() == 2);
+    CHECK(registry.Run(d, "set_default_material", Params(R"({"ambient": 0.5})")).ok);
+    CHECK(d.GetViewSettings().defaultMaterialAmbient == 0.5);
+    CHECK(d.GetViewSettings().defaultMaterialSpecular == 0.1);
+    CHECK(!registry.Run(d, "set_default_material",
+                        Params(R"({"ambient": 0.3, "specular": 2})")).ok);
+    CHECK(d.GetViewSettings().defaultMaterialAmbient == 0.5);
+
+    // The window's view becomes the default, without scene-specific parts.
+    registry.Run(d, "set_draw_mode", Params(R"({"mode": "wireframe"})"));
+    registry.Run(d, "set_aov", Params(R"({"aov": "depth"})"));
+    CHECK(registry.Run(d, "use_view_as_default").ok);
+    CHECK(store.GetSettings().view.drawMode == DrawMode::Wireframe);
+    CHECK(store.GetSettings().view.defaultMaterialAmbient == 0.5);
+    CHECK(store.GetSettings().view.aov == "color");
+
+    // Settings by JSON: partial, checked, and readable back.
+    CHECK(registry.Run(d, "set_settings", Params(
+        R"({"settings": {"loadPayloads": false, "view": {"background": "white"}}})")).ok);
+    CHECK(!store.GetSettings().loadPayloads);
+    CHECK(store.GetSettings().view.background == Background::White);
+    CHECK(store.GetSettings().view.drawMode == DrawMode::Wireframe);  // kept
+    CHECK(!registry.Run(d, "set_settings", Params(R"({"settings": {"colour": 1}})")).ok);
+    CHECK(!registry.Run(d, "set_settings",
+                        Params(R"({"settings": {"view": {"fog": true}}})")).ok);
+    ActionResult got = registry.Run(d, "get_settings");
+    CHECK(got.ok && got.value.GetJsObject().at("loadPayloads") == JsValue(false));
+    CHECK(registry.Run(d, "reset_settings").ok);
+    CHECK(store.GetSettings() == AppSettings());
+    // Open windows keep their view settings.
+    CHECK(d.GetViewSettings().drawMode == DrawMode::Wireframe);
+}
+
 } // namespace
 
 int main() {
@@ -413,5 +454,6 @@ int main() {
     TestStandardActions();
     TestViewActions();
     TestRendererActions();
+    TestSettingsActions();
     return test::Finish("action");
 }

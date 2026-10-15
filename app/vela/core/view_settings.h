@@ -77,9 +77,27 @@ struct ViewSettings {
     // prim means the stage's renderSettingsPrimPath metadata, as usdrecord.
     SdfPath renderSettingsPrim;
     SdfPath renderPassPrim;
+    // The fallback material for geometry without one, as usdview's View →
+    // Adjust Default Material (gray levels).
+    double defaultMaterialAmbient = 0.2;
+    double defaultMaterialSpecular = 0.1;
 
     bool operator==(const ViewSettings &other) const = default;
 };
+
+// As a JSON object with the names used by actions ("drawMode": "wireframe",
+// "background": "darkGrey", ...). Reading ignores unknown keys and values
+// of the wrong type, keeping the current value, so older saved settings
+// still load.
+JsObject ToJson(const ViewSettings &settings);
+void FromJson(const JsObject &json, ViewSettings *settings);
+// Settings that describe the scene being viewed rather than how to view it
+// (AOV, renderer setting overrides, render settings and pass prims) reset,
+// for defaults that apply to any file.
+ViewSettings WithoutSceneSpecific(const ViewSettings &settings);
+// What differs from the defaults (usdview's), as "name: value" in ToJson's
+// names and order, e.g. {"background: white", "drawMode: wireframe"}.
+std::vector<std::string> DescribeChanges(const ViewSettings &settings);
 
 // Whether the draw mode is lit (the others ignore lights and materials).
 bool IsShaded(DrawMode mode);

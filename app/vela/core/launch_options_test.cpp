@@ -40,6 +40,8 @@ void TestParse() {
     CHECK(*o.firstFrame == 2 && *o.lastFrame == 8 && *o.currentFrame == 4.5);
     CHECK(o.numThreads == -2 && o.viewportWidth == 640 && o.viewportHeight == 480);
     CHECK(o.norender && o.bboxStandin && o.timing && o.quitAfterStartup);
+    CHECK(o.clearSettings && !o.defaultSettings);
+    CHECK(Parse({"--defaultsettings"}, &error).defaultSettings);
 
     Parse({"a.usda", "--select", "World"}, &error);
     CHECK(error.find("absolute") != std::string::npos);
@@ -136,6 +138,32 @@ void TestOpenAndApply(const fs::path &dir) {
     o = Parse({scene.string(), "--sessionLayer", (dir / "nope.usda").string()});
     CHECK(!OpenDocument(o, &error));
     CHECK(error.find("nope.usda") != std::string::npos);
+
+    // Settings seed the options; flags apply on top.
+    AppSettings settings;
+    settings.loadPayloads = false;
+    settings.usePrimaryCamera = false;
+    settings.unloadedAsBounds = true;
+    settings.view.drawMode = DrawMode::Wireframe;
+    settings.view.complexity = 1.1;
+    settings.view.aov = "depth";  // scene-specific: not a default
+    o = DefaultLaunchOptions(settings);
+    CHECK(o.unloaded && o.bboxStandin && !o.usePrimaryCamera);
+    std::string parseError;
+    CHECK(ParseLaunchOptions({scene.string(), "--complexity", "high"}, &o, &parseError));
+    d = OpenDocument(o, &error);
+    CHECK(!d->GetStage()->GetPrimAtPath(SdfPath("/World/B/Box")));  // unloaded
+    CHECK(ApplyLaunchOptions(o, *d).empty());
+    CHECK(d->GetViewCamera().IsEmpty());  // not main_cam
+    CHECK(d->GetViewSettings().drawMode == DrawMode::Wireframe);
+    CHECK(std::abs(d->GetViewSettings().complexity - 1.2) < 1e-9);  // the flag wins
+    CHECK(d->GetViewSettings().aov == "color");
+    // --camera still works without the primary camera.
+    o = DefaultLaunchOptions(settings);
+    CHECK(ParseLaunchOptions({scene.string(), "--camera", "shot"}, &o, &parseError));
+    d = OpenDocument(o, &error);
+    ApplyLaunchOptions(o, *d);
+    CHECK(d->GetViewCamera() == SdfPath("/Cameras/Shots/shot"));
 
     // Threads.
     o = Parse({scene.string(), "--numThreads", "1"});

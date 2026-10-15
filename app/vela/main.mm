@@ -1,4 +1,5 @@
 #import <AppKit/AppKit.h>
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -7,13 +8,17 @@
 #import "document.h"
 #import "browser_view.h"
 #import "menus.h"
+#import "settings_window.h"
 #import "viewport/viewport_view.h"
 #include "app/vela/core/actions.h"
+#include "app/vela/core/app_settings.h"
+#include "app/vela/core/launch_options.h"
 #include "app/vela/core/document.h"
 #include "app/vela/core/free_camera.h"
 #include "pxr/base/js/json.h"
 #include "app/vela/viewport/renderer.h"
 #include "pxr/base/plug/registry.h"
+#include "pxr/base/work/threadLimits.h"
 #include "pxr/usd/usdGeom/bboxCache.h"
 #include "pxr/usd/usdGeom/camera.h"
 #include "pxr/usd/usdGeom/metrics.h"
@@ -32,6 +37,10 @@ PXR_NAMESPACE_USING_DIRECTIVE
 - (instancetype)initWithFile:(NSURL *)file {
     if ((self = [super init])) _launchFile = file;
     return self;
+}
+// Vela → Settings… (the window is made on first use).
+- (void)showSettings:(id)sender {
+    [[VelaSettingsWindowController shared] showWindow:sender];
 }
 - (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender { return NO; }
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
@@ -346,6 +355,33 @@ static void Usage() {
         "       Vela --benchmark FILE --window [--frames N]\n");
 }
 
+// The Settings window's settings, saved as JSON in the user defaults.
+// clear forgets the saved ones; useDefaults ignores them for this run and
+// saves nothing.
+static void LoadSettings(bool clear, bool useDefaults) {
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+    NSString *const key = @"VelaSettings";
+    if (clear) [defaults removeObjectForKey:key];
+    vela::AppSettingsStore &store = vela::AppSettingsStore::Get();
+    if (NSString *saved = [defaults stringForKey:key]; saved && !useDefaults) {
+        const JsValue json = JsParseString(saved.UTF8String);
+        vela::AppSettings settings;
+        if (json.IsObject()) vela::FromJson(json.GetJsObject(), &settings);
+        store.SetSettings(settings);
+    }
+    if (!useDefaults) {
+        store.AddObserver([key] {
+            const std::string json =
+                JsWriteToString(JsValue(vela::ToJson(vela::AppSettingsStore::Get().GetSettings())));
+            [NSUserDefaults.standardUserDefaults setObject:@(json.c_str()) forKey:key];
+        });
+    }
+    // At launch only, as worker threads start once.
+    if (const int limit = store.GetSettings().threadLimit) {
+        WorkSetConcurrencyLimitArgument(limit);
+    }
+}
+
 int main(int argc, const char *argv[]) {
     @autoreleasepool {
         NSString *runtime = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"Runtime/usd"];
@@ -431,7 +467,14 @@ int main(int argc, const char *argv[]) {
             if (argv[i][0] == '-' && argv[i][1] == 'N' && argv[i][2] == 'S') { ++i; continue; }
             args.push_back(argv[i]);
         }
-        vela::LaunchOptions launch;
+        // Settings first: the options start from them. --clearsettings and
+        // --defaultsettings decide whether the saved ones are used.
+        auto has = [&](const char *flag) {
+            return std::find(args.begin(), args.end(), flag) != args.end();
+        };
+        LoadSettings(has("--clearsettings"), has("--defaultsettings"));
+        vela::LaunchOptions launch =
+            vela::DefaultLaunchOptions(vela::AppSettingsStore::Get().GetSettings());
         std::string error;
         if (!vela::ParseLaunchOptions(args, &launch, &error)) {
             fprintf(stderr, "%s\n%s", error.c_str(), vela::LaunchUsage());

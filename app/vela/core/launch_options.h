@@ -4,6 +4,7 @@
 // that concern windows (see AppOptions).
 #pragma once
 
+#include "app_settings.h"
 #include "document.h"
 
 #include "pxr/pxr.h"
@@ -20,6 +21,12 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 struct LaunchOptions {
     std::string file;
+    // The view settings the document starts with (the Settings window's
+    // defaults), before --complexity and --renderer.
+    ViewSettings view;
+    // Look through the stage's primary camera (main_cam) when --camera is
+    // not given.
+    bool usePrimaryCamera = true;
     // Stage opening.
     std::vector<SdfPath> mask;          // --mask: population mask
     bool unloaded = false;              // --unloaded: load no payloads
@@ -41,11 +48,19 @@ struct LaunchOptions {
     bool bboxStandin = false;           // --bboxStandin: unloaded prims as boxes
     int viewportWidth = 0;              // --viewportSize WxH
     int viewportHeight = 0;
+    // Settings: --clearsettings resets the saved settings, and
+    // --defaultsettings uses the defaults without saving changes (usdview's
+    // meanings). main applies them before the other options are parsed.
+    bool clearSettings = false;
+    bool defaultSettings = false;
 };
 
-// Parses usdview's flags (arguments after the program name). Accepts the
-// flags that only affect usdview's own settings files, which Vela does not
-// have yet, and rejects ones it does not support. Returns false with a
+// The options a file opens with when no flags are given: the settings'
+// view defaults and opening options. ParseLaunchOptions adds flags on top.
+LaunchOptions DefaultLaunchOptions(const AppSettings &settings);
+
+// Parses usdview's flags (arguments after the program name) into options,
+// which start as DefaultLaunchOptions. Rejects flags Vela does not support. Returns false with a
 // message in error.
 bool ParseLaunchOptions(const std::vector<std::string> &args,
                         LaunchOptions *options, std::string *error);

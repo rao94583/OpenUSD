@@ -49,8 +49,6 @@ fragment float4 velaPresentFragment(Varyings in [[stage_in]],
 
 // Lighting and material defaults shared with usdview and usdrecord.
 const GfVec4f SceneAmbient(0.01f, 0.01f, 0.01f, 1.0f);
-const GfVec4f SpecularDefault(0.1f, 0.1f, 0.1f, 1.0f);
-const GfVec4f AmbientDefault(0.2f, 0.2f, 0.2f, 1.0f);
 const float ShininessDefault = 32.0f;
 
 UsdImagingGLDrawMode HydraDrawMode(DrawMode mode) {
@@ -100,12 +98,19 @@ TfToken ResolveRendererId(const std::string &name) {
     return TfToken();
 }
 
+// Any JSON number: saved settings may come back as another numeric type.
+double Number(const JsValue &value) {
+    return value.IsReal() ? value.GetReal()
+         : value.IsUInt64() ? double(value.GetUInt64()) : double(value.GetInt64());
+}
+
 VtValue ToVtValue(const RendererSetting::Type type, const JsValue &value) {
     switch (type) {
-    case RendererSetting::Type::Flag: return VtValue(value.GetBool());
-    case RendererSetting::Type::Int: return VtValue(int(value.GetInt64()));
-    case RendererSetting::Type::Float: return VtValue(float(value.GetReal()));
-    case RendererSetting::Type::String: return VtValue(value.GetString());
+    case RendererSetting::Type::Flag: return VtValue(value.IsBool() && value.GetBool());
+    case RendererSetting::Type::Int: return VtValue(int(Number(value)));
+    case RendererSetting::Type::Float: return VtValue(float(Number(value)));
+    case RendererSetting::Type::String:
+        return VtValue(value.IsString() ? value.GetString() : std::string());
     }
     return VtValue();
 }
@@ -291,8 +296,10 @@ void Renderer::Impl::Render(const View &view) {
         lights.push_back(dome);
     }
     GlfSimpleMaterial material;
-    material.SetAmbient(AmbientDefault);
-    material.SetSpecular(SpecularDefault);
+    const float ambient = float(settings.defaultMaterialAmbient);
+    const float specular = float(settings.defaultMaterialSpecular);
+    material.SetAmbient(GfVec4f(ambient, ambient, ambient, 1.0f));
+    material.SetSpecular(GfVec4f(specular, specular, specular, 1.0f));
     material.SetShininess(ShininessDefault);
     engine->SetLightingState(lights, material, SceneAmbient);
     engine->SetRendererSetting(HdRenderSettingsTokens->domeLightCameraVisibility,

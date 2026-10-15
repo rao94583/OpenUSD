@@ -235,6 +235,9 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     if (pending && std::filesystem::equivalent(pending->file, url.fileSystemRepresentation, ignored)) {
         _launch = *pending;
         pending.reset();
+    } else {
+        // Files opened from the app: the Settings window's options.
+        _launch = vela::DefaultLaunchOptions(vela::AppSettingsStore::Get().GetSettings());
     }
     _launch.file = url.fileSystemRepresentation;
     const double start = Now();

@@ -85,7 +85,8 @@ struct Action {
     // panel, and passes its path in this parameter.
     std::string savePathParam;
     // When set, the menu item opens a form with these fields and runs the
-    // action with {formParam: {key: value, ...}} for every field.
+    // action with every field's value: as {formParam: {key: value, ...}},
+    // or, without formParam, as the parameters themselves.
     std::function<std::vector<FormField>(const Document &)> form;
     std::string formParam;
 
