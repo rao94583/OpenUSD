@@ -49,6 +49,16 @@ struct MenuChoice {
     JsObject params;
 };
 
+// A field of an action's form, filled in from a sheet; see Action::form.
+struct FormField {
+    enum class Type { Bool, Int, Float, String, Choice };
+    std::string key;
+    std::string label;
+    Type type = Type::String;
+    JsValue value;                     // the current value, shown first
+    std::vector<std::string> choices;  // for Choice
+};
+
 struct Action {
     std::string name;         // stable identifier, e.g. "frame_selection"
     std::string title;        // menu title, e.g. "Frame Selected"
@@ -74,6 +84,10 @@ struct Action {
     // When set, the menu item first asks for a file to write, with a save
     // panel, and passes its path in this parameter.
     std::string savePathParam;
+    // When set, the menu item opens a form with these fields and runs the
+    // action with {formParam: {key: value, ...}} for every field.
+    std::function<std::vector<FormField>(const Document &)> form;
+    std::string formParam;
 
     // Edits made by the handler become one undo step named after the
     // title. Actions that only change the view leave undo alone.

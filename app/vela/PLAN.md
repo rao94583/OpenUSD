@@ -64,9 +64,63 @@ goes through it and sends change notifications that the views observe.
 
 This is the "UI manipulation API" from the README. Each operation is
 registered once, with a name, a JSON schema for its parameters and a
-handler. Menus, keyboard shortcuts, a ⌘K command palette, the Python API and
+handler. Menus, keyboard shortcuts, the ⌥Space command palette, the Python API and
 Claude all call the same entries. Examples: `select`, `frame_selection`,
 `set_time`, `set_camera`, `open_inspector`, `set_draw_mode`.
+
+### Mac-native options, not command-line flags
+
+A Mac user never types a command line, so nothing may be reachable only
+through one (user decision, 2026-10-15). Each of usdview's launch flags
+becomes either a **setting** in a Settings window (persisted, taking effect
+when a file is next opened, or at next launch where noted) or a **live
+command** (an action in a menu and the palette) that acts on the open
+scene. The flags keep working as a secondary path for scripts, tests and
+`open -a Vela --args`, and are implemented by running the same settings
+and actions.
+
+| Flag | Becomes |
+|---|---|
+| `--select PRIM` | Live: Edit → Select Path… (`select`), also from the palette |
+| `--camera CAMERA` | Live: View → Camera (done). Setting: open through the primary camera (main_cam) when present (on by default, as usdview) |
+| `--mask PRIM,...` | Per file: File → Open with Options… (population mask); live: File → Reopen with Mask… (reopens the stage) |
+| `--unloaded` | Setting: load payloads when opening (on by default); also in Open with Options…; live: Prim → Load/Unload (done) |
+| `--sessionLayer FILE` | Per file: Open with Options…; live: File → Replace Session Layer… |
+| `--mute LAYER,...` | Live: mute toggles in the Layers tab (`set_layer_muted`); also in Open with Options… |
+| `--complexity` | Live: View → Complexity (done). Setting: default complexity |
+| `--ff`, `--lf`, `--cf` | Live: Playback → Set Playback Range… (a form) and the timeline (done for the current frame) |
+| `--renderer` | Live: Renderer menu (done). Setting: default renderer |
+| `--numThreads` | Setting: thread limit, at next launch |
+| `--viewportSize` | Not needed: windows resize and remember their frames |
+| `--norender` | Live: View → Pause Viewport Drawing |
+| `--bboxStandin` | Live: View → Display → Unloaded Prims as Bounding Boxes. Setting: its default |
+| `--timing` | Live: Window → Load Statistics (open and first-frame times, also in the HUD's Info) |
+| `--clearsettings`, `--defaultsettings` | Settings → Reset to Defaults |
+| `--config` | Not needed: settings persist (NSUserDefaults) |
+| `--quitAfterStartup` | Tests only; stays a flag |
+
+View settings that are not per-launch (draw mode, lights, HUD sections,
+color correction and so on) get defaults in Settings too: the settings
+apply to newly opened documents, and View changes apply to the current one.
+
+### Command palette
+
+⌥Space opens a palette (a floating, Spotlight-like panel) that reaches
+everything the app can do, built entirely from the action registry, so
+nothing needs registering twice:
+
+- Every enabled action, and every choice of an action with choices (static
+  and dynamic), as its own entry: "Draw Mode › Wireframe", "Camera ›
+  /Cameras/main_cam", "Renderer › Embree". Checkmarks show the current
+  state; shortcuts are shown.
+- Fuzzy matching on title, menu path and description; recently used
+  entries first.
+- Actions with parameters ask for them in place: a form (the same form
+  sheet menus use), a save panel, or a prim path completed from the stage.
+- Also lists prims by path, to select and frame (usdview's search),
+  documents and settings.
+- ⌥Space works even in text fields (where it would type a non-breaking
+  space). From Phase 7, text that matches nothing can go to Claude.
 
 The registry is the single source of truth for the `vela-ui` skill and the
 MCP tool schemas, which are generated from it at build time. It also serves
@@ -163,7 +217,7 @@ C++ core with unit tests. The UI only translates input events.
 | 2 | **Viewport:** Metal view, Storm, Maya camera controls, frame all and selection, basic time scrubbing | Interactive frame rate on a large scene. A snapshot matches `usdrecord` (compared with `idiff`). Camera math unit tests pass. |
 | 3 | **Core:** document, selection, action registry, undo delegate. Menus go through the registry. | C++ tests for undo/redo, including round trips across layers |
 | 4 | **Browsing:** lazy prim outline (filters; type, visibility and draw-mode columns), inspector tabs (properties with array and spline viewers, metadata, composition arcs, layer stack, variants), timeline with playback, picking synced with selection | Everything usdview shows can be browsed |
-| 5 | **Editing and view settings to match usdview:** attribute editing, variants, load/unload, activation, visibility, purposes, draw modes, scene cameras, render settings and AOVs, HUD, OCIO, bounding boxes, validation panel, preferences, usdview's command-line flags | A parity checklist built from `pxr/usdImaging/usdviewq` is complete. Selected `testusdview` scenarios are ported to the action API. |
+| 5 | **Editing and view settings to match usdview:** attribute editing, variants, load/unload, activation, visibility, purposes, draw modes, scene cameras, render settings and AOVs, HUD, OCIO, bounding boxes, validation panel, a Settings window, usdview's command-line flags as settings or live commands (see [Mac-native options](#mac-native-options-not-command-line-flags)), the ⌥Space command palette | A parity checklist built from `pxr/usdImaging/usdviewq` is complete. Selected `testusdview` scenarios are ported to the action API. Nothing is reachable only from the command line; the palette reaches every action. |
 | 6 | **Python and MCP:** embedded interpreter, the `vela` module, a console panel replacing usdview's interpreter, `vela-mcp` and the socket | Claude Code in a terminal can query and edit the open scene |
 | 7 | **Claude panel:** streaming chat, tool-call display, approvals, undo groups, screenshots, session history | The README's example requests work end to end |
 | 8 | **Skills and evals:** both skills, generated references, eval suite | Evals pass at an agreed rate |
