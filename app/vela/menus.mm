@@ -103,25 +103,113 @@ bool IsPlainKey(const vela::Action &action) {
 
 } // namespace
 
+namespace {
+
+// Display names for the formats a save panel offers.
+NSString *FormatName(const std::string &extension) {
+    NSDictionary<NSString *, NSString *> *names = @{
+        @"png": @"PNG", @"jpg": @"JPEG", @"jpeg": @"JPEG", @"tif": @"TIFF", @"tiff": @"TIFF",
+        @"exr": @"OpenEXR (linear)", @"bmp": @"BMP", @"tga": @"TGA",
+        @"mov": @"QuickTime Movie", @"mp4": @"MPEG-4 Movie",
+    };
+    return names[@(extension.c_str())] ?: @(extension.c_str()).uppercaseString;
+}
+
+}  // namespace
+
+// The save panel's Format pop-up: choosing one sets the panel's type, and
+// with it the file name's extension.
+@interface VelaSaveFormats : NSObject
+@property (nonatomic, weak) NSSavePanel *panel;
+@property (nonatomic, copy) NSArray<UTType *> *types;
+@end
+@implementation VelaSaveFormats
+- (void)formatChosen:(NSPopUpButton *)popUp {
+    self.panel.allowedContentTypes = @[self.types[NSUInteger(popUp.indexOfSelectedItem)]];
+}
+@end
+
+// Asks for the file an action writes (savePathParam), then runs it.
+static void RunWithSavePath(const vela::Action &action, const JsObject &params, NSWindow *window) {
+    NSSavePanel *panel = [NSSavePanel savePanel];
+    panel.title = [@(action.title.c_str()) stringByReplacingOccurrencesOfString:@"…" withString:@""];
+    panel.allowsOtherFileTypes = NO;
+    // Named after the document, e.g. playroom.png.
+    if (NSDocument *document = window.windowController.document) {
+        panel.nameFieldStringValue = document.displayName.stringByDeletingPathExtension;
+    }
+    __block VelaSaveFormats *formats = nil;
+    if (action.saveTypes.empty()) {
+        panel.allowedContentTypes = UsdTypes();
+    } else {
+        // One type per format (jpg and jpeg are one), the first chosen.
+        NSMutableArray<UTType *> *types = [NSMutableArray array];
+        NSPopUpButton *popUp = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+        for (const std::string &extension : action.saveTypes) {
+            UTType *type = [UTType typeWithFilenameExtension:@(extension.c_str())];
+            if (!type || [types containsObject:type]) continue;
+            [types addObject:type];
+            [popUp addItemWithTitle:FormatName(extension)];
+        }
+        panel.allowedContentTypes = @[types.firstObject];
+        if (types.count > 1) {
+            formats = [VelaSaveFormats new];
+            formats.panel = panel;
+            formats.types = types;
+            popUp.target = formats;
+            popUp.action = @selector(formatChosen:);
+            NSTextField *label = [NSTextField labelWithString:@"Format:"];
+            NSStackView *accessory = [NSStackView stackViewWithViews:@[label, popUp]];
+            accessory.edgeInsets = NSEdgeInsetsMake(8, 8, 8, 8);
+            panel.accessoryView = accessory;
+        }
+    }
+    // Blocks capture C++ references as references: copy what the
+    // completion needs.
+    const std::string name = action.name, param = action.savePathParam;
+    const JsObject given = params;
+    [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
+        (void)formats;  // kept alive while the panel is up
+        vela::Document *current = CurrentDocument();
+        if (response != NSModalResponseOK || !current) return;
+        JsObject withPath = given;
+        withPath[param] = JsValue(std::string(panel.URL.fileSystemRepresentation));
+        ShowResult(vela::ActionRegistry::Get().Run(*current, name, withPath), window);
+    }];
+}
+
 void VelaRunAction(const std::string &actionName, const JsObject &params, NSWindow *window) {
     vela::Document *document = CurrentDocument();
     const vela::Action *action = vela::ActionRegistry::Get().Find(actionName);
     if (!document || !action) return;
     if (action->form) {
-        // Ask for the fields, then run with them under formParam.
+        // Ask for the fields, then run with them under formParam (after
+        // asking for a file, if the action writes one).
         const std::string name = action->name, param = action->formParam;
+        const JsObject given = params;  // not the reference: see RunWithSavePath
         // The sheet's title is the item's, without its ellipsis.
         NSString *title = [@(action->title.c_str())
             stringByReplacingOccurrencesOfString:@"…" withString:@""];
         VelaRunForm(window, title, action->form(*document),
                     ^(const JsObject &values) {
             vela::Document *current = CurrentDocument();
-            if (!current) return;
-            JsObject withValues = params;
+            const vela::Action *again = vela::ActionRegistry::Get().Find(name);
+            if (!current || !again) return;
+            JsObject withValues = given;
             if (param.empty()) {
                 for (const auto &[key, value] : values) withValues[key] = value;
             } else {
                 withValues[param] = JsValue(values);
+            }
+            if (!again->savePathParam.empty()) {
+                // After the form's sheet has gone.
+                const JsObject ready = withValues;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (const vela::Action *a = vela::ActionRegistry::Get().Find(name)) {
+                        RunWithSavePath(*a, ready, window);
+                    }
+                });
+                return;
             }
             ShowResult(vela::ActionRegistry::Get().Run(*current, name, withValues), window);
         });
@@ -134,10 +222,11 @@ void VelaRunAction(const std::string &actionName, const JsObject &params, NSWind
             stringByReplacingOccurrencesOfString:@"…" withString:@""];
         panel.allowedContentTypes = UsdTypes();
         const std::string name = action->name, param = action->openPathParam;
+        const JsObject given = params;  // not the reference: see RunWithSavePath
         [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
             vela::Document *current = CurrentDocument();
             if (response != NSModalResponseOK || !current) return;
-            JsObject withPath = params;
+            JsObject withPath = given;
             withPath[param] = JsValue(std::string(panel.URL.fileSystemRepresentation));
             ShowResult(vela::ActionRegistry::Get().Run(*current, name, withPath), window);
         }];
@@ -147,19 +236,7 @@ void VelaRunAction(const std::string &actionName, const JsObject &params, NSWind
         ShowResult(vela::ActionRegistry::Get().Run(*document, action->name, params), window);
         return;
     }
-    // Ask for the file first.
-    NSSavePanel *panel = [NSSavePanel savePanel];
-    panel.title = @(action->title.c_str());
-    panel.allowedContentTypes = UsdTypes();
-    panel.allowsOtherFileTypes = NO;
-    const std::string name = action->name, param = action->savePathParam;
-    [panel beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
-        vela::Document *current = CurrentDocument();
-        if (response != NSModalResponseOK || !current) return;
-        JsObject withPath = params;
-        withPath[param] = JsValue(std::string(panel.URL.fileSystemRepresentation));
-        ShowResult(vela::ActionRegistry::Get().Run(*current, name, withPath), window);
-    }];
+    RunWithSavePath(*action, params, window);
 }
 
 // Menu items carry the action name; this target runs and validates them.

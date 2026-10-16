@@ -210,13 +210,32 @@ void Document::DetachViewCamera() {
 }
 
 GfCamera Document::ComputeViewGfCamera(double aspectRatio) const {
+    return ComputeViewGfCamera(aspectRatio, _time);
+}
+
+GfCamera Document::ComputeViewGfCamera(double aspectRatio, UsdTimeCode time) const {
     if (UsdGeomCamera camera{_stage->GetPrimAtPath(_viewCamera)}) {
-        GfCamera result = camera.GetCamera(_time);
+        GfCamera result = camera.GetCamera(time);
         // Fit the camera's whole aperture inside the viewport.
         CameraUtilConformWindow(&result, CameraUtilFit, aspectRatio > 0.0 ? aspectRatio : 1.0);
         return result;
     }
     return _camera.ComputeGfCamera(aspectRatio, GetStageBounds());
+}
+
+double Document::GetViewCameraAspectRatio(UsdTimeCode time) const {
+    if (UsdGeomCamera camera{_stage->GetPrimAtPath(_viewCamera)}) {
+        const float aspect = camera.GetCamera(time).GetAspectRatio();
+        if (aspect > 0.0f) return aspect;
+    }
+    return _aspectRatio > 0.0 ? _aspectRatio : 1.0;
+}
+
+const std::vector<std::string> &ImageExportExtensions() {
+    // What Hio's plugins in the bundle write: stb, ImageIO and OpenEXR.
+    static const std::vector<std::string> extensions = {
+        "png", "jpg", "jpeg", "tif", "tiff", "exr", "bmp", "tga"};
+    return extensions;
 }
 
 SdfLayerHandleVector Document::GetLayersToSave() const {

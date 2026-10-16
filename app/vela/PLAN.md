@@ -539,6 +539,30 @@ way to interrupt a long script, and the console's Clear command.
 - Relationship and connection targets: the properties table's context menu
   goes to them (selecting the prim, then the property row).
 
+## Image and movie export (2026-10-16)
+
+- `export_image` and `export_movie` (core/file_actions.cpp) call
+  `Document::ViewportServices`, which the viewport sets: it owns the
+  renderer. `Renderer::ReadPixels` renders offscreen until converged into
+  its own texture and reads it back (8-bit display image, or the linear
+  float color AOV for EXR/HDR, rendered without color correction since
+  that overwrites the AOV). Nothing reads the window, so obscured or
+  minimized windows export the same; the viewport doesn't draw meanwhile.
+- Movies: `viewport/movie_writer.*` (AVAssetWriter; H.264/HEVC sizes round
+  up to even), frames at time codes start, start + 1, ..., end through
+  `ComputeViewGfCamera(aspect, time)`; a modal-session progress panel
+  with Cancel removes the partial file.
+- Resolution presets and framing (`core/export_framing.*`, unit-tested):
+  the camera's aspect ratio is a scene camera's aperture or the
+  viewport's; Fit renders the camera's own frame and composites it into
+  black bars (any pixel format, either row order), Crop conforms the
+  camera with `CameraUtilCrop`. Form choices can show titles for values
+  (`FormField::choiceValues`).
+- Menus: actions with a form and a save path ask for both (form first);
+  `Action::saveTypes` gives the save panel a Format pop-up. Fixed while
+  testing: the panels' completion blocks captured the `params` reference
+  (C++ references are captured by reference), which dangled.
+
 ## Testing
 
 - `cc_test` for the core: document, actions, undo, camera math

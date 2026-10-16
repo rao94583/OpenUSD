@@ -25,7 +25,14 @@ NSView *Control(const vela::FormField &field) {
     case T::Choice: {
         NSPopUpButton *popup = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
         for (const std::string &choice : field.choices) [popup addItemWithTitle:@(choice.c_str())];
-        if (field.value.IsString()) [popup selectItemWithTitle:@(field.value.GetString().c_str())];
+        // The current value, by value or (without values) by title.
+        const std::vector<std::string> &values =
+            field.choiceValues.size() == field.choices.size() ? field.choiceValues : field.choices;
+        for (size_t i = 0; i < values.size(); ++i) {
+            if (field.value.IsString() && field.value.GetString() == values[i]) {
+                [popup selectItemAtIndex:NSInteger(i)];
+            }
+        }
         return popup;
     }
     default: {
@@ -43,8 +50,13 @@ JsValue Value(const vela::FormField &field, NSView *control) {
     switch (field.type) {
     case T::Bool:
         return JsValue(((NSButton *)control).state == NSControlStateValueOn);
-    case T::Choice:
-        return JsValue(std::string(((NSPopUpButton *)control).titleOfSelectedItem.UTF8String ?: ""));
+    case T::Choice: {
+        const NSInteger index = ((NSPopUpButton *)control).indexOfSelectedItem;
+        const std::vector<std::string> &values =
+            field.choiceValues.size() == field.choices.size() ? field.choiceValues : field.choices;
+        return index >= 0 && size_t(index) < values.size() ? JsValue(values[size_t(index)])
+                                                            : JsValue(std::string());
+    }
     case T::String:
         return JsValue(std::string(((NSTextField *)control).stringValue.UTF8String ?: ""));
     case T::Int:

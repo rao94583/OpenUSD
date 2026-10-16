@@ -12,6 +12,45 @@ import subprocess
 import sys
 import tempfile
 import time
+import zlib
+
+
+
+def read_png(path):
+    """(width, height, rows of RGB(A) tuples) for an 8-bit RGB or RGBA PNG."""
+    data = Path(path).read_bytes()
+    assert data[:8] == b'\x89PNG\r\n\x1a\n'
+    pos, chunks, header = 8, b'', None
+    while pos < len(data):
+        length, kind = struct.unpack('>I4s', data[pos:pos + 8])
+        body = data[pos + 8:pos + 8 + length]
+        if kind == b'IHDR':
+            header = struct.unpack('>IIBBBBB', body)
+        elif kind == b'IDAT':
+            chunks += body
+        pos += 12 + length
+    width, height, depth, color = header[:4]
+    assert depth == 8 and color in (2, 6), header
+    channels = 4 if color == 6 else 3
+    raw, stride, rows, previous = zlib.decompress(chunks), width * channels, [], bytearray(width * channels)
+    for y in range(height):
+        kind = raw[y * (stride + 1)]
+        line = bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
+        for i in range(stride):
+            a = line[i - channels] if i >= channels else 0
+            b = previous[i]
+            c = previous[i - channels] if i >= channels else 0
+            if kind == 1: line[i] = (line[i] + a) & 255
+            elif kind == 2: line[i] = (line[i] + b) & 255
+            elif kind == 3: line[i] = (line[i] + (a + b) // 2) & 255
+            elif kind == 4:
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                line[i] = (line[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        rows.append([tuple(line[x * channels:(x + 1) * channels]) for x in range(width)])
+        previous = line
+    return width, height, rows
+
 
 temp = Path(tempfile.mkdtemp(prefix='Vela mcp '))
 # Unix socket paths are short (104 bytes).
@@ -115,6 +154,65 @@ try:
     assert png[:8] == b'\x89PNG\r\n\x1a\n', png[:16]
     width, height = struct.unpack('>II', png[16:24])
     assert width == 320 and height > 0, (width, height)
+
+    # Exports render offscreen, so they work with the window minimized.
+    subprocess.run(['/usr/bin/osascript', '-e',
+                    'tell application "System Events" to tell (first process whose unix id is '
+                    f'{app.pid}) to set value of attribute "AXMinimized" of window 1 to true'],
+                   capture_output=True)
+    for name, size in (('view.png', 320), ('view.jpg', 200), ('view.tif', 160), ('view.exr', 120)):
+        result = call('ui_action', action='export_image',
+                      params={'path': str(temp / name), 'width': size})
+        assert not result['isError'], result
+        assert result['structuredContent']['result']['width'] == size, result
+        assert (temp / name).stat().st_size > 1000, name
+    assert (temp / 'view.png').read_bytes()[:8] == b'\x89PNG\r\n\x1a\n'
+    assert struct.unpack('>II', (temp / 'view.png').read_bytes()[16:24])[0] == 320
+    assert (temp / 'view.exr').read_bytes()[:4] == b'\x76\x2f\x31\x01'  # OpenEXR
+    bad = call('ui_action', action='export_image', params={'path': str(temp / 'view.gif')})
+    assert bad['isError'], bad
+    movie = call('ui_action', action='export_movie',
+                 params={'path': str(temp / 'clip.mp4'), 'width': 161, 'start': 1, 'end': 6})
+    assert not movie['isError'], movie
+    info = movie['structuredContent']['result']
+    assert info['frames'] == 6 and info['width'] == 162, info  # even, for H.264
+    data = (temp / 'clip.mp4').read_bytes()
+    assert data[4:8] == b'ftyp' and b'avc1' in data, data[:32]
+    prores = call('ui_action', action='export_movie',
+                  params={'path': str(temp / 'clip.mov'), 'width': 96, 'start': 1, 'end': 3,
+                          'codec': 'prores422'})
+    assert not prores['isError'] and b'apcn' in (temp / 'clip.mov').read_bytes(), prores
+    bad = call('ui_action', action='export_movie',
+               params={'path': str(temp / 'clip2.mp4'), 'codec': 'prores422'})
+    assert bad['isError'], bad
+    # Presets and framing. The free camera has the viewport's aspect ratio,
+    # which isn't square: fit boxes a square export (black bars on two
+    # opposite edges), crop fills it.
+    def edges_black(path):
+        width, height, rows = read_png(path)
+        top, bottom = rows[0], rows[-1]
+        left = [row[0] for row in rows]
+        right = [row[-1] for row in rows]
+        black = lambda pixels: all(p[:3] == (0, 0, 0) for p in pixels)
+        return (black(top) and black(bottom)) or (black(left) and black(right))
+    for framing, boxed in (('fit', True), ('crop', False)):
+        path = temp / f'square_{framing}.png'
+        result = call('ui_action', action='export_image',
+                      params={'path': str(path), 'resolution': 'square', 'framing': framing,
+                              'showSelection': False})
+        assert not result['isError'], result
+        info = result['structuredContent']['result']
+        assert (info['width'], info['height']) == (1080, 1080), info
+        assert edges_black(path) == boxed, framing
+    bad = call('ui_action', action='export_image',
+               params={'path': str(temp / 'x.png'), 'resolution': '8k'})
+    assert bad['isError'], bad
+    bad = call('ui_action', action='export_image',
+               params={'path': str(temp / 'x.png'), 'framing': 'stretch'})
+    assert bad['isError'], bad
+    hd = call('ui_action', action='export_movie',
+              params={'path': str(temp / 'hd.mp4'), 'resolution': '720p', 'start': 1, 'end': 2})
+    assert hd['structuredContent']['result']['width'] == 1280, hd
 
     # The stateless protocol revision, on the same connection.
     meta = {'io.modelcontextprotocol/protocolVersion': '2026-07-28',

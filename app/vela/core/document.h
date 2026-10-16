@@ -2,6 +2,7 @@
 // or changes about it. Views observe it; actions change it.
 #pragma once
 
+#include "export_framing.h"
 #include "free_camera.h"
 #include "undo.h"
 #include "validation.h"
@@ -49,6 +50,29 @@ struct RendererInfo {
 
     bool operator==(const RendererInfo &other) const = default;
 };
+
+// Exporting what the viewport shows (see Document::ViewportServices).
+// Sizes: 0 for the viewport's; with one given, the other follows the
+// camera's aspect ratio. When the size's aspect ratio differs from the
+// camera's, framing letterboxes or pillarboxes it, or crops.
+struct ImageExport {
+    std::string path;          // the format follows the extension
+    int width = 0, height = 0;
+    Framing framing = Framing::Fit;
+    bool showSelection = true; // highlights and bounding boxes, as drawn
+};
+struct MovieExport {
+    std::string path;          // .mov or .mp4
+    double start = 0.0, end = 0.0;  // time codes, inclusive
+    double framesPerSecond = 24.0;
+    int width = 0, height = 0;
+    Framing framing = Framing::Fit;
+    std::string codec = "h264";  // h264, hevc, prores422 or prores4444
+    bool showSelection = false;
+};
+
+// The image formats export_image writes.
+const std::vector<std::string> &ImageExportExtensions();
 
 // A UsdRenderPass prim's render settings prim (the first target of its
 // renderSource relationship), or empty.
@@ -126,6 +150,11 @@ public:
     // The camera to draw through for a viewport of the given aspect ratio:
     // the scene camera fitted to it (as usdview does), or the free camera.
     GfCamera ComputeViewGfCamera(double aspectRatio) const;
+    // The same at another time, e.g. for a movie's frames.
+    GfCamera ComputeViewGfCamera(double aspectRatio, UsdTimeCode time) const;
+    // The aspect ratio (width / height) of what the view camera frames: a
+    // scene camera's aperture, or for the free camera the viewport's.
+    double GetViewCameraAspectRatio(UsdTimeCode time) const;
     // Scene cameras on the stage, in traversal order.
     SdfPathVector GetSceneCameras() const;
 
@@ -191,6 +220,15 @@ public:
     bool HasValidated() const { return _validated; }
     void SetValidationIssues(std::vector<ValidationIssue> issues);
 
+    // What the viewport (in the app) can render for export_image and
+    // export_movie. Unset without a viewport. They fill in the size used.
+    struct ViewportServices {
+        std::function<bool(ImageExport &, std::string *error)> exportImage;
+        std::function<bool(MovieExport &, std::string *error)> exportMovie;
+    };
+    void SetViewportServices(ViewportServices services) { _viewportServices = std::move(services); }
+    const ViewportServices &GetViewportServices() const { return _viewportServices; }
+
     UndoStack &GetUndoStack() { return *_undo; }
     const UndoStack &GetUndoStack() const { return *_undo; }
 
@@ -215,6 +253,7 @@ private:
     LoadStatistics _loadStatistics;
     std::vector<ValidationIssue> _validationIssues;
     bool _validated = false;
+    ViewportServices _viewportServices;
     mutable GfBBox3d _stageBounds;
     mutable bool _stageBoundsValid = false;
     mutable GfBBox3d _selectionBounds;

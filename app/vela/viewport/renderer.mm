@@ -13,6 +13,7 @@
 #include "pxr/imaging/hgiMetal/hgi.h"
 #include "pxr/imaging/hgiMetal/texture.h"
 #include "pxr/imaging/hio/image.h"
+#include "pxr/base/gf/half.h"
 #include "pxr/usd/usdGeom/tokens.h"
 #include "pxr/usd/usdRender/tokens.h"
 #include "pxr/usd/usd/prim.h"
@@ -20,6 +21,7 @@
 #include "pxr/usd/usdGeom/tokens.h"
 #include "pxr/usdImaging/usdImagingGL/engine.h"
 
+#include <algorithm>
 #include <chrono>
 #include <map>
 #include <optional>
@@ -448,11 +450,15 @@ bool Renderer::IsConverged() const {
     return !_impl->engine || _impl->engine->IsConverged();
 }
 
-bool Renderer::WriteImage(const View &view, const std::string &path) {
+bool Renderer::ReadPixels(const View &givenView, bool linear, Pixels *out) {
     if (!_impl->engine) {
         return false;
     }
-    // Non-interactive while writing, as usdrecord renders; the viewport
+    // Linear pixels are the color AOV before color correction, which
+    // otherwise writes over it.
+    View view = givenView;
+    if (linear) view.settings.colorCorrection = ColorCorrection::Disabled;
+    // Non-interactive while reading, as usdrecord renders; the viewport
     // keeps drawing interactively afterwards.
     UsdImagingGLEngine *engine = _impl->engine.get();
     const VtValue interactive = engine->GetRendererSetting(HdRenderSettingsTokens->enableInteractive);
@@ -471,36 +477,87 @@ bool Renderer::WriteImage(const View &view, const std::string &path) {
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
     }
     const NSUInteger width = view.size[0], height = view.size[1];
-    MTLTextureDescriptor *descriptor = [MTLTextureDescriptor
-        texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
-                                     width:width height:height mipmapped:NO];
-    descriptor.usage = MTLTextureUsageRenderTarget;
-    descriptor.storageMode = MTLStorageModePrivate;
-    id<MTLTexture> target = [GetDevice() newTextureWithDescriptor:descriptor];
-    id<MTLBuffer> pixels = [GetDevice() newBufferWithLength:width * height * 4
-                                                    options:MTLResourceStorageModeShared];
+    id<MTLTexture> source;
     id<MTLCommandBuffer> commandBuffer = [GetQueue() commandBuffer];
-    if (!Draw(view, target, commandBuffer)) {
-        return false;
+    if (linear) {
+        // Storm's passes are in Hgi's primary command buffer (see Draw).
+        _impl->Metal()->CommitPrimaryCommandBuffer(
+            HgiMetal::CommitCommandBuffer_NoWait, /*forceNewBuffer=*/true);
+        HgiTextureHandle color = engine->GetAovTexture(HdAovTokens->color);
+        auto *metalColor = static_cast<HgiMetalTexture *>(color.Get());
+        if (!metalColor) return false;
+        source = metalColor->GetTextureId();
+        if (source.width != width || source.height != height) return false;
+    } else {
+        MTLTextureDescriptor *descriptor = [MTLTextureDescriptor
+            texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
+                                         width:width height:height mipmapped:NO];
+        descriptor.usage = MTLTextureUsageRenderTarget;
+        descriptor.storageMode = MTLStorageModePrivate;
+        source = [GetDevice() newTextureWithDescriptor:descriptor];
+        if (!Draw(view, source, commandBuffer)) {
+            return false;
+        }
     }
+    NSUInteger pixelSize;
+    switch (source.pixelFormat) {
+    case MTLPixelFormatRGBA8Unorm: out->format = HioFormatUNorm8Vec4; pixelSize = 4; break;
+    case MTLPixelFormatRGBA16Float: out->format = HioFormatFloat16Vec4; pixelSize = 8; break;
+    case MTLPixelFormatRGBA32Float: out->format = HioFormatFloat32Vec4; pixelSize = 16; break;
+    default: return false;
+    }
+    const NSUInteger rowBytes = width * pixelSize;
+    id<MTLBuffer> pixels = [GetDevice() newBufferWithLength:rowBytes * height
+                                                    options:MTLResourceStorageModeShared];
     id<MTLBlitCommandEncoder> blit = [commandBuffer blitCommandEncoder];
-    [blit copyFromTexture:target sourceSlice:0 sourceLevel:0
+    [blit copyFromTexture:source sourceSlice:0 sourceLevel:0
              sourceOrigin:MTLOriginMake(0, 0, 0)
                sourceSize:MTLSizeMake(width, height, 1)
                  toBuffer:pixels destinationOffset:0
-    destinationBytesPerRow:width * 4 destinationBytesPerImage:width * height * 4];
+    destinationBytesPerRow:rowBytes destinationBytesPerImage:rowBytes * height];
     [blit endEncoding];
     [commandBuffer commit];
     [commandBuffer waitUntilCompleted];
+    out->width = int(width);
+    out->height = int(height);
+    // The AOV is stored bottom row first (Draw flips it upright).
+    out->flipped = linear;
+    const uint8_t *bytes = static_cast<const uint8_t *>(pixels.contents);
+    out->data.assign(bytes, bytes + rowBytes * height);
+    return true;
+}
 
+bool Renderer::WantsLinear(const std::string &path) {
+    std::string extension = path.substr(path.rfind('.') + 1);
+    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+    return extension == "exr" || extension == "hdr";
+}
+
+bool Renderer::WritePixels(const Pixels &pixels, const std::string &path) {
     HioImage::StorageSpec storage;
-    storage.width = int(width);
-    storage.height = int(height);
-    storage.format = HioFormatUNorm8Vec4;
-    storage.flipped = false;
-    storage.data = pixels.contents;
+    storage.width = pixels.width;
+    storage.height = pixels.height;
+    storage.format = pixels.format;
+    storage.flipped = pixels.flipped;
+    storage.data = const_cast<uint8_t *>(pixels.data.data());
+    // stb writes HDR from 32-bit floats only.
+    std::vector<float> wide;
+    const bool hdr = path.size() > 4 && (path.compare(path.size() - 4, 4, ".hdr") == 0 ||
+                                         path.compare(path.size() - 4, 4, ".HDR") == 0);
+    if (hdr && pixels.format == HioFormatFloat16Vec4) {
+        const GfHalf *half = reinterpret_cast<const GfHalf *>(pixels.data.data());
+        wide.assign(half, half + size_t(pixels.width) * pixels.height * 4);
+        storage.format = HioFormatFloat32Vec4;
+        storage.data = wide.data();
+    }
     HioImageSharedPtr image = HioImage::OpenForWriting(path);
     return image && image->Write(storage);
+}
+
+bool Renderer::WriteImage(const View &view, const std::string &path) {
+    // EXR and HDR files hold linear floating-point color.
+    Pixels pixels;
+    return ReadPixels(view, WantsLinear(path), &pixels) && WritePixels(pixels, path);
 }
 
 bool Renderer::Pick(const GfFrustum &frustum, UsdTimeCode time,

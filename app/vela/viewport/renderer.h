@@ -13,12 +13,14 @@
 #include "pxr/base/gf/vec2i.h"
 #include "pxr/base/vt/dictionary.h"
 #include "pxr/base/gf/vec4f.h"
+#include "pxr/imaging/hio/types.h"
 #include "pxr/usd/sdf/path.h"
 #include "pxr/usd/usd/stage.h"
 #include "pxr/usd/usd/timeCode.h"
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace vela {
 
@@ -76,8 +78,24 @@ public:
     std::string GetRendererName() const;
     VtDictionary GetRenderStats() const;
 
-    // Renders until converged and writes the image Draw would show.
+    // Renders offscreen until converged and reads back the image Draw
+    // would show (8-bit RGBA, top row first), or with linear the color
+    // AOV without color correction (16- or 32-bit float RGBA, as the
+    // renderer stores it). Nothing depends on a window being visible.
+    struct Pixels {
+        int width = 0, height = 0;
+        HioFormat format = HioFormatUNorm8Vec4;
+        bool flipped = false;  // bottom row first
+        std::vector<uint8_t> data;
+    };
+    bool ReadPixels(const View &view, bool linear, Pixels *pixels);
+    // Renders until converged and writes the image Draw would show, or for
+    // .exr and .hdr files the linear color.
     bool WriteImage(const View &view, const std::string &path);
+    // Whether a file's format holds linear color (.exr, .hdr).
+    static bool WantsLinear(const std::string &path);
+    // Writes pixels to an image file; the extension picks the format.
+    static bool WritePixels(const Pixels &pixels, const std::string &path);
 
     // The prim drawn nearest the center of a pick frustum.
     // Picking draws what the view settings show (purposes, draw mode).

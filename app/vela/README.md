@@ -94,6 +94,32 @@ From a terminal, `Vela FILE` takes usdview's options (`--select`,
 `--camera`, `--mask`, `--unloaded`, `--sessionLayer`, `--ff/--lf/--cf`,
 `--complexity`, `--timing`, ...); `Vela --bogus` lists them.
 
+## Exporting images and movies
+
+File → Export Image… saves what the viewport shows (without the HUD) as
+PNG, JPEG, TIFF, BMP, TGA or OpenEXR, chosen in the save panel's Format
+menu. EXR files hold the renderer's linear color, before color correction.
+File → Export Movie… asks for the frame range, frame rate, resolution and
+codec. Resolutions: 4K UHD, 1440p, 1080p and 720p (16:9), DCI 4K and 2K
+(1.90:1), Flat (1.85:1), Scope (2.39:1), 4:3, square, portrait (4:5),
+vertical (9:16), the viewport's size, or a custom width and height. When
+the camera's aspect ratio (a scene camera's aperture, or the viewport's
+for the free camera) differs from the resolution's, the frame is
+letterboxed or pillarboxed in black to keep all of it, or cropped to fill.
+It renders each frame
+through the viewport's camera (a scene camera, which may be animated, or
+the free camera) into a .mov or .mp4: H.264, HEVC, ProRes 422 or ProRes
+4444. A progress panel can cancel it. Both render offscreen at the size
+asked for, so covering, minimizing or resizing the window doesn't change
+the result, and they don't move the timeline. Python and MCP run them as
+the `export_image` and `export_movie` actions:
+
+```python
+vela.run('export_image', path='/tmp/view.png', width=1600)
+vela.run('export_movie', path='/tmp/turn.mov', start=1, end=96, codec='prores422',
+         resolution='2160p', framing='fit')
+```
+
 ## Window
 
 The prim browser (left), inspector (right) and bottom panel each hide and

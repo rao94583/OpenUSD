@@ -29,7 +29,9 @@ const char *const Instructions =
     "edits appear in the window at once and each call is one undo step. "
     "ui_action runs any menu command by name (list_actions describes them, "
     "e.g. undo, frame_selection, set_draw_mode). viewport_screenshot shows "
-    "what the viewport renders.";
+    "what the viewport renders; the export_image and export_movie actions "
+    "write it to files (any size, png/jpg/tif/exr, or .mov/.mp4 movies "
+    "through the view's camera), rendered offscreen.";
 
 // JSON-RPC error codes.
 constexpr int ParseError = -32700;

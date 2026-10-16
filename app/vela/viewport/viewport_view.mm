@@ -1,14 +1,19 @@
 #import "viewport_view.h"
 #import "hud_view.h"
+#import "movie_writer.h"
 #import <QuartzCore/QuartzCore.h>
 
 #include "app/vela/core/actions.h"
 #include "app/vela/viewport/renderer.h"
 
 #include "pxr/base/gf/frustum.h"
+#include "pxr/base/gf/half.h"
+#include "pxr/imaging/cameraUtil/conformWindow.h"
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <cstring>
 #include <memory>
 
 PXR_NAMESPACE_USING_DIRECTIVE
@@ -24,6 +29,74 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 @implementation VelaDisplayLinkTarget
 - (void)tick:(id)link { [self.view displayLinkFired]; }
+@end
+
+// A movie export's progress, with Cancel, in a modal session: the main
+// thread renders the frames, and the session keeps the UI responding
+// between them.
+@interface VelaExportProgress : NSObject
+- (instancetype)initWithTitle:(NSString *)title frames:(int64_t)frames window:(NSWindow *)window;
+- (BOOL)updateFrame:(int64_t)frame;  // NO when cancelled
+- (void)end;
+@end
+
+@implementation VelaExportProgress {
+    NSPanel *_panel;
+    NSProgressIndicator *_bar;
+    NSTextField *_label;
+    NSModalSession _session;
+    int64_t _frames;
+    BOOL _cancelled;
+}
+
+- (instancetype)initWithTitle:(NSString *)title frames:(int64_t)frames window:(NSWindow *)window {
+    if (!(self = [super init])) return nil;
+    _frames = frames;
+    _panel = [[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 360, 110)
+        styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+    _panel.title = title;
+    _bar = [NSProgressIndicator new];
+    _bar.indeterminate = NO;
+    _bar.minValue = 0;
+    _bar.maxValue = double(frames);
+    _label = [NSTextField labelWithString:@""];
+    _label.font = [NSFont monospacedDigitSystemFontOfSize:NSFont.smallSystemFontSize weight:NSFontWeightRegular];
+    NSButton *cancel = [NSButton buttonWithTitle:@"Cancel" target:self action:@selector(cancel:)];
+    cancel.keyEquivalent = @"\e";
+    NSStackView *stack = [NSStackView stackViewWithViews:@[_bar, _label, cancel]];
+    stack.orientation = NSUserInterfaceLayoutOrientationVertical;
+    stack.alignment = NSLayoutAttributeLeading;
+    stack.edgeInsets = NSEdgeInsetsMake(16, 20, 16, 20);
+    [_bar.widthAnchor constraintEqualToConstant:320].active = YES;
+    _panel.contentView = stack;
+    if (window) {
+        // Over the document's window, wherever it is (even minimized).
+        NSRect frame = _panel.frame;
+        frame.origin = NSMakePoint(NSMidX(window.frame) - frame.size.width / 2,
+                                   NSMidY(window.frame) - frame.size.height / 2);
+        [_panel setFrame:frame display:NO];
+    } else {
+        [_panel center];
+    }
+    _session = [NSApp beginModalSessionForWindow:_panel];
+    [self updateFrame:0];
+    return self;
+}
+
+- (void)cancel:(id)sender { _cancelled = YES; }
+
+- (BOOL)updateFrame:(int64_t)frame {
+    _bar.doubleValue = double(frame);
+    _label.stringValue = [NSString stringWithFormat:@"Frame %lld of %lld", frame, _frames];
+    [NSApp runModalSession:_session];
+    return !_cancelled;
+}
+
+- (void)end {
+    [NSApp endModalSession:_session];
+    [_panel orderOut:nil];
+}
+
 @end
 
 @implementation VelaViewportView {
@@ -58,6 +131,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
     int _benchmarkRemaining;
     std::chrono::steady_clock::time_point _benchmarkStart;
     void (^_benchmarkCompletion)(double seconds);
+    // While exporting, the viewport doesn't draw (the renderer is busy).
+    BOOL _exporting;
 }
 
 - (instancetype)initWithDocument:(std::shared_ptr<vela::Document>)document {
@@ -78,11 +153,25 @@ PXR_NAMESPACE_USING_DIRECTIVE
     _hudView = [[VelaHudView alloc] initWithFrame:self.bounds];
     _hudView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [self addSubview:_hudView];
+    // File → Export Image… and Export Movie…, through the document's actions.
+    vela::Document::ViewportServices services;
+    services.exportImage = [weakSelf](vela::ImageExport &request, std::string *error) {
+        VelaViewportView *strongSelf = weakSelf;
+        if (!strongSelf) { *error = "The window has closed"; return false; }
+        return bool([strongSelf exportImage:request error:error]);
+    };
+    services.exportMovie = [weakSelf](vela::MovieExport &request, std::string *error) {
+        VelaViewportView *strongSelf = weakSelf;
+        if (!strongSelf) { *error = "The window has closed"; return false; }
+        return bool([strongSelf exportMovie:request error:error]);
+    };
+    _document->SetViewportServices(std::move(services));
     return self;
 }
 
 - (void)dealloc {
     _document->RemoveObserver(_observer);
+    _document->SetViewportServices({});
 }
 
 - (void)documentChanged:(unsigned)changes {
@@ -232,9 +321,15 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 // What the viewport draws, at a size in pixels.
 - (vela::View)viewOfSize:(GfVec2i)size {
+    return [self viewOfSize:size time:_document->GetTime() showSelection:YES];
+}
+
+// The same at another time (the camera too, when it is a scene camera),
+// with or without the selection's highlights and bounding boxes.
+- (vela::View)viewOfSize:(GfVec2i)size time:(UsdTimeCode)time showSelection:(BOOL)showSelection {
     vela::View view;
-    view.camera = _document->ComputeViewGfCamera(double(size[0]) / size[1]);
-    view.time = _document->GetTime();
+    view.camera = _document->ComputeViewGfCamera(double(size[0]) / size[1], time);
+    view.time = time;
     view.size = size;
     view.settings = _document->GetViewSettings();
     view.clearColor = vela::BackgroundColor(view.settings.background);
@@ -252,7 +347,162 @@ PXR_NAMESPACE_USING_DIRECTIVE
     case vela::HighlightMode::WhenPaused: view.highlight = !_document->IsPlaying(); break;
     case vela::HighlightMode::Always: view.highlight = true; break;
     }
+    if (!showSelection) {
+        view.highlight = false;
+        view.bboxes.clear();
+    }
     return view;
+}
+
+// An export's size: as asked, or the viewport's; with one of them, the
+// other follows the camera's aspect ratio. even rounds up to even
+// numbers, as video codecs need.
+- (GfVec2i)exportSizeWithWidth:(int)width height:(int)height time:(UsdTimeCode)time even:(BOOL)even {
+    return vela::ResolveExportSize(width, height, _document->GetViewCameraAspectRatio(time),
+                                   [self pixelSize], even);
+}
+
+namespace {
+
+// pixels placed in a black frame of the output's size (as a fitted frame
+// says), for letterboxing and pillarboxing.
+vela::Renderer::Pixels Boxed(const vela::Renderer::Pixels &inner, const vela::FittedFrame &frame,
+                             GfVec2i output) {
+    vela::Renderer::Pixels out;
+    out.width = output[0];
+    out.height = output[1];
+    out.format = inner.format;
+    out.flipped = inner.flipped;
+    const size_t pixelSize = inner.data.size() / (size_t(inner.width) * inner.height);
+    // Opaque black in the pixels' format.
+    std::vector<uint8_t> black(pixelSize, 0);
+    if (inner.format == HioFormatUNorm8Vec4) black[3] = 255;
+    else if (inner.format == HioFormatFloat16Vec4) {
+        const GfHalf one(1.0f);
+        std::memcpy(&black[6], &one, sizeof(one));
+    } else if (inner.format == HioFormatFloat32Vec4) {
+        const float one = 1.0f;
+        std::memcpy(&black[12], &one, sizeof(one));
+    }
+    out.data.resize(size_t(output[0]) * output[1] * pixelSize);
+    for (size_t i = 0; i < out.data.size(); i += pixelSize) {
+        std::memcpy(&out.data[i], black.data(), pixelSize);
+    }
+    // Rows by their place in the image, top first, whichever way the
+    // buffers store them.
+    const size_t innerRow = size_t(inner.width) * pixelSize, outRow = size_t(output[0]) * pixelSize;
+    for (int y = 0; y < inner.height; ++y) {
+        const int from = inner.flipped ? inner.height - 1 - y : y;
+        const int imageRow = frame.offset[1] + y;
+        const int to = out.flipped ? output[1] - 1 - imageRow : imageRow;
+        std::memcpy(&out.data[size_t(to) * outRow + size_t(frame.offset[0]) * pixelSize],
+                    &inner.data[size_t(from) * innerRow], innerRow);
+    }
+    return out;
+}
+
+} // namespace
+
+// A frame for export, rendered offscreen at the output's size. When the
+// camera's aspect ratio differs from the output's, Fit renders the
+// camera's whole frame and adds bars; Crop fills the output with the
+// middle of it.
+- (BOOL)renderExportFrame:(GfVec2i)output time:(UsdTimeCode)time framing:(vela::Framing)framing
+            showSelection:(BOOL)showSelection linear:(BOOL)linear
+                   pixels:(vela::Renderer::Pixels *)pixels {
+    const double aspect = _document->GetViewCameraAspectRatio(time);
+    const double outputAspect = double(output[0]) / output[1];
+    if (framing == vela::Framing::Fit) {
+        const vela::FittedFrame frame = vela::FitFrame(output, aspect);
+        if (frame.boxed) {
+            vela::Renderer::Pixels inner;
+            if (!_renderer->ReadPixels([self viewOfSize:frame.size time:time showSelection:showSelection],
+                                       linear, &inner)) {
+                return NO;
+            }
+            *pixels = Boxed(inner, frame, output);
+            return YES;
+        }
+        return _renderer->ReadPixels([self viewOfSize:output time:time showSelection:showSelection],
+                                     linear, pixels);
+    }
+    vela::View view = [self viewOfSize:output time:time showSelection:showSelection];
+    GfCamera camera = _document->ComputeViewGfCamera(aspect, time);
+    CameraUtilConformWindow(&camera, CameraUtilCrop, outputAspect);
+    view.camera = camera;
+    return _renderer->ReadPixels(view, linear, pixels);
+}
+
+// Rendered offscreen, into a texture of its own: what the window shows on
+// screen (covered, minimized, or smaller) doesn't matter.
+- (BOOL)exportImage:(vela::ImageExport &)request error:(std::string *)error {
+    const UsdTimeCode time = _document->GetTime();
+    const GfVec2i size = [self exportSizeWithWidth:request.width height:request.height
+                                              time:time even:NO];
+    request.width = size[0];
+    request.height = size[1];
+    _exporting = YES;
+    vela::Renderer::Pixels pixels;
+    const bool rendered = [self renderExportFrame:size time:time framing:request.framing
+                                    showSelection:request.showSelection
+                                           linear:vela::Renderer::WantsLinear(request.path)
+                                           pixels:&pixels];
+    const bool ok = rendered && vela::Renderer::WritePixels(pixels, request.path);
+    _exporting = NO;
+    [self requestRender];
+    if (!ok) *error = rendered ? "the image could not be written (is the folder writable?)"
+                               : "the renderer could not render it";
+    return ok;
+}
+
+- (BOOL)exportMovie:(vela::MovieExport &)request error:(std::string *)error {
+    const GfVec2i size = [self exportSizeWithWidth:request.width height:request.height
+        time:UsdTimeCode(request.start) even:request.codec == "h264" || request.codec == "hevc"];
+    request.width = size[0];
+    request.height = size[1];
+    const int64_t frames = int64_t(std::floor(request.end - request.start)) + 1;
+    NSString *message = nil;
+    VelaMovieWriter *writer = [[VelaMovieWriter alloc] initWithPath:@(request.path.c_str())
+        width:size[0] height:size[1] framesPerSecond:request.framesPerSecond
+        codec:@(request.codec.c_str()) error:&message];
+    if (!writer) {
+        *error = message ? message.UTF8String : "could not start the movie";
+        return false;
+    }
+    VelaExportProgress *progress = [[VelaExportProgress alloc]
+        initWithTitle:[NSString stringWithFormat:@"Exporting %@",
+                       @(request.path.c_str()).lastPathComponent]
+               frames:frames window:self.window];
+    _exporting = YES;
+    bool ok = true;
+    vela::Renderer::Pixels pixels;
+    for (int64_t i = 0; i < frames && ok; ++i) {
+        if (![progress updateFrame:i]) {
+            *error = "cancelled";
+            ok = false;
+            break;
+        }
+        if (![self renderExportFrame:size time:UsdTimeCode(request.start + double(i))
+                             framing:request.framing showSelection:request.showSelection
+                              linear:NO pixels:&pixels]) {
+            *error = "frame " + std::to_string(i) + " did not render";
+            ok = false;
+        } else if (![writer appendFrame:pixels.data.data() error:&message]) {
+            *error = message ? message.UTF8String : "could not add a frame";
+            ok = false;
+        }
+    }
+    if (ok) {
+        [progress updateFrame:frames];
+        ok = [writer finish:&message];
+        if (!ok) *error = message ? message.UTF8String : "could not finish the movie";
+    } else {
+        [writer cancel];
+    }
+    [progress end];
+    _exporting = NO;
+    [self requestRender];
+    return ok;
 }
 
 - (NSData *)pngWithWidth:(int)width height:(int)height error:(NSString **)error {
@@ -276,8 +526,9 @@ PXR_NAMESPACE_USING_DIRECTIVE
 }
 
 - (void)render {
-    // View → Display → Pause Viewport Drawing (usdview's --norender).
-    if (_document->GetViewSettings().pauseDrawing) {
+    // View → Display → Pause Viewport Drawing (usdview's --norender), and
+    // exports, which use the renderer.
+    if (_document->GetViewSettings().pauseDrawing || _exporting) {
         return;
     }
     CAMetalLayer *layer = (CAMetalLayer *)self.layer;

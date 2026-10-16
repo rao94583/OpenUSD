@@ -57,6 +57,9 @@ struct FormField {
     Type type = Type::String;
     JsValue value;                     // the current value, shown first
     std::vector<std::string> choices;  // for Choice
+    // For Choice, the values the choices stand for (the same count), when
+    // they differ from the titles shown. value is one of these.
+    std::vector<std::string> choiceValues;
 };
 
 struct Action {
@@ -82,8 +85,11 @@ struct Action {
     std::function<std::vector<MenuChoice>(const Document &)> dynamicChoices;
     std::function<bool(const Document &, const JsObject &params)> chosen;
     // When set, the menu item first asks for a file to write, with a save
-    // panel, and passes its path in this parameter.
+    // panel, and passes its path in this parameter (after the form, if the
+    // action has one). saveTypes are the file extensions it offers, the
+    // first chosen first; empty offers USD files.
     std::string savePathParam;
+    std::vector<std::string> saveTypes;
     // Likewise with an open panel, for a USD file to read.
     std::string openPathParam;
     // When set, the menu item opens a form with these fields and runs the
