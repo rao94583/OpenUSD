@@ -184,6 +184,7 @@ JsValue ActionRegistry::Describe() const {
             {"description", JsValue(action.description)},
             {"parameters", JsValue(action.parameters)},
             {"undoable", JsValue(action.undoable)},
+            {"query", JsValue(action.query)},
         };
         if (!action.menu.empty()) entry["menu"] = JsValue(action.menu);
         if (!action.choices.empty()) {

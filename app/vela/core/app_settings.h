@@ -28,6 +28,9 @@ struct AppSettings {
     // Worker threads: 0 for all, negative for all but that many
     // (--numThreads). Applies at the next launch.
     int threadLimit = 0;
+    // Accept MCP clients (Claude Code through vela-mcp) on the app's
+    // socket.
+    bool mcpServer = true;
 
     bool operator==(const AppSettings &other) const = default;
 };

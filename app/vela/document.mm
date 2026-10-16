@@ -1,12 +1,14 @@
 #import "document.h"
 #import "form_sheet.h"
 #import "validation_panel.h"
+#import "python_console.h"
 #import "browser_view.h"
 #import "window_layout.h"
 #import "menus.h"
 #import "viewport/viewport_view.h"
 
 #include "app/vela/core/actions.h"
+#include "app/vela/core/session.h"
 
 #include "pxr/usd/usd/primRange.h"
 
@@ -234,6 +236,8 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     vela::LaunchOptions _launch;
     double _openStart;  // for the load statistics
     VelaValidationPanelController *_validation;
+    int _sessionId;
+    id _becameMainObserver;
 }
 
 + (BOOL)autosavesInPlace { return NO; }
@@ -247,6 +251,7 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
 }
 
 - (std::shared_ptr<vela::Document>)core { return _core; }
+- (int)sessionId { return _sessionId; }
 
 - (VelaViewportView *)viewport {
     return ((VelaWindowController *)self.windowControllers.firstObject).viewport;
@@ -309,9 +314,32 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     [_validation showWindow:sender];
 }
 
+// Window → Python Console: an interpreter for this document, in a window
+// of its own (so menus and undo act on this document while it is key).
+- (void)showPythonConsole:(id)sender {
+    for (NSWindowController *controller in self.windowControllers) {
+        if ([controller isKindOfClass:[VelaPythonConsoleController class]]) {
+            [controller showWindow:sender];
+            return;
+        }
+    }
+    VelaPythonConsoleController *console =
+        [[VelaPythonConsoleController alloc] initWithSessionId:_sessionId];
+    [self addWindowController:console];
+    [console showWindow:sender];
+}
+
 - (void)close {
     [_validation close];
     _validation = nil;
+    if (_becameMainObserver) {
+        [NSNotificationCenter.defaultCenter removeObserver:_becameMainObserver];
+        _becameMainObserver = nil;
+    }
+    if (_sessionId) {
+        vela::Session::Get().Remove(_sessionId);
+        _sessionId = 0;
+    }
     [super close];
 }
 
@@ -397,6 +425,41 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     return [super validateUserInterfaceItem:item];
 }
 
+// Python and MCP find the document through the session; the front window's
+// is current.
+- (void)registerWithSession:(VelaWindowController *)controller {
+    __weak VelaViewportView *weakViewport = controller.viewport;
+    vela::SessionDocument entry;
+    entry.name = self.displayName.UTF8String;
+    entry.document = _core;
+    entry.screenshot = [weakViewport](int width, int height, std::vector<uint8_t> *png,
+                                      std::string *error) {
+        VelaViewportView *viewport = weakViewport;
+        if (!viewport) {
+            *error = "The window has closed";
+            return false;
+        }
+        NSString *message = nil;
+        NSData *data = [viewport pngWithWidth:width height:height error:&message];
+        if (!data) {
+            *error = message ? message.UTF8String : "Rendering failed";
+            return false;
+        }
+        const uint8_t *bytes = (const uint8_t *)data.bytes;
+        png->assign(bytes, bytes + data.length);
+        return true;
+    };
+    _sessionId = vela::Session::Get().Add(std::move(entry));
+    const int sessionId = _sessionId;
+    __weak VelaDocument *weakSelf = self;
+    _becameMainObserver = [NSNotificationCenter.defaultCenter
+        addObserverForName:NSWindowDidBecomeMainNotification object:nil queue:nil
+                usingBlock:^(NSNotification *notification) {
+        NSWindow *window = notification.object;
+        if (window.windowController.document == weakSelf) vela::Session::Get().SetFront(sessionId);
+    }];
+}
+
 - (size_t)primCount {
     size_t count = 0;
     if (_core) for (const auto &prim : _core->GetStage()->Traverse()) { (void)prim; ++count; }
@@ -406,7 +469,10 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
 - (void)makeWindowControllers {
     VelaWindowController *controller =
         [[VelaWindowController alloc] initWithDocument:_core primCount:[self primCount]];
+    // Closing the main window closes the document, and its console.
+    controller.shouldCloseDocument = YES;
     [self addWindowController:controller];
+    [self registerWithSession:controller];
     // Window-level launch options.
     VelaViewportView *viewport = controller.viewport;
     if (_launch.viewportWidth > 0) {

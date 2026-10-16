@@ -4,7 +4,8 @@ import subprocess
 import sys
 
 app, = Path(sys.argv[1]).glob('*.app')
-for path in sorted((app / 'Contents/Resources/Runtime').rglob('*')):
+helpers = [app / 'Contents/MacOS/vela-mcp']
+for path in sorted((app / 'Contents/Resources/Runtime').rglob('*')) + helpers:
     if path.is_file() and not path.is_symlink():
         with path.open('rb') as stream:
             magic = stream.read(4)

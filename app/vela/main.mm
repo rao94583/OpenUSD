@@ -11,6 +11,7 @@
 #import "form_sheet.h"
 #import "menus.h"
 #import "palette.h"
+#import "scripting.h"
 #import "settings_window.h"
 #import "viewport/viewport_view.h"
 #include "app/vela/core/actions.h"
@@ -18,10 +19,14 @@
 #include "app/vela/core/launch_options.h"
 #include "app/vela/core/document.h"
 #include "app/vela/core/free_camera.h"
+#include "app/vela/core/mcp.h"
+#include "app/vela/core/python.h"
+#include "app/vela/core/session.h"
 #include "pxr/base/js/json.h"
 #include "app/vela/viewport/renderer.h"
 #include "pxr/base/plug/registry.h"
 #include "pxr/base/work/threadLimits.h"
+#include "pxr/usd/usd/primRange.h"
 #include "pxr/usd/usdGeom/bboxCache.h"
 #include "pxr/usd/usdGeom/camera.h"
 #include "pxr/usd/usdGeom/metrics.h"
@@ -74,6 +79,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     [NSApp activateIgnoringOtherApps:YES];
     [VelaPaletteController installShortcut];
+    VelaStartScripting();
     if (_launchFile) {
         [NSDocumentController.sharedDocumentController openDocumentWithContentsOfURL:_launchFile
             display:YES completionHandler:^(NSDocument *document, BOOL, NSError *error) {
@@ -365,12 +371,77 @@ static int WindowBenchmark(const RenderOptions &options) {
     return status;
 }
 
+// The embedded interpreter against a document, as the console and MCP use
+// it: the vela module sees the document's own stage, edits are one undo
+// step, and errors come back as tracebacks.
+static int CheckPython(const char *file) {
+    std::string error;
+    auto core = vela::Document::Open(file, &error);
+    if (!core) { fprintf(stderr, "%s\n", error.c_str()); return 1; }
+    vela::SessionDocument entry;
+    entry.name = "check";
+    entry.document = core;
+    vela::Session::Get().Add(entry);
+    if (!VelaStartPython()) return 1;
+    int failures = 0;
+    auto check = [&](bool ok, const std::string &what) {
+        if (!ok) { fprintf(stderr, "FAILED: %s\n", what.c_str()); ++failures; }
+    };
+    auto run = [&](const std::string &code) {
+        vela::PythonResult result = vela::RunPython(code, "check");
+        if (!result.ok) fprintf(stderr, "%s", result.error.c_str());
+        return result;
+    };
+    const std::string root = core->GetStage()->GetRootLayer()->GetIdentifier();
+    vela::PythonResult r = run("from pxr import Usd\nvela.stage.GetRootLayer().identifier");
+    check(r.ok && r.value == "'" + root + "'", "vela.stage is the document's stage: " + r.value);
+    r = run("print('hello')\nlen(vela.documents())");
+    check(r.ok && r.output == "hello\n" && r.value == "1", "output and value: " + r.output + r.value);
+    // Edits through the USD API are one undo step.
+    r = run("UsdGeom.Xform.Define(vela.stage, '/FromPython')\n"
+            "vela.stage.GetPrimAtPath('/FromPython').CreateAttribute('n', Sdf.ValueTypeNames.Int).Set(3)");
+    check(r.ok && core->GetStage()->GetPrimAtPath(SdfPath("/FromPython")), "define a prim");
+    check(core->GetUndoStack().GetUndoName() == "Python", "undo step name: " +
+          core->GetUndoStack().GetUndoName());
+    r = run("vela.selection = ['/FromPython']\n[str(p) for p in vela.selection]");
+    check(r.ok && core->GetSelection() == SdfPathVector{SdfPath("/FromPython")} &&
+          r.value == "['/FromPython']", "selection: " + r.value);
+    r = run("vela.run('get_settings') is not None");
+    check(r.ok && r.value == "True", "vela.run: " + r.value);
+    vela::ActionRegistry::Get().Run(*core, "undo");
+    check(!core->GetStage()->GetPrimAtPath(SdfPath("/FromPython")), "undo the script's edits");
+    r = vela::RunPython("1/0", "check");
+    check(!r.ok && r.error.find("ZeroDivisionError") != std::string::npos &&
+          r.error.find("<vela>") == std::string::npos, "traceback: " + r.error);
+    r = vela::RunPython("vela.run('no_such_action')", "check");
+    check(!r.ok && r.error.find("ActionError") != std::string::npos, "action error: " + r.error);
+    check(!vela::IsCompletePython("for i in range(3):") && vela::IsCompletePython("x = 1"),
+          "completeness");
+    // The same through MCP's run_python.
+    const std::string reply = vela::mcp::Handle(
+        R"j({"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "run_python",)j"
+        R"j( "arguments": {"code": "len(list(vela.stage.Traverse()))"}}})j");
+    const JsValue parsed = JsParseString(reply);
+    std::string text;
+    if (parsed.IsObject() && parsed.GetJsObject().count("result")) {
+        const JsObject &result = parsed.GetJsObject().at("result").GetJsObject();
+        text = result.at("content").GetJsArray()[0].GetJsObject().at("text").GetString();
+    }
+    size_t prims = 0;
+    for (const auto &prim : core->GetStage()->Traverse()) { (void)prim; ++prims; }
+    check(text == std::to_string(prims), "MCP run_python: " + reply);
+    if (failures) return 1;
+    printf("Python checks passed\n");
+    return 0;
+}
+
 static void Usage() {
     fprintf(stderr,
         "Usage: Vela [FILE] [usdview's options; see above]\n"
         "       Vela --check-document FILE\n"
         "       Vela --check-saving FILE PRIM   # edit and save through the document\n"
         "       Vela --check-browser FILE    # read-only browsing smoke check\n"
+        "       Vela --check-python FILE    # the embedded interpreter and MCP tools\n"
         "       Vela --describe-actions     # the action registry, as JSON\n"
         "       Vela --describe-menus       # the main menu, as text\n"
         "       Vela --snapshot FILE OUTPUT.png [--camera PATH | --viewCamera PATH] [--frame TIME]\n"
@@ -465,6 +536,9 @@ int main(int argc, const char *argv[]) {
             printf("Saving checks passed\n");
             return 0;
         }
+        if (argc == 3 && strcmp(argv[1], "--check-python") == 0) {
+            return CheckPython(argv[2]);
+        }
         if (argc == 3 && strcmp(argv[1], "--check-document") == 0) {
             VelaDocument *document = [VelaDocument new];
             NSError *error = nil;
@@ -510,13 +584,21 @@ int main(int argc, const char *argv[]) {
             Usage();
             return 2;
         }
+        // Tests (--defaultsettings) neither restore nor save open windows.
+        if (has("--defaultsettings")) {
+            [NSUserDefaults.standardUserDefaults setVolatileDomain:@{
+                @"ApplePersistenceIgnoreState": @"YES"} forName:NSArgumentDomain];
+        }
         NSURL *launchFile = nil;
         if (!launch.file.empty()) {
             launchFile = [NSURL fileURLWithPath:@(launch.file.c_str())];
             launch.file = launchFile.fileSystemRepresentation;
             VelaSetLaunchOptions(launch);
-            [NSUserDefaults.standardUserDefaults setVolatileDomain:@{
-                @"NSTreatUnknownArgumentsAsOpen": @"NO"} forName:NSArgumentDomain];
+            NSMutableDictionary *arguments = [[NSUserDefaults.standardUserDefaults
+                volatileDomainForName:NSArgumentDomain] mutableCopy] ?: [NSMutableDictionary dictionary];
+            arguments[@"NSTreatUnknownArgumentsAsOpen"] = @"NO";
+            [NSUserDefaults.standardUserDefaults setVolatileDomain:arguments
+                                                           forName:NSArgumentDomain];
         }
         [NSApplication sharedApplication];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];

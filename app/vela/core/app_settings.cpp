@@ -10,6 +10,7 @@ JsObject ToJson(const AppSettings &settings) {
         {"loadPayloads", JsValue(settings.loadPayloads)},
         {"usePrimaryCamera", JsValue(settings.usePrimaryCamera)},
         {"threadLimit", JsValue(settings.threadLimit)},
+        {"mcpServer", JsValue(settings.mcpServer)},
     };
 }
 
@@ -26,6 +27,7 @@ void FromJson(const JsObject &json, AppSettings *settings) {
     };
     flag("loadPayloads", &settings->loadPayloads);
     flag("usePrimaryCamera", &settings->usePrimaryCamera);
+    flag("mcpServer", &settings->mcpServer);
     if (const JsValue *v = get("threadLimit"); v && (v->IsInt() || v->IsUInt64())) {
         settings->threadLimit = int(v->IsUInt64() ? int64_t(v->GetUInt64()) : v->GetInt64());
     }

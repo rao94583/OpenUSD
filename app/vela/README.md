@@ -1,13 +1,13 @@
 # Vela
 
-Native macOS USD viewer (Phase 4 browsing is in progress). Requires macOS 13+, Xcode and
+Native macOS USD viewer and editor. Requires macOS 13+, Xcode and
 the repository's Bazel toolchain. It opens `.usd`, `.usda`, `.usdc` and
 `.usdz` through `NSDocument` (File → Open, Finder) and shows the stage in a
 Storm viewport rendered with Metal.
 
 ```sh
 bazel build //app/vela:archive
-bazel test //app/vela:all                  # core, menus, bundle, snapshots
+bazel test //app/vela:all                  # core, menus, bundle, snapshots, MCP
 bazel test //app/vela:benchmark_test --test_output=all   # manual
 ```
 
@@ -94,11 +94,42 @@ From a terminal, `Vela FILE` takes usdview's options (`--select`,
 `--camera`, `--mask`, `--unloaded`, `--sessionLayer`, `--ff/--lf/--cf`,
 `--complexity`, `--timing`, ...); `Vela --bogus` lists them.
 
+## Python and Claude
+
+Window → Python Console (⌥⌘P) is an interpreter for the front document,
+replacing usdview's. `vela.stage` is the document's own `Usd.Stage`, so
+edits appear in the window at once; `vela.selection` and `vela.time` can be
+read and assigned, `vela.run(action, **params)` runs any menu command and
+`vela.actions()` describes them. Usd, Sdf, Gf, Vt, Tf, UsdGeom, UsdShade,
+UsdLux, UsdUtils and Kind are imported. Each input's edits are one undo
+step, named "Python". Return runs a complete statement (a block runs on a
+blank line), Shift-Return adds a line, ⌘Return runs everything, ↑ and ↓
+browse history.
+
+Vela is also an MCP server, so Claude Code in a terminal can query and edit
+the open scene. Settings → Claude and MCP shows the command to add it (and
+can turn the server off):
+
+```sh
+claude mcp add vela -- '/Applications/Vela.app/Contents/MacOS/vela-mcp'
+```
+
+`vela-mcp` bridges the client's stdio to a Unix socket the app listens on
+(`~/Library/Application Support/Vela/mcp.sock`, mode 0600, this user only);
+no TCP port opens. If Vela isn't running, the first message launches it.
+Tools: `get_app_state`, `list_actions`, `ui_action`, `run_python` (a
+persistent namespace, as in the console), `viewport_screenshot` and
+`open_document`. Edits are undoable like any other. The server speaks both
+MCP protocol eras: the stateless 2026-07-28 revision (per-request `_meta`,
+`server/discover`) and the `initialize` handshake of 2025-11-25 and
+earlier.
+
 ## Command line
 
 ```sh
 Vela --check-document FILE          # print the prim count
 Vela --check-saving FILE PRIM       # edit and save through the document
+Vela --check-python FILE            # the embedded interpreter and vela module
 Vela --describe-actions             # the action registry, as JSON
 Vela --describe-menus               # the main menu, as text
 Vela --snapshot FILE OUT.png [--camera PATH] [--frame T] [--width W] [--height H]
@@ -136,7 +167,5 @@ verifies the bundle signature again after execution. The native reader's
 `--check-document PATH` mode uses the same document code as the window and
 prints the prim count without starting the AppKit event loop.
 
-Python is bundled and tested as an interpreter subprocess in this phase.
-The in-process interpreter, live `vela.stage` API and console are Phase 6.
 The smoke test does not automate Finder or visually inspect the window.
 Offline builds require refreshing `bazel vendor` for the new Apple rules.

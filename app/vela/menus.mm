@@ -327,6 +327,10 @@ NSMenu *VelaBuildMainMenu() {
     palette.target = PaletteTarget();
     // The front document shows its issues.
     [window addItemWithTitle:@"Validation" action:@selector(showValidation:) keyEquivalent:@""];
+    // An interpreter for the front document (usdview's Interpreter).
+    NSMenuItem *console = [window addItemWithTitle:@"Python Console"
+        action:@selector(showPythonConsole:) keyEquivalent:@"p"];
+    console.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
     [window addItem:[NSMenuItem separatorItem]];
     [window addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:)
                keyEquivalent:@"m"];

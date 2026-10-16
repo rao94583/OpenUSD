@@ -53,6 +53,7 @@ void TestAppSettings() {
     AppSettings a;
     a.loadPayloads = false;
     a.threadLimit = -2;
+    a.mcpServer = false;
     a.view.background = Background::Black;
     AppSettings read;
     FromJson(JsParseString(JsWriteToString(JsValue(ToJson(a)))).GetJsObject(), &read);

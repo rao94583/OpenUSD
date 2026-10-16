@@ -1,5 +1,6 @@
 #import "settings_window.h"
 #import "document.h"
+#import "scripting.h"
 
 #include "app/vela/core/actions.h"
 #include "app/vela/core/app_settings.h"
@@ -45,6 +46,9 @@ vela::Document *FrontDocument() {
     NSTextField *_viewSummary;
     NSButton *_useCurrentView;
     NSTextField *_threadLimit;
+    NSButton *_mcpServer;
+    NSTextField *_mcpStatus;
+    NSTextField *_mcpCommand;
     int _observer;
 }
 
@@ -75,6 +79,19 @@ vela::Document *FrontDocument() {
     _threadLimit.target = self;
     _threadLimit.action = @selector(threadLimitChanged:);
     [_threadLimit.widthAnchor constraintEqualToConstant:60].active = YES;
+    _mcpServer = checkbox(@"Let Claude Code and other MCP clients use Vela");
+    _mcpStatus = Note(@"");
+    // The command that adds the helper to Claude Code, to copy.
+    _mcpCommand = [NSTextField textFieldWithString:VelaMcpAddCommand()];
+    _mcpCommand.editable = NO;
+    _mcpCommand.selectable = YES;
+    _mcpCommand.font = [NSFont monospacedSystemFontOfSize:NSFont.smallSystemFontSize
+                                                   weight:NSFontWeightRegular];
+    _mcpCommand.lineBreakMode = NSLineBreakByTruncatingMiddle;
+    [_mcpCommand.widthAnchor constraintEqualToConstant:300].active = YES;
+    NSButton *copyCommand = [NSButton buttonWithTitle:@"Copy"
+                                               target:self action:@selector(copyMcpCommand:)];
+    NSStackView *command = [NSStackView stackViewWithViews:@[_mcpCommand, copyCommand]];
     NSButton *resetAll = [NSButton buttonWithTitle:@"Reset All Settings"
                                             target:self action:@selector(resetAll:)];
 
@@ -82,7 +99,7 @@ vela::Document *FrontDocument() {
     NSStackView *threads = [NSStackView stackViewWithViews:@[
         [NSTextField labelWithString:@"Thread limit:"], _threadLimit]];
     NSTextField *opening = Heading(@"Opening Files"), *windows = Heading(@"New Windows"),
-                *performance = Heading(@"Performance");
+                *performance = Heading(@"Performance"), *mcp = Heading(@"Claude and MCP");
     NSStackView *stack = [NSStackView stackViewWithViews:@[
         opening,
         _loadPayloads, _primaryCamera, _unloadedAsBounds,
@@ -96,13 +113,17 @@ vela::Document *FrontDocument() {
         threads,
         Note(@"0 uses every core; a negative number leaves that many free. "
              @"Takes effect the next time Vela starts."),
+        mcp,
+        _mcpServer, _mcpStatus,
+        Note(@"To use Vela from Claude Code in Terminal, add it as an MCP server:"),
+        command,
         resetAll,
     ]];
     stack.orientation = NSUserInterfaceLayoutOrientationVertical;
     stack.alignment = NSLayoutAttributeLeading;
     stack.spacing = 8;
     // Space before each section and before the reset button.
-    for (NSView *view in @[windows, performance, resetAll]) {
+    for (NSView *view in @[windows, performance, mcp, resetAll]) {
         [stack setCustomSpacing:18 afterView:stack.views[[stack.views indexOfObject:view] - 1]];
     }
     stack.edgeInsets = NSEdgeInsetsMake(20, 20, 20, 20);
@@ -112,6 +133,8 @@ vela::Document *FrontDocument() {
 
     __weak VelaSettingsWindowController *weakSelf = self;
     _observer = vela::AppSettingsStore::Get().AddObserver([weakSelf] { [weakSelf refresh]; });
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(refresh)
+                                               name:VelaMcpStatusChanged object:nil];
     [self refresh];
     return self;
 }
@@ -134,6 +157,8 @@ vela::Document *FrontDocument() {
         : [NSString stringWithFormat:@"New windows start with usdview's view settings, except %@.",
            @(TfStringJoin(changes, ", ").c_str())];
     _threadLimit.stringValue = [NSString stringWithFormat:@"%d", s.threadLimit];
+    _mcpServer.state = s.mcpServer ? NSControlStateValueOn : NSControlStateValueOff;
+    _mcpStatus.stringValue = VelaMcpStatus();
     _useCurrentView.enabled = FrontDocument() != nullptr;
 }
 
@@ -147,7 +172,9 @@ vela::Document *FrontDocument() {
     const bool payloads = _loadPayloads.state == NSControlStateValueOn;
     const bool camera = _primaryCamera.state == NSControlStateValueOn;
     const bool bounds = _unloadedAsBounds.state == NSControlStateValueOn;
+    const bool mcp = _mcpServer.state == NSControlStateValueOn;
     [self update:^(vela::AppSettings &s) {
+        s.mcpServer = mcp;
         s.loadPayloads = payloads;
         s.usePrimaryCamera = camera;
         s.view.unloadedAsBounds = bounds;
@@ -172,6 +199,12 @@ vela::Document *FrontDocument() {
 
 - (void)restoreView:(id)sender {
     [self update:^(vela::AppSettings &s) { s.view = vela::ViewSettings(); }];
+}
+
+- (void)copyMcpCommand:(id)sender {
+    [NSPasteboard.generalPasteboard clearContents];
+    [NSPasteboard.generalPasteboard setString:_mcpCommand.stringValue
+                                      forType:NSPasteboardTypeString];
 }
 
 - (void)resetAll:(id)sender {

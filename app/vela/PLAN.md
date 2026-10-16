@@ -467,10 +467,63 @@ plugins re-enabled the engine's OpenGL presentation (a crash in
 Embree kept every core busy. Still pending: inspector editing for arrays
 and other types, the validation panel, preferences, and a settings form.
 
+## Phase 6 progress
+
+Done (2026-10-15). A Claude Code session in a terminal, with `vela-mcp`
+as an MCP server, listed the prims of the open scene, read the cube's
+size, changed its size and color, and described a viewport screenshot;
+the window showed the change.
+
+- **Interpreter** (`core/python.*`): the bundle's Python 3.11 starts at
+  launch in this process, isolated (`PyConfig_InitIsolatedConfig`, home
+  `Runtime/python`, `Runtime/usd/lib/python` first on `sys.path`, no
+  signal handlers). The GIL is released after start-up and taken per run.
+- **`vela` module** (`core/vela_module.py`, compiled into the core as a
+  string and imported on first use, so pxr's import doesn't slow launch):
+  `stage`, `selection`, `time` (module properties, assignable), `document`,
+  `documents()`, `current()`, `run()`, `actions()`, `open()`, `Document`.
+  It needs no boost.python: the app puts each document's stage in
+  `UsdUtilsStageCache`, and Python finds the same stage by id, through the
+  shared `libusd_ms`. A small C module (`_vela`) passes JSON.
+- **Session** (`core/session.*`): open documents with ids; the current one
+  is a scoped one (a console's), else the front window's, else the newest.
+  `DocumentState` is `get_app_state`'s report.
+- **Threading:** scripts run on the main thread for now, holding the GIL,
+  under one `UndoBlock` ("Python"); MCP messages are handed to the main
+  thread (`dispatch_sync`, which also runs during menus and sheets). The
+  worker thread with a write lock remains future work: Document observers
+  and AppKit are main-thread only.
+- **Console** (`python_console.*`): Window → Python Console (⌥⌘P), a
+  window controller of the document, so ⌘Z and the menus act on its
+  document while it is key.
+- **MCP** (`core/mcp.*`, `core/mcp_socket.*`, `mcp_bridge.cpp`): the app
+  serves JSON-RPC lines on a Unix socket in Application Support (0700
+  folder, 0600 socket, peer uid checked); `vela-mcp` in `Contents/MacOS`
+  moves lines between stdio and the socket and launches Vela when needed.
+  Both protocol eras: Claude Code 2.1.296 probes with `server/discover`
+  and then speaks 2026-07-28, whose `tools/list` and `server/discover`
+  results must carry `ttlMs` and `cacheScope` (it rejected the list
+  without them). Messages must be one line: `JsWriteToString`
+  pretty-prints, so replies use a compact `JsWriter`.
+- **Settings:** Claude and MCP: a switch for the server (on by default),
+  its status, and the `claude mcp add` command with a Copy button.
+- `Describe()` includes `query`; MCP marks read-only tools.
+- Fixed: `Renderer::WriteImage` left Embree non-interactive (it now
+  restores `enableInteractive`); `--defaultsettings` now also ignores
+  saved window state, after a killed test run restored its window into
+  the next test.
+- Tests: `mcp_test` (protocol, tools, socket), `python_test`
+  (`--check-python`), `mcp_ui_test` (a launched app driven through
+  `vela-mcp`: prims, attributes, undo, selection, screenshot, both eras).
+
+Left for later: scripts on a worker thread with batched notifications, a
+way to interrupt a long script, and the console's Clear command.
+
 ## Testing
 
 - `cc_test` for the core: document, actions, undo, camera math
-- Python tests for the `vela` module
+- The `vela` module through `--check-python`, and MCP through a launched
+  app (`mcp_ui_test`)
 - Scripted tests that drive the app through the action registry
 - Viewport image comparisons with `idiff`, as for Storm today
 - A few `macos_ui_test` smoke tests

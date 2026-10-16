@@ -230,6 +230,51 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 #pragma mark Drawing
 
+// What the viewport draws, at a size in pixels.
+- (vela::View)viewOfSize:(GfVec2i)size {
+    vela::View view;
+    view.camera = _document->ComputeViewGfCamera(double(size[0]) / size[1]);
+    view.time = _document->GetTime();
+    view.size = size;
+    view.settings = _document->GetViewSettings();
+    view.clearColor = vela::BackgroundColor(view.settings.background);
+    const vela::ViewSettings &s = view.settings;
+    if (s.showBBoxes && (s.showBBoxesDuringPlayback || !_document->IsPlaying())) {
+        const GfBBox3d &bounds = _document->GetSelectionBounds();
+        if (!bounds.GetRange().IsEmpty()) {
+            if (s.showAlignedBBox) view.bboxes.push_back(GfBBox3d(bounds.ComputeAlignedRange()));
+            if (s.showOrientedBBox) view.bboxes.push_back(bounds);
+        }
+        view.bboxColor = vela::BBoxLineColor(s.background);
+    }
+    switch (view.settings.highlightMode) {
+    case vela::HighlightMode::Never: view.highlight = false; break;
+    case vela::HighlightMode::WhenPaused: view.highlight = !_document->IsPlaying(); break;
+    case vela::HighlightMode::Always: view.highlight = true; break;
+    }
+    return view;
+}
+
+- (NSData *)pngWithWidth:(int)width height:(int)height error:(NSString **)error {
+    GfVec2i size = [self pixelSize];
+    const double aspect = double(size[0]) / size[1];
+    if (width > 0 && height > 0) size = GfVec2i(width, height);
+    else if (width > 0) size = GfVec2i(width, std::max(1, int(std::lround(width / aspect))));
+    else if (height > 0) size = GfVec2i(std::max(1, int(std::lround(height * aspect))), height);
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:
+        [NSString stringWithFormat:@"vela-screenshot-%@.png", NSUUID.UUID.UUIDString]];
+    if (!_renderer->WriteImage([self viewOfSize:size], path.UTF8String)) {
+        if (error) *error = @"The viewport could not render an image";
+        return nil;
+    }
+    NSData *data = [NSData dataWithContentsOfFile:path];
+    [NSFileManager.defaultManager removeItemAtPath:path error:nil];
+    // The viewport draws again with its interactive settings.
+    [self requestRender];
+    if (!data && error) *error = @"The rendered image could not be read";
+    return data;
+}
+
 - (void)render {
     // View → Display → Pause Viewport Drawing (usdview's --norender).
     if (_document->GetViewSettings().pauseDrawing) {
@@ -255,26 +300,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
         _document->DetachViewCamera();
         _document->GetCamera().Tumble(360.0 / _benchmarkFrames, 0.0);
     }
-    vela::View view;
-    view.camera = [self gfCamera];
-    view.time = _document->GetTime();
-    view.size = size;
-    view.settings = _document->GetViewSettings();
-    view.clearColor = vela::BackgroundColor(view.settings.background);
-    const vela::ViewSettings &s = view.settings;
-    if (s.showBBoxes && (s.showBBoxesDuringPlayback || !_document->IsPlaying())) {
-        const GfBBox3d &bounds = _document->GetSelectionBounds();
-        if (!bounds.GetRange().IsEmpty()) {
-            if (s.showAlignedBBox) view.bboxes.push_back(GfBBox3d(bounds.ComputeAlignedRange()));
-            if (s.showOrientedBBox) view.bboxes.push_back(bounds);
-        }
-        view.bboxColor = vela::BBoxLineColor(s.background);
-    }
-    switch (view.settings.highlightMode) {
-    case vela::HighlightMode::Never: view.highlight = false; break;
-    case vela::HighlightMode::WhenPaused: view.highlight = !_document->IsPlaying(); break;
-    case vela::HighlightMode::Always: view.highlight = true; break;
-    }
+    const vela::View view = [self viewOfSize:size];
     id<MTLCommandBuffer> commandBuffer = [_renderer->GetQueue() commandBuffer];
     if (!_renderer->Draw(view, drawable.texture, commandBuffer)) {
         return;

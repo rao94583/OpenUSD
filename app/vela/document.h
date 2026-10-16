@@ -20,5 +20,8 @@ void VelaSetLaunchTime(double seconds);
 @interface VelaDocument : NSDocument
 @property (nonatomic, readonly) std::shared_ptr<vela::Document> core;
 @property (nonatomic, readonly) VelaViewportView *viewport;
+// The document's id in vela::Session (Python and MCP), once its window
+// exists; 0 before.
+@property (nonatomic, readonly) int sessionId;
 - (size_t)primCount;
 @end

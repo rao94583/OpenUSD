@@ -452,8 +452,18 @@ bool Renderer::WriteImage(const View &view, const std::string &path) {
     if (!_impl->engine) {
         return false;
     }
-    _impl->engine->SetRendererSetting(
-        HdRenderSettingsTokens->enableInteractive, VtValue(false));
+    // Non-interactive while writing, as usdrecord renders; the viewport
+    // keeps drawing interactively afterwards.
+    UsdImagingGLEngine *engine = _impl->engine.get();
+    const VtValue interactive = engine->GetRendererSetting(HdRenderSettingsTokens->enableInteractive);
+    engine->SetRendererSetting(HdRenderSettingsTokens->enableInteractive, VtValue(false));
+    struct Restore {
+        UsdImagingGLEngine *engine;
+        VtValue value;
+        ~Restore() {
+            if (!value.IsEmpty()) engine->SetRendererSetting(HdRenderSettingsTokens->enableInteractive, value);
+        }
+    } restore{engine, interactive};
     // As usdrecord does: render until converged before reading back.
     for (unsigned sleep = 10; ; sleep = std::min(100u, sleep + 5)) {
         _impl->Render(view);
