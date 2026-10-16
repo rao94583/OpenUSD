@@ -131,8 +131,8 @@ vela::Document *FrontDocument() {
     const std::vector<std::string> changes = vela::DescribeChanges(s.view);
     _viewSummary.stringValue = changes.empty()
         ? @"New windows start with usdview's view settings."
-        : [NSString stringWithFormat:@"New windows start with usdview's view settings, except %s.",
-           TfStringJoin(changes, ", ").c_str()];
+        : [NSString stringWithFormat:@"New windows start with usdview's view settings, except %@.",
+           @(TfStringJoin(changes, ", ").c_str())];
     _threadLimit.stringValue = [NSString stringWithFormat:@"%d", s.threadLimit];
     _useCurrentView.enabled = FrontDocument() != nullptr;
 }

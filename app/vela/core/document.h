@@ -4,6 +4,7 @@
 
 #include "free_camera.h"
 #include "undo.h"
+#include "validation.h"
 #include "view_settings.h"
 
 #include "pxr/pxr.h"
@@ -74,6 +75,8 @@ public:
         Saved = 1u << 9,
         // The renderer's offerings (RendererInfo) changed.
         Renderer = 1u << 10,
+        // New validation results.
+        Validation = 1u << 11,
     };
     using Observer = std::function<void(unsigned changes)>;
 
@@ -182,6 +185,12 @@ public:
     const LoadStatistics &GetLoadStatistics() const { return _loadStatistics; }
     void SetLoadStatistics(const LoadStatistics &statistics) { _loadStatistics = statistics; }
 
+    // The last validation's results (see RunValidation), for the
+    // Validation panel; empty and not validated until the stage is.
+    const std::vector<ValidationIssue> &GetValidationIssues() const { return _validationIssues; }
+    bool HasValidated() const { return _validated; }
+    void SetValidationIssues(std::vector<ValidationIssue> issues);
+
     UndoStack &GetUndoStack() { return *_undo; }
     const UndoStack &GetUndoStack() const { return *_undo; }
 
@@ -204,6 +213,8 @@ private:
     ViewSettings _viewSettings;
     RendererInfo _rendererInfo;
     LoadStatistics _loadStatistics;
+    std::vector<ValidationIssue> _validationIssues;
+    bool _validated = false;
     mutable GfBBox3d _stageBounds;
     mutable bool _stageBoundsValid = false;
     mutable GfBBox3d _selectionBounds;

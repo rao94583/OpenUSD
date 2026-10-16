@@ -148,6 +148,33 @@ void RegisterFileActions(ActionRegistry &r) {
         },
     });
     r.Register({
+        .name = "validate", .title = "Validate Stage",
+        .description = "Check the stage with USD's validators, as usdchecker does "
+                       "(all of them, or those with any of the given keywords, "
+                       "e.g. [\"UsdGeomValidators\"]). Returns the counts and "
+                       "the issues (severity, validator, message, sites); the "
+                       "Validation panel (Window → Validation) shows them.",
+        .parameters = ParameterSchema(R"({"properties": {
+            "keywords": {"type": "array", "items": {"type": "string"}}}})"),
+        .run = [](Document &d, const JsObject &p) {
+            std::vector<std::string> keywords;
+            if (auto found = p.find("keywords"); found != p.end()) {
+                for (const JsValue &keyword : found->second.GetJsArray()) {
+                    keywords.push_back(keyword.GetString());
+                }
+            }
+            d.SetValidationIssues(RunValidation(d.GetStage(), keywords));
+            int counts[3] = {0, 0, 0};
+            for (const ValidationIssue &issue : d.GetValidationIssues()) {
+                ++counts[static_cast<int>(issue.severity)];
+            }
+            return ActionResult{true, JsValue(JsObject{
+                {"errors", JsValue(counts[0])}, {"warnings", JsValue(counts[1])},
+                {"info", JsValue(counts[2])},
+                {"issues", ToJson(d.GetValidationIssues())}}), {}};
+        },
+    });
+    r.Register({
         .name = "set_layer_muted", .title = "Muted Layers",
         .description = "Mute or unmute a layer by identifier (usdview's --mute): a "
                        "muted layer's opinions are ignored, without editing any "

@@ -18,6 +18,8 @@ usd_headers(
         "//pxr/usd/usdRender",
         "//pxr/usd/usdUtils",
         "//pxr/usdImaging/usdImagingGL",
+        "//pxr/usdValidation/usdUtilsValidators",
+        "//pxr/usdValidation/usdValidation",
     ],
 )
 
@@ -48,6 +50,7 @@ cc_library(
         "core/palette.cpp",
         "core/standard_actions.cpp",
         "core/undo.cpp",
+        "core/validation.cpp",
         "core/value_text.cpp",
         "core/view_actions.cpp",
         "core/view_settings.cpp",
@@ -63,6 +66,7 @@ cc_library(
         "core/launch_options.h",
         "core/palette.h",
         "core/undo.h",
+        "core/validation.h",
         "core/value_text.h",
         "core/view_settings.h",
     ],
@@ -106,6 +110,7 @@ cc_test(
     "palette_test",
     "document_test",
     "undo_test",
+    "validation_test",
     "value_text_test",
 ]]
 
@@ -125,6 +130,8 @@ objc_library(
         "palette.mm",
         "settings_window.h",
         "settings_window.mm",
+        "validation_panel.h",
+        "validation_panel.mm",
         "spline_view.h",
         "spline_view.mm",
         "window_layout.h",

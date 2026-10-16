@@ -325,6 +325,8 @@ NSMenu *VelaBuildMainMenu() {
         action:@selector(toggle:) keyEquivalent:@" "];
     palette.keyEquivalentModifierMask = NSEventModifierFlagOption;
     palette.target = PaletteTarget();
+    // The front document shows its issues.
+    [window addItemWithTitle:@"Validation" action:@selector(showValidation:) keyEquivalent:@""];
     [window addItem:[NSMenuItem separatorItem]];
     [window addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:)
                keyEquivalent:@"m"];

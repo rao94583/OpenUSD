@@ -18,7 +18,8 @@
     const CGFloat lineHeight = 15, margin = 8;
     CGFloat y = bottom ? self.bounds.size.height - margin - lineHeight * lines.size() : margin;
     for (const auto &[key, value] : lines) {
-        NSString *text = [NSString stringWithFormat:@"%s: %s", key.c_str(), value.c_str()];
+        // %@ with UTF-8 strings: names may not be ASCII.
+        NSString *text = [NSString stringWithFormat:@"%@: %@", @(key.c_str()), @(value.c_str())];
         const NSSize size = [text sizeWithAttributes:attributes];
         const CGFloat x = right ? self.bounds.size.width - margin - size.width : margin;
         [text drawAtPoint:NSMakePoint(x, y) withAttributes:attributes];

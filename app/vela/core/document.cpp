@@ -259,6 +259,12 @@ SdfPath RenderPassSource(const UsdStageRefPtr &stage, const SdfPath &pass) {
     return targets.empty() ? SdfPath() : targets.front();
 }
 
+void Document::SetValidationIssues(std::vector<ValidationIssue> issues) {
+    _validationIssues = std::move(issues);
+    _validated = true;
+    _Notify(Validation);
+}
+
 void Document::SetRendererInfo(const RendererInfo &info) {
     if (!(info == _rendererInfo)) {
         _rendererInfo = info;

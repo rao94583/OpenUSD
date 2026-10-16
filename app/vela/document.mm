@@ -1,5 +1,6 @@
 #import "document.h"
 #import "form_sheet.h"
+#import "validation_panel.h"
 #import "browser_view.h"
 #import "window_layout.h"
 #import "menus.h"
@@ -232,6 +233,7 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     int _observer;
     vela::LaunchOptions _launch;
     double _openStart;  // for the load statistics
+    VelaValidationPanelController *_validation;
 }
 
 + (BOOL)autosavesInPlace { return NO; }
@@ -296,6 +298,21 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
 
 - (void)dealloc {
     if (_core) _core->RemoveObserver(_observer);
+}
+
+// Window → Validation.
+- (void)showValidation:(id)sender {
+    if (!_validation) {
+        _validation = [[VelaValidationPanelController alloc] initWithDocument:_core
+                                                                        title:self.displayName];
+    }
+    [_validation showWindow:sender];
+}
+
+- (void)close {
+    [_validation close];
+    _validation = nil;
+    [super close];
 }
 
 - (void)showEditedState {
