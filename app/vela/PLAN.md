@@ -519,6 +519,26 @@ the window showed the change.
 Left for later: scripts on a worker thread with batched notifications, a
 way to interrupt a long script, and the console's Clear command.
 
+## UI changes after Phase 6 (2026-10-16)
+
+- Panes: `window_layout.*` puts the prim browser and inspector in an
+  `NSSplitViewController` (sidebar and inspector items, collapsible) and
+  the bottom panel in a plain `NSSplitView` below them. A split view
+  controller resizes the window to fit an item it expands, which shrank the
+  window to its narrowest when the panel opened; and stack views hug above
+  the window's size priority (500), so bars that span a pane set their
+  horizontal hugging low. `VelaCheckDocumentLayout` checks sizes, collapsing
+  and that no panel tab resizes the window.
+- Bottom panel (`bottom_panel.*`): Python (`python_console.*`, now a view
+  controller), Log (`log_view.*`, `core/log.*`: a TfDiagnosticMgr delegate
+  that still prints to stderr), Claude (a placeholder).
+- Color coding (`core/color_codes.*`, `color_coding.*`): usdview's values
+  from usdviewq/common.py; in light mode the colors darken. `PrimSummary`
+  has a style and font, and `InspectorRow` a value source, interpolation
+  and targets.
+- Relationship and connection targets: the properties table's context menu
+  goes to them (selecting the prim, then the property row).
+
 ## Testing
 
 - `cc_test` for the core: document, actions, undo, camera math

@@ -1,6 +1,7 @@
 #include "mcp.h"
 #include "actions.h"
 #include "document.h"
+#include "log.h"
 #include "python.h"
 #include "session.h"
 
@@ -389,7 +390,24 @@ std::string Handle(const std::string &message) {
             arguments = a->second.GetJsObject();
         }
         for (const Tool &tool : ToolTable()) {
-            if (tool.name == name->second.GetString()) return reply(tool.call(arguments));
+            if (tool.name != name->second.GetString()) continue;
+            // The Log tab shows what clients do, and what failed.
+            std::string summary = tool.name;
+            if (auto code = arguments.find("code"); code != arguments.end() && code->second.IsString()) {
+                summary += ":\n" + code->second.GetString();
+            } else if (!arguments.empty()) {
+                summary += " " + Compact(JsValue(arguments));
+            }
+            Log::Get().Add(LogEntry::Level::Info, "MCP", summary);
+            JsObject result = tool.call(arguments);
+            if (result["isError"].IsBool() && result["isError"].GetBool()) {
+                const JsArray &content = result["content"].GetJsArray();
+                const std::string text = !content.empty() && content[0].IsObject() &&
+                    content[0].GetJsObject().count("text")
+                    ? content[0].GetJsObject().at("text").GetString() : "failed";
+                Log::Get().Add(LogEntry::Level::Warning, "MCP", tool.name + " failed: " + text);
+            }
+            return reply(std::move(result));
         }
         return ErrorReply(id, InvalidParams, "Unknown tool: " + name->second.GetString());
     }

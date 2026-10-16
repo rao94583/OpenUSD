@@ -1,14 +1,16 @@
 #import "browser_view.h"
 #import "window_layout.h"
 #import "spline_view.h"
+#import "color_coding.h"
 #include "app/vela/core/browser.h"
 #include "app/vela/core/actions.h"
+#include "app/vela/core/log.h"
 #include "pxr/usd/usd/primRange.h"
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
 @interface VelaBrowserController () <NSOutlineViewDataSource, NSOutlineViewDelegate,
-    NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate>
+    NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate, NSMenuDelegate>
 @end
 
 @implementation VelaBrowserController {
@@ -66,7 +68,11 @@ PXR_NAMESPACE_USING_DIRECTIVE
     [_primFilter addItemsWithTitles:@[@"All prims", @"Active prims", @"Loaded prims", @"Models", @"Visible prims"]];
     _primFilter.target = self; _primFilter.action = @selector(filterOptionsChanged:);
     _showPrototypes = [NSButton checkboxWithTitle:@"Prototypes" target:self action:@selector(filterOptionsChanged:)];
-    NSStackView *filterBar = [NSStackView stackViewWithViews:@[_primFilter, _showPrototypes]];
+    NSView *spacer = [NSView new];
+    [spacer setContentHuggingPriority:NSLayoutPriorityDefaultLow - 1
+                       forOrientation:NSLayoutConstraintOrientationHorizontal];
+    NSStackView *filterBar = [NSStackView stackViewWithViews:
+        @[_primFilter, _showPrototypes, spacer, VelaLegendButton(YES)]];
     filterBar.spacing = 6;
     _outline = [NSOutlineView new];
     _outline.dataSource = self; _outline.delegate = self;
@@ -111,7 +117,11 @@ PXR_NAMESPACE_USING_DIRECTIVE
     _selectionLabel = [NSTextField labelWithString:@"No selection"];
     _selectionLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     _prototypeButton = [NSButton buttonWithTitle:@"Prototype" target:self action:@selector(goToPrototype:)];
-    NSStackView *selectionBar = [NSStackView stackViewWithViews:@[_selectionLabel, _prototypeButton]];
+    NSView *selectionSpacer = [NSView new];
+    [selectionSpacer setContentHuggingPriority:NSLayoutPriorityDefaultLow - 1
+                                forOrientation:NSLayoutConstraintOrientationHorizontal];
+    NSStackView *selectionBar = [NSStackView stackViewWithViews:
+        @[_selectionLabel, _prototypeButton, selectionSpacer, VelaLegendButton(NO)]];
     [_selectionLabel setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow forOrientation:NSLayoutConstraintOrientationHorizontal];
     _propertySearch = [NSSearchField new];
     _propertySearch.placeholderString = @"Filter properties by name or type";
@@ -121,7 +131,12 @@ PXR_NAMESPACE_USING_DIRECTIVE
     for (NSInteger i = 0; i < names.count; ++i) {
         NSTableView *table = [self makeTable];
         table.tag = i;
-        if (i == 0) { table.target = self; table.doubleAction = @selector(openProperty:); }
+        if (i == 0) {
+            table.target = self; table.doubleAction = @selector(openProperty:);
+            // Relationship targets and connections to go to.
+            table.menu = [NSMenu new];
+            table.menu.delegate = self;
+        }
         if (i == 2 || i == 3) { table.target = self; table.doubleAction = @selector(openLayer:); }
         [_tables addObject:table];
         NSTabViewItem *tab = [[NSTabViewItem alloc] initWithIdentifier:names[i]];
@@ -206,7 +221,12 @@ PXR_NAMESPACE_USING_DIRECTIVE
     NSTextField *label = [view makeViewWithIdentifier:column.identifier owner:self];
     if (!label) { label = [NSTextField labelWithString:@""]; label.identifier = column.identifier; }
     label.stringValue = @(value.c_str()); label.lineBreakMode = NSLineBreakByTruncatingMiddle;
-    label.textColor = summary.active && summary.loaded && !summary.inPrototype ? NSColor.labelColor : NSColor.secondaryLabelColor;
+    // usdview's color coding: what the prim is, how it is declared, and
+    // whether it is active.
+    NSColor *color = VelaColor(vela::ColorOf(summary.style));
+    label.textColor = summary.active ? color : VelaDimmed(color);
+    label.font = [column.identifier isEqualToString:@"Prim"] ? VelaPrimFont(summary.font)
+                                                            : [NSFont systemFontOfSize:NSFont.systemFontSize];
     label.toolTip = [NSString stringWithFormat:@"%@%@%@%@%@", item,
         summary.visibility.empty() ? @"" : [@" (visibility: " stringByAppendingFormat:@"%s)", summary.visibility.c_str()],
         summary.inPrototype ? @" (USD prototype, read-only)" : @"",
@@ -381,12 +401,124 @@ PXR_NAMESPACE_USING_DIRECTIVE
         }
     }
     label.stringValue = @((editable ? editText : *value).c_str());
+    [self styleLabel:label table:table column:column row:row];
     // An unauthored value reads as such, and typing starts from empty.
     label.placeholderString = editable && editText.empty() ? @"<no value>" : nil;
     label.toolTip = editable ? @"Edit the value; Return applies it" : label.stringValue;
     label.lineBreakMode = NSLineBreakByTruncatingMiddle;
     return label;
 }
+// Properties are colored by where their values come from, as in usdview;
+// names are bold, and both are italic when the value is interpolated.
+// Other tables use the plain label style.
+- (void)styleLabel:(NSTextField *)label table:(NSTableView *)table
+            column:(NSTableColumn *)column row:(const vela::InspectorRow &)row {
+    const CGFloat size = NSFont.systemFontSize;
+    NSFont *regular = [NSFont systemFontOfSize:size];
+    if (table != _tables[0]) {
+        label.textColor = NSColor.labelColor;
+        label.font = regular;
+        return;
+    }
+    const bool name = [column.identifier isEqualToString:@"Name"];
+    const bool value = [column.identifier isEqualToString:@"Value"];
+    if (!name && !value) {
+        label.textColor = NSColor.secondaryLabelColor;
+        label.font = regular;
+        return;
+    }
+    label.textColor = VelaColor(vela::ColorOf(row.valueSource));
+    NSFont *font = name ? [NSFont boldSystemFontOfSize:size] : regular;
+    if (row.interpolated) {
+        font = [NSFontManager.sharedFontManager convertFont:regular toHaveTrait:NSItalicFontMask];
+    }
+    label.font = font;
+}
+
+#pragma mark Going to targets
+
+// The properties table's menu: each target of the clicked relationship,
+// or source of the clicked attribute's connections.
+- (void)menuNeedsUpdate:(NSMenu *)menu {
+    [menu removeAllItems];
+    NSTableView *table = _tables[0];
+    const NSInteger index = table.clickedRow;
+    if (index < 0 || index >= (NSInteger)_rows[0].size()) return;
+    const vela::InspectorRow &row = _rows[0][index];
+    const bool relationship = row.valueSource == vela::ValueSource::Relationship;
+    if (row.targets.empty()) {
+        NSMenuItem *none = [menu addItemWithTitle:relationship ? @"No Targets" : @"No Connections"
+                                           action:nil keyEquivalent:@""];
+        none.enabled = NO;
+        if (!relationship) [menu removeAllItems];
+    }
+    const size_t shown = std::min<size_t>(row.targets.size(), 25);
+    for (size_t i = 0; i < shown; ++i) {
+        NSString *target = @(row.targets[i].c_str());
+        NSMenuItem *item = [menu addItemWithTitle:
+            [NSString stringWithFormat:relationship ? @"Go to Target %@" : @"Go to Source %@", target]
+            action:@selector(goToTarget:) keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = target;
+    }
+    if (row.targets.size() > shown) {
+        NSMenuItem *more = [menu addItemWithTitle:
+            [NSString stringWithFormat:@"%zu more (double-click to list all)", row.targets.size() - shown]
+            action:nil keyEquivalent:@""];
+        more.enabled = NO;
+    }
+    if (menu.numberOfItems) [menu addItem:[NSMenuItem separatorItem]];
+    NSMenuItem *copy = [menu addItemWithTitle:@"Copy Property Path" action:@selector(copyPropertyPath:)
+                                keyEquivalent:@""];
+    copy.target = self;
+    copy.representedObject = @([self inspectedPath].AppendProperty(TfToken(row.name)).GetText());
+}
+
+// Selects the target's prim; a property target is then shown in the
+// inspector.
+- (void)goToTarget:(NSMenuItem *)item {
+    [self goToPath:SdfPath([item.representedObject UTF8String])];
+}
+
+- (void)goToPath:(const SdfPath &)target {
+    const SdfPath prim = target.GetPrimPath();
+    if (!_document->GetStage()->GetPrimAtPath(prim)) {
+        [self showResult:vela::ActionResult::Error("Nothing at " + target.GetString())];
+        return;
+    }
+    // Prototype prims are only in the outline when it shows prototypes.
+    if (_document->GetStage()->GetPrimAtPath(prim).IsInPrototype()) {
+        if (_showPrototypes.state != NSControlStateValueOn) {
+            _showPrototypes.state = NSControlStateValueOn;
+            [self filterOptionsChanged:nil];
+        }
+    }
+    [self showResult:vela::ActionRegistry::Get().Run(*_document, "select",
+        {{"paths", JsValue(JsArray{JsValue(prim.GetString())})}})];
+    if (!target.IsPropertyPath()) return;
+    // Show the target property: clear a filter that hides it, then select it.
+    const std::string name = target.GetName();
+    [self refreshInspector];
+    auto find = [&] {
+        for (size_t i = 0; i < _rows[0].size(); ++i) if (_rows[0][i].name == name) return NSInteger(i);
+        return NSInteger(-1);
+    };
+    if (find() < 0 && _propertySearch.stringValue.length) {
+        _propertySearch.stringValue = @"";
+        [self refreshInspector];
+    }
+    const NSInteger row = find();
+    if (row >= 0) {
+        [_tables[0] selectRowIndexes:[NSIndexSet indexSetWithIndex:NSUInteger(row)] byExtendingSelection:NO];
+        [_tables[0] scrollRowToVisible:row];
+    }
+}
+
+- (void)copyPropertyPath:(NSMenuItem *)item {
+    [NSPasteboard.generalPasteboard clearContents];
+    [NSPasteboard.generalPasteboard setString:item.representedObject forType:NSPasteboardTypeString];
+}
+
 - (NSPopUpButton *)variantPopUpForSet:(const std::string &)set selection:(const std::string &)selection {
     NSPopUpButton *popUp = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
     popUp.controlSize = NSControlSizeSmall;
@@ -423,6 +555,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
 }
 - (void)showResult:(const vela::ActionResult &)result {
     if (result.ok) return;
+    vela::Log::Get().Add(vela::LogEntry::Level::Error, "Inspector", result.error);
     NSAlert *alert = [NSAlert new];
     alert.alertStyle = NSAlertStyleWarning;
     alert.messageText = @(result.error.c_str());
@@ -450,6 +583,9 @@ PXR_NAMESPACE_USING_DIRECTIVE
             backing:NSBackingStoreBuffered defer:NO];
         _detailWindow.releasedWhenClosed = NO;
         _detailTable = [self makeTable];
+        // A relationship's targets: double-click one to go there.
+        _detailTable.target = self;
+        _detailTable.doubleAction = @selector(openDetailRow:);
         _detailMetadataTable = [self makeTable]; _detailOpinionsTable = [self makeTable];
         NSTabView *tabs = [NSTabView new];
         NSArray *names = @[@"Values", @"Metadata", @"Opinions"];
@@ -510,6 +646,16 @@ PXR_NAMESPACE_USING_DIRECTIVE
     }
     _layerWindow.title = @(_layerIdentifier.c_str());
     [_layerTable reloadData]; [_layerWindow makeKeyAndOrderFront:nil];
+}
+- (void)openDetailRow:(NSTableView *)table {
+    const NSInteger row = table.clickedRow;
+    if (row < 0 || row >= (NSInteger)_detailRows.size()) return;
+    const std::string &text = _detailRows[row].value;
+    if (!SdfPath::IsValidPathString(text) || !SdfPath(text).IsAbsolutePath()) return;
+    // The detail window belongs to the property it shows; go in the
+    // document window.
+    [_inspectorView.window makeKeyAndOrderFront:nil];
+    [self goToPath:SdfPath(text)];
 }
 - (void)previousPage:(id)sender { if (_detailOffset >= 128) _detailOffset -= 128; [self refreshDetails]; }
 - (void)nextPage:(id)sender { _detailOffset += 128; [self refreshDetails]; }

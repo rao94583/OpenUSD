@@ -48,7 +48,6 @@ const char *const Banner =
 @end
 
 @implementation VelaPythonConsoleController {
-    int _sessionId;
     NSTextView *_output;
     NSTextView *_input;
     NSMutableArray<NSString *> *_history;
@@ -56,18 +55,8 @@ const char *const Banner =
     NSString *_draft;         // the new input, while browsing history
 }
 
-- (instancetype)initWithSessionId:(int)sessionId {
-    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 760, 520)
-        styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
-                  NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable
-        backing:NSBackingStoreBuffered defer:NO];
-    if (!(self = [super initWithWindow:window])) return nil;
-    _sessionId = sessionId;
+- (void)loadView {
     _history = [NSMutableArray array];
-    window.minSize = NSMakeSize(360, 220);
-    window.tabbingMode = NSWindowTabbingModeDisallowed;
-    window.frameAutosaveName = @"VelaPythonConsole";
-
     _output = [NSTextView new];
     _output.editable = NO;
     _output.selectable = YES;
@@ -80,29 +69,35 @@ const char *const Banner =
     NSScrollView *inputScroll = Scrolling(_input);
     _input.typingAttributes = @{NSFontAttributeName: ConsoleFont(),
                                 NSForegroundColorAttributeName: NSColor.textColor};
+    _input.toolTip = @"Return runs a complete statement; Shift-Return adds a line";
 
-    NSSplitView *split = [NSSplitView new];
-    split.vertical = NO;
-    split.dividerStyle = NSSplitViewDividerStyleThin;
-    split.autosaveName = @"VelaPythonConsoleSplit";
-    [split addArrangedSubview:outputScroll];
-    [split addArrangedSubview:inputScroll];
-    [split setHoldingPriority:NSLayoutPriorityDefaultLow - 1 forSubviewAtIndex:0];
-    [split setHoldingPriority:NSLayoutPriorityDefaultLow + 1 forSubviewAtIndex:1];
-    [inputScroll.heightAnchor constraintGreaterThanOrEqualToConstant:44].active = YES;
-    [outputScroll.heightAnchor constraintGreaterThanOrEqualToConstant:80].active = YES;
-    window.contentView = split;
-    [split layoutSubtreeIfNeeded];
-    [split setPosition:NSHeight(split.bounds) - 110 ofDividerAtIndex:0];
-    window.initialFirstResponder = _input;
-    [window center];
-
+    // Output above, a few lines of input below, as in a terminal.
+    NSView *root = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 800, 220)];
+    NSBox *line = [NSBox new];
+    line.boxType = NSBoxSeparator;
+    for (NSView *view in @[outputScroll, line, inputScroll]) {
+        view.translatesAutoresizingMaskIntoConstraints = NO;
+        [root addSubview:view];
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [outputScroll.topAnchor constraintEqualToAnchor:root.topAnchor],
+        [outputScroll.leadingAnchor constraintEqualToAnchor:root.leadingAnchor],
+        [outputScroll.trailingAnchor constraintEqualToAnchor:root.trailingAnchor],
+        [line.topAnchor constraintEqualToAnchor:outputScroll.bottomAnchor],
+        [line.leadingAnchor constraintEqualToAnchor:root.leadingAnchor],
+        [line.trailingAnchor constraintEqualToAnchor:root.trailingAnchor],
+        [inputScroll.topAnchor constraintEqualToAnchor:line.bottomAnchor],
+        [inputScroll.leadingAnchor constraintEqualToAnchor:root.leadingAnchor],
+        [inputScroll.trailingAnchor constraintEqualToAnchor:root.trailingAnchor],
+        [inputScroll.bottomAnchor constraintEqualToAnchor:root.bottomAnchor],
+        [inputScroll.heightAnchor constraintEqualToConstant:64],
+        [outputScroll.heightAnchor constraintGreaterThanOrEqualToConstant:24]]];
+    self.view = root;
     [self append:@(Banner) color:NSColor.secondaryLabelColor];
-    return self;
 }
 
-- (NSString *)windowTitleForDocumentDisplayName:(NSString *)displayName {
-    return [NSString stringWithFormat:@"%@ — Python", displayName];
+- (void)focusInput {
+    [self.view.window makeFirstResponder:_input];
 }
 
 - (NSString *)transcript { return _output.string; }
@@ -127,6 +122,7 @@ const char *const Banner =
 }
 
 - (void)runCode:(NSString *)code {
+    (void)self.view;
     if (!code.length) return;
     [self echo:code];
     if (![_history.lastObject isEqualToString:code]) [_history addObject:code];

@@ -5,6 +5,7 @@
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #include "app/vela/core/actions.h"
+#include "app/vela/core/log.h"
 
 #include "pxr/base/js/json.h"
 
@@ -69,6 +70,7 @@ JsObject ActionParams(id represented) {
 // Errors from actions run from the menu show as an alert on the window.
 void ShowResult(const vela::ActionResult &result, NSWindow *window) {
     if (result.ok) return;
+    vela::Log::Get().Add(vela::LogEntry::Level::Error, "Action", result.error);
     NSAlert *alert = [NSAlert new];
     alert.alertStyle = NSAlertStyleWarning;
     const std::string &error = result.error;
@@ -300,6 +302,26 @@ NSMenu *VelaBuildMainMenu() {
         }
     }
 
+    // The window's panes, for the front document window (its controller
+    // handles them and titles them Show or Hide).
+    for (NSMenuItem *top in bar.itemArray) {
+        if (![top.submenu.title isEqualToString:@"View"]) continue;
+        NSMenu *view = top.submenu;
+        [view addItem:[NSMenuItem separatorItem]];
+        struct { NSString *title; SEL action; NSString *key; NSEventModifierFlags modifiers; } const panes[] = {
+            {@"Hide Prim Browser", @selector(togglePrimBrowser:), @"s",
+             NSEventModifierFlagControl | NSEventModifierFlagCommand},
+            {@"Hide Inspector", @selector(toggleInspector:), @"i",
+             NSEventModifierFlagOption | NSEventModifierFlagCommand},
+            {@"Hide Bottom Panel", @selector(toggleBottomPanel:), @"y",
+             NSEventModifierFlagShift | NSEventModifierFlagCommand},
+        };
+        for (const auto &pane : panes) {
+            NSMenuItem *item = [view addItemWithTitle:pane.title action:pane.action keyEquivalent:pane.key];
+            item.keyEquivalentModifierMask = pane.modifiers;
+        }
+    }
+
     // Text editing in fields (filters, forms, the palette) needs the
     // standard items: AppKit routes ⌘X, ⌘C, ⌘V and ⌘A through them.
     NSMenu *edit = addMenu(@"Edit");
@@ -327,14 +349,23 @@ NSMenu *VelaBuildMainMenu() {
     palette.target = PaletteTarget();
     // The front document shows its issues.
     [window addItemWithTitle:@"Validation" action:@selector(showValidation:) keyEquivalent:@""];
-    // An interpreter for the front document (usdview's Interpreter).
+    // The bottom panel's tabs: an interpreter for the front document
+    // (usdview's Interpreter), the log, and the Claude console.
     NSMenuItem *console = [window addItemWithTitle:@"Python Console"
         action:@selector(showPythonConsole:) keyEquivalent:@"p"];
     console.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
+    NSMenuItem *log = [window addItemWithTitle:@"Log" action:@selector(showLog:) keyEquivalent:@"l"];
+    log.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
+    [window addItemWithTitle:@"Claude" action:@selector(showClaudeConsole:) keyEquivalent:@""];
     [window addItem:[NSMenuItem separatorItem]];
     [window addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:)
                keyEquivalent:@"m"];
     NSApp.windowsMenu = window;
+
+    // What the browser's colors and fonts mean (the app delegate shows it).
+    NSMenu *help = addMenu(@"Help");
+    [help addItemWithTitle:@"Color Legend" action:@selector(showColorLegend:) keyEquivalent:@""];
+    NSApp.helpMenu = help;
     return bar;
 }
 
@@ -349,7 +380,7 @@ bool VelaRunShortcut(NSEvent *event, vela::Document &document) {
     }
     vela::ActionResult result = registry.Run(document, action->name);
     if (!result.ok) {
-        NSLog(@"%s", result.error.c_str());
+        vela::Log::Get().Add(vela::LogEntry::Level::Error, "Action", result.error);
     }
     return true;
 }

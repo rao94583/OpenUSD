@@ -233,5 +233,55 @@ void TestInspector() {
     CHECK(b.PropertyDetails(path, "curve").size() == 3);
     CHECK(b.PropertyDetails(path, "curve", 1, 1).size() == 2);
 }
+
+// usdview's color coding: prim styles and fonts, value sources, italics
+// and relationship targets.
+void TestColorCoding() {
+    auto stage = UsdStage::CreateInMemory();
+    UsdGeomXform::Define(stage, SdfPath("/Plain"));
+    stage->OverridePrim(SdfPath("/Over"));
+    stage->CreateClassPrim(SdfPath("/Class"));
+    auto ref = UsdGeomXform::Define(stage, SdfPath("/Ref")).GetPrim();
+    ref.GetReferences().AddInternalReference(SdfPath("/Plain"));
+    auto instance = UsdGeomXform::Define(stage, SdfPath("/Instance")).GetPrim();
+    UsdGeomCube::Define(stage, SdfPath("/Proto/Child"));
+    instance.GetReferences().AddInternalReference(SdfPath("/Proto"));
+    instance.SetInstanceable(true);
+    auto cube = UsdGeomCube::Define(stage, SdfPath("/Cube"));
+    cube.CreateSizeAttr().Set(2.0);
+    auto animated = cube.GetPrim().CreateAttribute(TfToken("animated"), SdfValueTypeNames->Double);
+    animated.Set(1.0, UsdTimeCode(1)); animated.Set(3.0, UsdTimeCode(3));
+    cube.GetPrim().CreateAttribute(TfToken("empty"), SdfValueTypeNames->Double);
+    auto source = cube.GetPrim().CreateAttribute(TfToken("source"), SdfValueTypeNames->Double);
+    auto connected = cube.GetPrim().CreateAttribute(TfToken("connected"), SdfValueTypeNames->Double);
+    connected.AddConnection(source.GetPath());
+    cube.GetPrim().CreateRelationship(TfToken("look")).SetTargets({SdfPath("/Plain")});
+
+    Document d(stage); Browser b(d);
+    CHECK(b.Summary(SdfPath("/Plain")).style == PrimStyle::Normal);
+    CHECK(b.Summary(SdfPath("/Plain")).font == PrimFont::Defined);
+    CHECK(b.Summary(SdfPath("/Over")).font == PrimFont::Over);
+    CHECK(b.Summary(SdfPath("/Class")).font == PrimFont::Abstract);
+    CHECK(b.Summary(SdfPath("/Ref")).style == PrimStyle::HasArcs);
+    CHECK(b.Summary(SdfPath("/Instance")).style == PrimStyle::Instance);
+    CHECK(b.Summary(SdfPath("/Instance/Child")).style == PrimStyle::Prototype);
+
+    d.SetTime(UsdTimeCode(2));
+    auto rows = b.Properties(SdfPath("/Cube"));
+    CHECK(Find(rows, "size")->valueSource == ValueSource::Default && !Find(rows, "size")->interpolated);
+    CHECK(Find(rows, "purpose")->valueSource == ValueSource::Fallback);
+    CHECK(Find(rows, "animated")->valueSource == ValueSource::TimeSamples);
+    CHECK(Find(rows, "animated")->interpolated);
+    CHECK(Find(rows, "empty")->valueSource == ValueSource::None);
+    CHECK(Find(rows, "look")->valueSource == ValueSource::Relationship);
+    CHECK(Find(rows, "look")->targets == std::vector<std::string>{"/Plain"});
+    CHECK(Find(rows, "connected")->targets == std::vector<std::string>{"/Cube.source"});
+    d.SetTime(UsdTimeCode(3));
+    CHECK(!Find(b.Properties(SdfPath("/Cube")), "animated")->interpolated);
+    CHECK(ColorOf(ValueSource::Relationship) == (Rgb{230, 132, 131}));
+    CHECK(PrimLegend().size() == 8 && PropertyLegend().size() == 8);
 }
-int main() { test::RegisterPlugins(); TestOutline(); TestFiltersAndPrototypes(); TestArrayTypes(); TestInspector(); return test::Finish("browser"); }
+
+}
+
+int main() { test::RegisterPlugins(); TestOutline(); TestFiltersAndPrototypes(); TestArrayTypes(); TestInspector(); TestColorCoding(); return test::Finish("browser"); }

@@ -42,6 +42,34 @@ std::string Source(const UsdProperty &property, UsdTimeCode time) {
     const auto stack = property.GetPropertyStack(time);
     return stack.empty() ? "schema fallback / unauthored" : "strongest spec: " + stack.front()->GetLayer()->GetIdentifier();
 }
+// Where an attribute's value comes from at a time, as usdview colors it.
+ValueSource ValueSourceOf(const UsdAttribute &attr, UsdTimeCode time) {
+    switch (attr.GetResolveInfo(time).GetSource()) {
+    case UsdResolveInfoSourceFallback: return ValueSource::Fallback;
+    case UsdResolveInfoSourceDefault: return ValueSource::Default;
+    case UsdResolveInfoSourceTimeSamples: return ValueSource::TimeSamples;
+    case UsdResolveInfoSourceValueClips: return ValueSource::ValueClips;
+    case UsdResolveInfoSourceSpline: return ValueSource::Spline;
+    default: return ValueSource::None;
+    }
+}
+// usdview's italics (GetPropertyTextFont): not on a time sample (between
+// samples, or held before the first or after the last), or off a spline's
+// knots.
+bool IsInterpolated(const UsdAttribute &attr, UsdTimeCode time) {
+    if (!time.IsNumeric()) return false;
+    double lower = 0.0, upper = 0.0;
+    bool hasSamples = false;
+    if (attr.GetBracketingTimeSamples(time.GetValue(), &lower, &upper, &hasSamples) &&
+        hasSamples && lower != time.GetValue()) {
+        return true;
+    }
+    if (attr.HasSpline()) {
+        const auto knots = attr.GetSpline().GetKnots();
+        return knots.find(time.GetValue()) == knots.end();
+    }
+    return false;
+}
 template<class Map> void MetadataRows(const Map &metadata, const std::string &prefix,
                   InspectorRows *rows, int depth = 0) {
     for (const auto &[name, value] : metadata) {
@@ -179,6 +207,15 @@ PrimSummary Browser::Summary(const SdfPath &path) const {
     PrimSummary result{prim.GetName().GetString(), prim.GetTypeName().GetString()};
     result.inPrototype = prim.IsInPrototype();
     result.active = prim.IsActive(); result.loaded = prim.IsLoaded(); result.instanceProxy = prim.IsInstanceProxy();
+    // usdview's precedence (primViewItem.py): instance, arcs, prototype.
+    const bool hasArcs = prim.HasAuthoredReferences() || prim.HasAuthoredPayloads() ||
+        prim.HasAuthoredInherits() || prim.HasAuthoredSpecializes() || prim.HasVariantSets();
+    result.style = prim.IsInstance() ? PrimStyle::Instance
+        : hasArcs ? PrimStyle::HasArcs
+        : prim.IsInPrototype() || prim.IsInstanceProxy() ? PrimStyle::Prototype
+        : PrimStyle::Normal;
+    result.font = prim.IsAbstract() ? PrimFont::Abstract
+        : prim.IsDefined() ? PrimFont::Defined : PrimFont::Over;
     if (UsdGeomImageable imageable{prim}) result.visibility = imageable.ComputeVisibility(_document.GetTime()).GetString();
     result.drawMode = UsdGeomModelAPI(prim).ComputeModelDrawMode().GetString();
     return result;
@@ -188,15 +225,25 @@ InspectorRows Browser::Properties(const SdfPath &path, const std::string &query)
     if (!prim) return {};
     InspectorRows rows;
     for (const auto &property : prim.GetProperties()) {
+        const UsdTimeCode time = _document.GetTime();
         if (const auto attr = property.As<UsdAttribute>()) {
-            VtValue value; attr.Get(&value, _document.GetTime());
-            rows.push_back({attr.GetName().GetString(), attr.GetTypeName().GetAsToken().GetString(),
-                            Value(value) + (attr.HasSpline() ? " (spline)" : ""), Source(attr, _document.GetTime())});
+            VtValue value; attr.Get(&value, time);
+            InspectorRow row{attr.GetName().GetString(), attr.GetTypeName().GetAsToken().GetString(),
+                             Value(value) + (attr.HasSpline() ? " (spline)" : ""), Source(attr, time)};
+            row.valueSource = ValueSourceOf(attr, time);
+            row.interpolated = IsInterpolated(attr, time);
+            SdfPathVector connections;
+            attr.GetConnections(&connections);
+            for (const SdfPath &c : connections) row.targets.push_back(c.GetString());
+            rows.push_back(std::move(row));
         } else if (const auto rel = property.As<UsdRelationship>()) {
             SdfPathVector targets; rel.GetTargets(&targets);
             std::string value;
             for (size_t i = 0; i < std::min(size_t(8), targets.size()); ++i) value += (i ? ", " : "") + targets[i].GetString();
-            rows.push_back({rel.GetName().GetString(), "relationship", Short(value), Source(rel, _document.GetTime())});
+            InspectorRow row{rel.GetName().GetString(), "relationship", Short(value), Source(rel, time)};
+            row.valueSource = ValueSource::Relationship;
+            for (const SdfPath &t : targets) row.targets.push_back(t.GetString());
+            rows.push_back(std::move(row));
         }
     }
     if (!query.empty()) {

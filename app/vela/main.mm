@@ -13,6 +13,8 @@
 #import "palette.h"
 #import "scripting.h"
 #import "settings_window.h"
+#import "color_coding.h"
+#import "log_view.h"
 #import "viewport/viewport_view.h"
 #include "app/vela/core/actions.h"
 #include "app/vela/core/app_settings.h"
@@ -69,6 +71,11 @@ PXR_NAMESPACE_USING_DIRECTIVE
         }
         VelaOpenWithOptions(url, options);
     });
+}
+
+// Help → Color Legend.
+- (void)showColorLegend:(id)sender {
+    [[VelaLegendWindowController shared] showWindow:sender];
 }
 
 // Vela → Settings… (the window is made on first use).
@@ -600,6 +607,8 @@ int main(int argc, const char *argv[]) {
             [NSUserDefaults.standardUserDefaults setVolatileDomain:arguments
                                                            forName:NSArgumentDomain];
         }
+        // The Log tab shows USD's diagnostics from here on.
+        VelaStartLog();
         [NSApplication sharedApplication];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
         VelaDelegate *delegate = [[VelaDelegate alloc] initWithFile:launchFile];

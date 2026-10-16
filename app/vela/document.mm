@@ -2,6 +2,7 @@
 #import "form_sheet.h"
 #import "validation_panel.h"
 #import "python_console.h"
+#import "bottom_panel.h"
 #import "browser_view.h"
 #import "window_layout.h"
 #import "menus.h"
@@ -22,10 +23,12 @@ PXR_NAMESPACE_USING_DIRECTIVE
 // The viewport above a timeline: play, a frame slider and the status line.
 // Everything goes through the action registry; the controller observes the
 // document to stay in sync.
-@interface VelaWindowController : NSWindowController <NSWindowDelegate>
+@interface VelaWindowController : NSWindowController <NSWindowDelegate, NSToolbarDelegate,
+                                                     NSMenuItemValidation, NSToolbarItemValidation>
 - (instancetype)initWithDocument:(std::shared_ptr<vela::Document>)document
                        primCount:(size_t)count;
 @property (nonatomic, readonly) VelaViewportView *viewport;
+@property (nonatomic, readonly) VelaBottomPanel *bottomPanel;
 @end
 
 @implementation VelaWindowController {
@@ -36,10 +39,13 @@ PXR_NAMESPACE_USING_DIRECTIVE
     VelaBrowserController *_browser;
     NSSlider *_slider;
     NSTextField *_frameLabel;
-    NSTextField *_statusLabel;
-    NSString *_viewportStatus;
+    NSTextField *_statusLabel;  // prim count and selection
+    NSTextField *_renderTimeLabel;
+    NSString *_selectionStatus;
     NSButton *_playButton;
     NSTimer *_timer;
+    VelaDocumentLayout *_layout;
+    VelaBottomPanel *_bottomPanel;
 }
 
 - (instancetype)initWithDocument:(std::shared_ptr<vela::Document>)document
@@ -65,40 +71,70 @@ PXR_NAMESPACE_USING_DIRECTIVE
                                maxValue:_document->GetEndTime()
                                  target:self action:@selector(sliderMoved:)];
     _slider.continuous = YES;
+    // The labels after the slider have fixed widths, so the slider doesn't
+    // resize as the frame, selection and render time change.
+    NSFont *digits = [NSFont monospacedDigitSystemFontOfSize:12 weight:NSFontWeightRegular];
     _frameLabel = [NSTextField labelWithString:@""];
-    _frameLabel.font = [NSFont monospacedDigitSystemFontOfSize:12 weight:NSFontWeightRegular];
-    [_frameLabel setContentHuggingPriority:NSLayoutPriorityRequired
-                            forOrientation:NSLayoutConstraintOrientationHorizontal];
+    _frameLabel.font = digits;
+    _frameLabel.alignment = NSTextAlignmentRight;
+    [_frameLabel.widthAnchor constraintEqualToConstant:[self frameLabelWidth:digits]].active = YES;
     _statusLabel = [NSTextField labelWithString:@""];
     _statusLabel.textColor = NSColor.secondaryLabelColor;
     _statusLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
-    [_statusLabel setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow
-                                           forOrientation:NSLayoutConstraintOrientationHorizontal];
+    [_statusLabel.widthAnchor constraintEqualToConstant:280].active = YES;
+    _renderTimeLabel = [NSTextField labelWithString:@""];
+    _renderTimeLabel.font = digits;
+    _renderTimeLabel.textColor = NSColor.secondaryLabelColor;
+    _renderTimeLabel.alignment = NSTextAlignmentRight;
+    _renderTimeLabel.toolTip = @"The last frame's render time";
+    [_renderTimeLabel.widthAnchor constraintEqualToConstant:
+        [@"8888.8 ms" sizeWithAttributes:@{NSFontAttributeName: digits}].width + 4].active = YES;
     for (NSView *view in @[_playButton, _slider, _frameLabel]) {
         view.hidden = !animated;
     }
     [_slider.widthAnchor constraintGreaterThanOrEqualToConstant:200].active = YES;
 
+    // Without animation there's no slider; a spacer keeps the render time
+    // at the right edge.
+    NSView *spacer = [NSView new];
+    [spacer setContentHuggingPriority:1 forOrientation:NSLayoutConstraintOrientationHorizontal];
+    spacer.hidden = animated;
     NSStackView *bar = [NSStackView stackViewWithViews:
-        @[_playButton, _slider, _frameLabel, _statusLabel]];
+        @[_playButton, _slider, _frameLabel, _statusLabel, spacer, _renderTimeLabel]];
     bar.edgeInsets = NSEdgeInsetsMake(6, 10, 6, 10);
     bar.spacing = 10;
     bar.detachesHiddenViews = YES;
     _browser = [[VelaBrowserController alloc] initWithDocument:_document];
     [bar setContentHuggingPriority:NSLayoutPriorityRequired
                     forOrientation:NSLayoutConstraintOrientationVertical];
-    window.contentView = VelaDocumentLayout(_browser.outlineView, _viewport,
-                                            _browser.inspectorView, bar);
+    _bottomPanel = [VelaBottomPanel new];
+    _layout = [[VelaDocumentLayout alloc] initWithOutline:_browser.outlineView viewport:_viewport
+        inspector:_browser.inspectorView bottomPanel:_bottomPanel.view timeline:bar];
+    // The window's content view, not its contentViewController: a window
+    // follows its content view controller's preferred size, which the split
+    // view controllers change as panes collapse and expand.
+    window.contentView = _layout.view;
+    [_layout applyDefaultSizes];
+    NSToolbar *toolbar = [[NSToolbar alloc] initWithIdentifier:@"VelaDocument"];
+    toolbar.delegate = self;
+    toolbar.displayMode = NSToolbarDisplayModeIconOnly;
+    toolbar.allowsUserCustomization = NO;
+    window.toolbar = toolbar;
+    window.toolbarStyle = NSWindowToolbarStyleUnifiedCompact;
     window.initialFirstResponder = _viewport;
     window.delegate = self;
     [window center];
 
     __weak VelaWindowController *weakSelf = self;
-    _viewport.statusChanged = ^(NSString *status) {
+    _viewport.statusChanged = ^(NSString *selection, double milliseconds) {
         VelaWindowController *strongSelf = weakSelf;
         if (strongSelf) {
-            strongSelf->_viewportStatus = status;
-            [strongSelf showStatus];
+            if (![selection isEqualToString:strongSelf->_selectionStatus]) {
+                strongSelf->_selectionStatus = selection;
+                [strongSelf showStatus];
+            }
+            strongSelf->_renderTimeLabel.stringValue =
+                [NSString stringWithFormat:@"%.1f ms", milliseconds];
         }
     };
     _observer = _document->AddObserver([weakSelf](unsigned changes) {
@@ -114,6 +150,80 @@ PXR_NAMESPACE_USING_DIRECTIVE
 }
 
 - (VelaViewportView *)viewport { return _viewport; }
+- (VelaBottomPanel *)bottomPanel { return _bottomPanel; }
+
+#pragma mark Panes
+
+// View → Hide/Show Prim Browser, Inspector, Bottom Panel, and the toolbar.
+- (void)togglePane:(VelaPane)pane {
+    [_layout setPane:pane collapsed:![_layout isCollapsed:pane] animated:YES];
+}
+- (void)togglePrimBrowser:(id)sender { [self togglePane:VelaPanePrimBrowser]; }
+- (void)toggleInspector:(id)sender { [self togglePane:VelaPaneInspector]; }
+- (void)toggleBottomPanel:(id)sender { [self togglePane:VelaPaneBottomPanel]; }
+
+// Window → Python Console and Log: the bottom panel, open on that tab.
+- (void)showPanelTab:(VelaPanelTab)tab {
+    [self.window makeKeyAndOrderFront:nil];
+    if ([_layout isCollapsed:VelaPaneBottomPanel]) {
+        [_layout setPane:VelaPaneBottomPanel collapsed:NO animated:NO];
+    }
+    [_bottomPanel showTab:tab];
+    [_bottomPanel focusTab];
+}
+- (void)showPythonConsole:(id)sender { [self showPanelTab:VelaPanelTabPython]; }
+- (void)showLog:(id)sender { [self showPanelTab:VelaPanelTabLog]; }
+- (void)showClaudeConsole:(id)sender { [self showPanelTab:VelaPanelTabClaude]; }
+
+- (NSString *)titleForToggle:(SEL)action {
+    struct { SEL action; VelaPane pane; NSString *name; } const toggles[] = {
+        {@selector(togglePrimBrowser:), VelaPanePrimBrowser, @"Prim Browser"},
+        {@selector(toggleInspector:), VelaPaneInspector, @"Inspector"},
+        {@selector(toggleBottomPanel:), VelaPaneBottomPanel, @"Bottom Panel"},
+    };
+    for (const auto &toggle : toggles) {
+        if (toggle.action == action) {
+            return [NSString stringWithFormat:@"%@ %@",
+                    [_layout isCollapsed:toggle.pane] ? @"Show" : @"Hide", toggle.name];
+        }
+    }
+    return nil;
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
+    if (NSString *title = [self titleForToggle:item.action]) item.title = title;
+    return YES;
+}
+
+- (BOOL)validateToolbarItem:(NSToolbarItem *)item {
+    if (NSString *title = [self titleForToggle:item.action]) item.toolTip = title;
+    return YES;
+}
+
+- (NSArray<NSToolbarItemIdentifier> *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar {
+    return @[@"primBrowser", NSToolbarFlexibleSpaceItemIdentifier, @"bottomPanel", @"inspector"];
+}
+- (NSArray<NSToolbarItemIdentifier> *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar {
+    return [self toolbarDefaultItemIdentifiers:toolbar];
+}
+- (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSToolbarItemIdentifier)identifier
+    willBeInsertedIntoToolbar:(BOOL)flag {
+    NSDictionary<NSString *, NSArray *> *items = @{
+        @"primBrowser": @[@"sidebar.left", @"Prim Browser", NSStringFromSelector(@selector(togglePrimBrowser:))],
+        @"bottomPanel": @[@"rectangle.bottomthird.inset.filled", @"Bottom Panel",
+                          NSStringFromSelector(@selector(toggleBottomPanel:))],
+        @"inspector": @[@"sidebar.right", @"Inspector", NSStringFromSelector(@selector(toggleInspector:))],
+    };
+    NSArray *spec = items[identifier];
+    if (!spec) return nil;
+    NSToolbarItem *item = [[NSToolbarItem alloc] initWithItemIdentifier:identifier];
+    item.image = [NSImage imageWithSystemSymbolName:spec[0] accessibilityDescription:spec[1]];
+    item.label = spec[1];
+    item.action = NSSelectorFromString(spec[2]);
+    item.target = self;
+    item.bordered = YES;
+    return item;
+}
 
 - (void)run:(const char *)action params:(const JsObject &)params {
     vela::ActionResult result =
@@ -125,7 +235,26 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 - (void)showStatus {
     _statusLabel.stringValue = [NSString stringWithFormat:@"%zu prims    %@",
-                                _primCount, _viewportStatus ?: @""];
+                                _primCount, _selectionStatus ?: @""];
+    _statusLabel.toolTip = _statusLabel.stringValue;
+}
+
+// Wide enough for any frame of the stage's range, e.g. "-88.5 / 888.5".
+- (CGFloat)frameLabelWidth:(NSFont *)font {
+    auto widest = [](double time) {
+        NSString *text = [NSString stringWithFormat:@"%g", time];
+        NSMutableString *digits = [NSMutableString string];
+        for (NSUInteger i = 0; i < text.length; ++i) {
+            const unichar c = [text characterAtIndex:i];
+            [digits appendString:(c >= '0' && c <= '9') ? @"8" : [NSString stringWithCharacters:&c length:1]];
+        }
+        return digits;
+    };
+    NSString *start = widest(_document->GetStartTime()), *end = widest(_document->GetEndTime());
+    NSString *longest = start.length > end.length ? start : end;
+    // Room for a fractional time (".25") while scrubbing.
+    NSString *sample = [NSString stringWithFormat:@"%@.88 / %@", longest, end];
+    return std::ceil([sample sizeWithAttributes:@{NSFontAttributeName: font}].width) + 4;
 }
 
 - (void)documentChanged:(unsigned)changes {
@@ -314,21 +443,6 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     [_validation showWindow:sender];
 }
 
-// Window → Python Console: an interpreter for this document, in a window
-// of its own (so menus and undo act on this document while it is key).
-- (void)showPythonConsole:(id)sender {
-    for (NSWindowController *controller in self.windowControllers) {
-        if ([controller isKindOfClass:[VelaPythonConsoleController class]]) {
-            [controller showWindow:sender];
-            return;
-        }
-    }
-    VelaPythonConsoleController *console =
-        [[VelaPythonConsoleController alloc] initWithSessionId:_sessionId];
-    [self addWindowController:console];
-    [console showWindow:sender];
-}
-
 - (void)close {
     [_validation close];
     _validation = nil;
@@ -450,6 +564,7 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
         return true;
     };
     _sessionId = vela::Session::Get().Add(std::move(entry));
+    controller.bottomPanel.python.sessionId = _sessionId;
     const int sessionId = _sessionId;
     __weak VelaDocument *weakSelf = self;
     _becameMainObserver = [NSNotificationCenter.defaultCenter

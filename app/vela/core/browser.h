@@ -1,6 +1,7 @@
 // Read-only browsing of the composed stage. No AppKit or renderer dependency.
 #pragma once
 #include "actions.h"
+#include "color_codes.h"
 #include "document.h"
 #include "pxr/base/gf/vec2d.h"
 #include <set>
@@ -9,9 +10,18 @@ namespace vela {
 struct PrimSummary {
     std::string name, type, visibility, drawMode;
     bool active = false, loaded = false, instanceProxy = false, inPrototype = false;
+    // usdview's color coding; see color_codes.h.
+    PrimStyle style = PrimStyle::Normal;
+    PrimFont font = PrimFont::Defined;
 };
 struct InspectorRow {
     std::string name, type, value, source;
+    // Properties: where the value comes from at the current time and
+    // whether it is interpolated (see color_codes.h), and the paths a
+    // relationship targets or an attribute is connected to.
+    ValueSource valueSource = ValueSource::None;
+    bool interpolated = false;
+    std::vector<std::string> targets;
 };
 struct SplinePlot {
     std::vector<GfVec2d> samples, knots;

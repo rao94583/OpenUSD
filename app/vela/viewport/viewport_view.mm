@@ -366,8 +366,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     } else if (!paths.empty()) {
         selection = [NSString stringWithFormat:@"%zu prims selected", paths.size()];
     }
-    self.statusChanged([NSString stringWithFormat:@"%@    %.1f ms",
-                        selection, _frameMilliseconds]);
+    self.statusChanged(selection, _frameMilliseconds);
 }
 
 #pragma mark Picking

@@ -10,8 +10,9 @@
 
 - (instancetype)initWithDocument:(std::shared_ptr<vela::Document>)document;
 
-// Called with a one-line description of the selection and frame time.
-@property (nonatomic, copy) void (^statusChanged)(NSString *status);
+// Called with a description of the selection and the last frame's render
+// time, in milliseconds.
+@property (nonatomic, copy) void (^statusChanged)(NSString *selection, double milliseconds);
 // Called once, when the first frame has been drawn.
 @property (nonatomic, copy) void (^firstFrameDrawn)(void);
 

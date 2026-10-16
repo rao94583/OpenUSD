@@ -94,10 +94,30 @@ From a terminal, `Vela FILE` takes usdview's options (`--select`,
 `--camera`, `--mask`, `--unloaded`, `--sessionLayer`, `--ff/--lf/--cf`,
 `--complexity`, `--timing`, ...); `Vela --bogus` lists them.
 
+## Window
+
+The prim browser (left), inspector (right) and bottom panel each hide and
+show from the View menu (⌃⌘S, ⌥⌘I, ⇧⌘Y), the toolbar's buttons, or by
+dragging a divider to the window's edge. The bottom panel has three tabs:
+Python, Log (⌥⌘L: USD's errors, warnings and status messages, failed
+actions and MCP calls, filtered by level and text; its tab counts unseen
+errors and warnings) and Claude (Phase 7).
+
+The browser uses usdview's color coding. Prim names: orange for prims with
+composition arcs (references, payloads, inherits, specializes, variant
+sets), light blue for instances, periwinkle inside prototypes, dimmed when
+inactive; bold for `def`, italic for `over`, regular for `class`. Property
+names and values are colored by where the value comes from (default, time
+samples, spline, value clips, schema fallback, none) and relationships are
+red; italic values are interpolated. The palette buttons above the outline
+and inspector, and Help → Color Legend, explain them. Right-click a
+relationship (or a connected attribute) to go to its targets; double-click
+a target in the property window does the same.
+
 ## Python and Claude
 
-Window → Python Console (⌥⌘P) is an interpreter for the front document,
-replacing usdview's. `vela.stage` is the document's own `Usd.Stage`, so
+Window → Python Console (⌥⌘P) opens the bottom panel's interpreter for
+the window's document, replacing usdview's. `vela.stage` is the document's own `Usd.Stage`, so
 edits appear in the window at once; `vela.selection` and `vela.time` can be
 read and assigned, `vela.run(action, **params)` runs any menu command and
 `vela.actions()` describes them. Usd, Sdf, Gf, Vt, Tf, UsdGeom, UsdShade,
