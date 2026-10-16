@@ -1,0 +1,450 @@
+#usda 1.0
+(
+    doc = """A small playroom for trying Vela: materials, a bouncing ball and a
+    spinning top (frames 1-96), two scene cameras, lights, a variant set on
+    the top, instanced blocks, a payload (the shelf) and a lamp whose proxy
+    and render purposes differ. Things to try are in README.md."""
+    defaultPrim = "World"
+    upAxis = "Y"
+    metersPerUnit = 1
+    startTimeCode = 1
+    endTimeCode = 96
+    timeCodesPerSecond = 24
+)
+
+def Xform "World" (
+    kind = "assembly"
+)
+{
+    def Scope "Cameras"
+    {
+        # Vela looks through main_cam when a stage has one (see Settings).
+        def Camera "main_cam"
+        {
+            float focalLength = 35
+            float horizontalAperture = 36
+            float verticalAperture = 24
+            float2 clippingRange = (0.1, 1000)
+            double3 xformOp:translate = (5.2, 3.4, 6.4)
+            float3 xformOp:rotateXYZ = (-17, 39, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def Camera "top_cam"
+        {
+            float focalLength = 24
+            float horizontalAperture = 36
+            float verticalAperture = 24
+            float2 clippingRange = (0.1, 1000)
+            double3 xformOp:translate = (0, 11, 0)
+            float3 xformOp:rotateXYZ = (-90, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+    }
+
+    def Scope "Lights"
+    {
+        def DistantLight "Fill"
+        {
+            color3f inputs:color = (0.75, 0.85, 1)
+            float inputs:intensity = 0.8
+            float3 xformOp:rotateXYZ = (-30, -140, 0)
+            uniform token[] xformOpOrder = ["xformOp:rotateXYZ"]
+        }
+
+        def DistantLight "Sun"
+        {
+            float inputs:angle = 2
+            color3f inputs:color = (1, 0.95, 0.85)
+            float inputs:intensity = 2.5
+            float3 xformOp:rotateXYZ = (-55, 35, 0)
+            uniform token[] xformOpOrder = ["xformOp:rotateXYZ"]
+        }
+    }
+
+    def Cube "Floor" (
+        prepend apiSchemas = ["MaterialBindingAPI"]
+    )
+    {
+        double size = 1
+        float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+        double3 xformOp:translate = (0, -0.05, 0)
+        float3 xformOp:scale = (9, 0.1, 9)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+        rel material:binding = </World/Looks/Floor>
+    }
+
+    def Xform "Toys"
+    {
+        def Sphere "Ball" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            double radius = 0.35
+            float3[] extent = [(-0.35, -0.35, -0.35), (0.35, 0.35, 0.35)]
+            rel material:binding = </World/Looks/RedPlastic>
+            double3 xformOp:translate.timeSamples = {
+            1: (-0.6, 0.3500, 0.4),
+            3: (-0.6, 0.8542, 0.4),
+            5: (-0.6, 1.2667, 0.4),
+            7: (-0.6, 1.5875, 0.4),
+            9: (-0.6, 1.8167, 0.4),
+            11: (-0.6, 1.9542, 0.4),
+            13: (-0.6, 2.0000, 0.4),
+            15: (-0.6, 1.9542, 0.4),
+            17: (-0.6, 1.8167, 0.4),
+            19: (-0.6, 1.5875, 0.4),
+            21: (-0.6, 1.2667, 0.4),
+            23: (-0.6, 0.8542, 0.4),
+            25: (-0.6, 0.3500, 0.4),
+            27: (-0.6, 0.8542, 0.4),
+            29: (-0.6, 1.2667, 0.4),
+            31: (-0.6, 1.5875, 0.4),
+            33: (-0.6, 1.8167, 0.4),
+            35: (-0.6, 1.9542, 0.4),
+            37: (-0.6, 2.0000, 0.4),
+            39: (-0.6, 1.9542, 0.4),
+            41: (-0.6, 1.8167, 0.4),
+            43: (-0.6, 1.5875, 0.4),
+            45: (-0.6, 1.2667, 0.4),
+            47: (-0.6, 0.8542, 0.4),
+            49: (-0.6, 0.3500, 0.4),
+            51: (-0.6, 0.8542, 0.4),
+            53: (-0.6, 1.2667, 0.4),
+            55: (-0.6, 1.5875, 0.4),
+            57: (-0.6, 1.8167, 0.4),
+            59: (-0.6, 1.9542, 0.4),
+            61: (-0.6, 2.0000, 0.4),
+            63: (-0.6, 1.9542, 0.4),
+            65: (-0.6, 1.8167, 0.4),
+            67: (-0.6, 1.5875, 0.4),
+            69: (-0.6, 1.2667, 0.4),
+            71: (-0.6, 0.8542, 0.4),
+            73: (-0.6, 0.3500, 0.4),
+            75: (-0.6, 0.8542, 0.4),
+            77: (-0.6, 1.2667, 0.4),
+            79: (-0.6, 1.5875, 0.4),
+            81: (-0.6, 1.8167, 0.4),
+            83: (-0.6, 1.9542, 0.4),
+            85: (-0.6, 2.0000, 0.4),
+            87: (-0.6, 1.9542, 0.4),
+            89: (-0.6, 1.8167, 0.4),
+            91: (-0.6, 1.5875, 0.4),
+            93: (-0.6, 1.2667, 0.4),
+            95: (-0.6, 0.8542, 0.4),
+            97: (-0.6, 0.3500, 0.4),
+            }
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        # Pick its color in the inspector's Variants tab.
+        def Xform "Top" (
+            variants = {
+                string color = "blue"
+            }
+            prepend variantSets = "color"
+        )
+        {
+            double3 xformOp:translate = (1.2, 0, 1.4)
+            float xformOp:rotateY.timeSamples = {
+                1: 0,
+                96: 1440,
+            }
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateY"]
+
+            def Cone "Body" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double height = 0.6
+                double radius = 0.45
+                uniform token axis = "Y"
+                float3[] extent = [(-0.45, -0.3, -0.45), (0.45, 0.3, 0.45)]
+                double3 xformOp:translate = (0, 0.3, 0)
+                float3 xformOp:rotateXYZ = (180, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+            }
+
+            def Cylinder "Handle" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double height = 0.3
+                double radius = 0.05
+                uniform token axis = "Y"
+                float3[] extent = [(-0.05, -0.15, -0.05), (0.05, 0.15, 0.05)]
+                double3 xformOp:translate = (0, 0.75, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+                rel material:binding = </World/Looks/Metal>
+            }
+
+            variantSet "color" = {
+                "blue" {
+                    over "Body"
+                    {
+                        rel material:binding = </World/Looks/Blue>
+                    }
+                }
+                "green" {
+                    over "Body"
+                    {
+                        rel material:binding = </World/Looks/Green>
+                    }
+                }
+                "yellow" {
+                    over "Body"
+                    {
+                        rel material:binding = </World/Looks/Yellow>
+                    }
+                }
+            }
+        }
+
+        # Native instances of one block: the outline's Prototypes checkbox
+        # shows their prototype.
+        def Xform "Blocks"
+        {
+        def "Block1" (
+            instanceable = true
+            prepend references = @./block.usda@
+        )
+        {
+            double3 xformOp:translate = (1.10, 0.25, -1.1)
+            double3 xformOp:rotateXYZ = (0, 4, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+        def "Block2" (
+            instanceable = true
+            prepend references = @./block.usda@
+        )
+        {
+            double3 xformOp:translate = (1.62, 0.25, -1.1)
+            double3 xformOp:rotateXYZ = (0, 12, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+        def "Block3" (
+            instanceable = true
+            prepend references = @./block.usda@
+        )
+        {
+            double3 xformOp:translate = (2.14, 0.25, -1.1)
+            double3 xformOp:rotateXYZ = (0, 4, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+        def "Block4" (
+            instanceable = true
+            prepend references = @./block.usda@
+        )
+        {
+            double3 xformOp:translate = (1.36, 0.75, -1.1)
+            double3 xformOp:rotateXYZ = (0, 12, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+        def "Block5" (
+            instanceable = true
+            prepend references = @./block.usda@
+        )
+        {
+            double3 xformOp:translate = (1.88, 0.75, -1.1)
+            double3 xformOp:rotateXYZ = (0, 4, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+        def "Block6" (
+            instanceable = true
+            prepend references = @./block.usda@
+        )
+        {
+            double3 xformOp:translate = (1.62, 1.25, -1.1)
+            double3 xformOp:rotateXYZ = (0, 12, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+        }
+    }
+
+    # A payload: Prim → Unload Selected unloads it, Load Selected brings it
+    # back.
+    def "Shelf" (
+        prepend payload = @./shelf.usda@
+    )
+    {
+        double3 xformOp:translate = (-2.3, 0, -3)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    # The lamp's proxy (a plain cylinder) shows by default. In View →
+    # Display, Render Purpose on and Proxy Purpose off show the detailed lamp.
+    def Xform "Lamp"
+    {
+        double3 xformOp:translate = (3, 0, -2.4)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+        def Cylinder "Proxy"
+        {
+            uniform token purpose = "proxy"
+            double height = 2.2
+            double radius = 0.4
+            uniform token axis = "Y"
+            float3[] extent = [(-0.4, -1.1, -0.4), (0.4, 1.1, 0.4)]
+            color3f[] primvars:displayColor = [(0.6, 0.6, 0.65)]
+            double3 xformOp:translate = (0, 1.1, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Xform "Render"
+        {
+            uniform token purpose = "render"
+
+            def Cylinder "Base" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double height = 0.06
+                double radius = 0.3
+                uniform token axis = "Y"
+                float3[] extent = [(-0.3, -0.03, -0.3), (0.3, 0.03, 0.3)]
+                double3 xformOp:translate = (0, 0.03, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+                rel material:binding = </World/Looks/Metal>
+            }
+
+            def Cylinder "Stem" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double height = 1.7
+                double radius = 0.03
+                uniform token axis = "Y"
+                float3[] extent = [(-0.03, -0.85, -0.03), (0.03, 0.85, 0.03)]
+                double3 xformOp:translate = (0, 0.9, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+                rel material:binding = </World/Looks/Metal>
+            }
+
+            def Cone "Shade" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double height = 0.5
+                double radius = 0.4
+                uniform token axis = "Y"
+                float3[] extent = [(-0.4, -0.25, -0.4), (0.4, 0.25, 0.4)]
+                double3 xformOp:translate = (0, 1.9, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+                rel material:binding = </World/Looks/Shade>
+            }
+        }
+    }
+
+    # Guides (the world axes) show with View → Display → Guide Purpose.
+    def BasisCurves "Axes"
+    {
+        uniform token purpose = "guide"
+        uniform token type = "linear"
+        int[] curveVertexCounts = [2, 2, 2]
+        point3f[] points = [(0, 0.01, 0), (1, 0.01, 0), (0, 0.01, 0), (0, 1.01, 0), (0, 0.01, 0), (0, 0.01, 1)]
+        float[] widths = [0.03] (interpolation = "constant")
+        color3f[] primvars:displayColor = [(1, 0, 0), (0, 1, 0), (0, 0, 1)] (interpolation = "uniform")
+        float3[] extent = [(0, 0, 0), (1, 1.02, 1)]
+    }
+
+    def Scope "Looks"
+    {
+        def Material "Floor"
+        {
+            token outputs:surface.connect = </World/Looks/Floor/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.55, 0.6, 0.65)
+                float inputs:roughness = 0.8
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+
+        def Material "RedPlastic"
+        {
+            token outputs:surface.connect = </World/Looks/RedPlastic/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.85, 0.12, 0.1)
+                float inputs:roughness = 0.25
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+
+        def Material "Blue"
+        {
+            token outputs:surface.connect = </World/Looks/Blue/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.15, 0.35, 0.85)
+                float inputs:roughness = 0.35
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+
+        def Material "Green"
+        {
+            token outputs:surface.connect = </World/Looks/Green/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.2, 0.7, 0.3)
+                float inputs:roughness = 0.35
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+
+        def Material "Yellow"
+        {
+            token outputs:surface.connect = </World/Looks/Yellow/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.95, 0.8, 0.15)
+                float inputs:roughness = 0.35
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+
+        def Material "Metal"
+        {
+            token outputs:surface.connect = </World/Looks/Metal/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.8, 0.8, 0.82)
+                float inputs:roughness = 0.3
+                float inputs:metallic = 0.4
+                token outputs:surface
+            }
+        }
+
+        def Material "Shade"
+        {
+            token outputs:surface.connect = </World/Looks/Shade/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.98, 0.94, 0.8)
+                float inputs:roughness = 0.6
+                float inputs:metallic = 0.0
+                token outputs:surface
+            }
+        }
+    }
+}

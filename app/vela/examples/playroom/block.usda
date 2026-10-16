@@ -1,0 +1,33 @@
+#usda 1.0
+(
+    defaultPrim = "Block"
+    upAxis = "Y"
+)
+
+# A toy block, referenced as native instances by playroom.usda.
+def Xform "Block" (
+    kind = "component"
+)
+{
+    def Cube "Geom" (
+        prepend apiSchemas = ["MaterialBindingAPI"]
+    )
+    {
+        double size = 0.5
+        float3[] extent = [(-0.25, -0.25, -0.25), (0.25, 0.25, 0.25)]
+        rel material:binding = </Block/Wood>
+    }
+
+    def Material "Wood"
+    {
+        token outputs:surface.connect = </Block/Wood/Surface.outputs:surface>
+
+        def Shader "Surface"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.72, 0.52, 0.32)
+            float inputs:roughness = 0.7
+            token outputs:surface
+        }
+    }
+}
