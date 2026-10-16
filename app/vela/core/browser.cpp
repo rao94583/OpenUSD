@@ -329,6 +329,8 @@ bool Browser::EditableText(const SdfPath &path, const std::string &attribute,
     if (!_document.GetEditTarget()->PermissionToEdit()) return false;
     VtValue value;
     attr.Get(&value, _document.GetTime());
+    // Large arrays are not edited as text.
+    if (!IsTextEditable(attr.GetTypeName(), value)) return false;
     if (text) *text = FormatForEditing(value);
     return true;
 }

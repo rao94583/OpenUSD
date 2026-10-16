@@ -381,6 +381,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
         }
     }
     label.stringValue = @((editable ? editText : *value).c_str());
+    // An unauthored value reads as such, and typing starts from empty.
+    label.placeholderString = editable && editText.empty() ? @"<no value>" : nil;
     label.toolTip = editable ? @"Edit the value; Return applies it" : label.stringValue;
     label.lineBreakMode = NSLineBreakByTruncatingMiddle;
     return label;

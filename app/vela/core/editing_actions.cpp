@@ -1,9 +1,21 @@
 // Phase 5 authoring operations, shared by the inspector and scripted clients.
 #include "actions.h"
 #include "document.h"
+#include "pxr/base/gf/half.h"
+#include "pxr/base/gf/matrix2d.h"
+#include "pxr/base/gf/matrix3d.h"
+#include "pxr/base/gf/matrix4d.h"
+#include "pxr/base/gf/quatd.h"
+#include "pxr/base/gf/quatf.h"
+#include "pxr/base/gf/quath.h"
+#include "pxr/base/gf/traits.h"
 #include "pxr/base/gf/vec2d.h"
+#include "pxr/base/gf/vec2h.h"
 #include "pxr/base/gf/vec3d.h"
+#include "pxr/base/gf/vec3h.h"
 #include "pxr/base/gf/vec4d.h"
+#include "pxr/base/gf/vec4h.h"
+#include "pxr/usd/sdf/timeCode.h"
 #include "pxr/base/vt/array.h"
 #include "pxr/usd/usd/attribute.h"
 #include "pxr/usd/usd/variantSets.h"
@@ -26,7 +38,38 @@ double Number(const JsValue &v) {
 // Convert against the attribute's actual USD type. Never infer its type
 // from JSON (an integer JSON literal may be a floating-point USD value).
 template<class T> bool Read(const JsValue &v, T *out) {
-    if constexpr (std::is_same_v<T, bool>) {
+    if constexpr (std::is_same_v<T, GfHalf>) {
+        // Half's largest finite value.
+        if (!(v.IsReal() || v.IsInt() || v.IsUInt64())) return false;
+        const double n = Number(v);
+        if (!std::isfinite(n) || std::abs(n) > 65504.0) return false;
+        *out = GfHalf(float(n));
+    } else if constexpr (std::is_same_v<T, SdfTimeCode>) {
+        if (!(v.IsReal() || v.IsInt() || v.IsUInt64()) || !std::isfinite(Number(v))) return false;
+        *out = SdfTimeCode(Number(v));
+    } else if constexpr (GfIsGfQuat<T>::value) {
+        // [real, i, j, k], as USD writes quaternions.
+        if (!v.IsArray() || v.GetJsArray().size() != 4) return false;
+        typename T::ScalarType c[4];
+        for (int i = 0; i < 4; ++i) if (!Read(v.GetJsArray()[i], &c[i])) return false;
+        *out = T(c[0], c[1], c[2], c[3]);
+    } else if constexpr (GfIsGfMatrix<T>::value) {
+        // Rows ([[1, 0], [0, 1]]) or all elements in row order.
+        if (!v.IsArray()) return false;
+        std::vector<JsValue> elements;
+        for (const JsValue &row : v.GetJsArray()) {
+            if (row.IsArray()) {
+                if (row.GetJsArray().size() != size_t(T::numColumns)) return false;
+                for (const JsValue &e : row.GetJsArray()) elements.push_back(e);
+            } else {
+                elements.push_back(row);
+            }
+        }
+        if (elements.size() != size_t(T::numRows * T::numColumns)) return false;
+        for (size_t i = 0; i < elements.size(); ++i) {
+            if (!Read(elements[i], &(*out)[i / T::numColumns][i % T::numColumns])) return false;
+        }
+    } else if constexpr (std::is_same_v<T, bool>) {
         if (!v.IsBool()) return false;
         *out = v.GetBool();
     } else if constexpr (std::is_same_v<T, std::string> ||
@@ -94,7 +137,13 @@ bool ConvertValue(const JsValue &v, const SdfValueTypeName &type, VtValue *out) 
         Convert<GfVec4f>(v, model, out) || Convert<GfVec2d>(v, model, out) ||
         Convert<GfVec3d>(v, model, out) || Convert<GfVec4d>(v, model, out) ||
         Convert<GfVec2i>(v, model, out) || Convert<GfVec3i>(v, model, out) ||
-        Convert<GfVec4i>(v, model, out);
+        Convert<GfVec4i>(v, model, out) || Convert<unsigned char>(v, model, out) ||
+        Convert<GfHalf>(v, model, out) || Convert<SdfTimeCode>(v, model, out) ||
+        Convert<GfVec2h>(v, model, out) || Convert<GfVec3h>(v, model, out) ||
+        Convert<GfVec4h>(v, model, out) || Convert<GfQuatf>(v, model, out) ||
+        Convert<GfQuatd>(v, model, out) || Convert<GfQuath>(v, model, out) ||
+        Convert<GfMatrix2d>(v, model, out) || Convert<GfMatrix3d>(v, model, out) ||
+        Convert<GfMatrix4d>(v, model, out);
 }
 
 UsdPrim Prim(Document &d, const JsObject &p) {
@@ -115,7 +164,7 @@ ActionResult Status(bool ok) {
 void AttributeActions(ActionRegistry &r) {
     r.Register({
         .name = "set_attribute", .title = "Set Attribute",
-        .description = "Author an existing attribute in the edit target. Omit time to edit the default, or supply a numeric time sample. JSON values must match the USD type: scalars, vectors, or arrays of those.",
+        .description = "Author an existing attribute in the edit target. Omit time to edit the default, or supply a numeric time sample. JSON values must match the USD type: scalars, vectors ([x, y, z]), quaternions ([real, i, j, k]), matrices (rows, [[1, 0], [0, 1]], or elements in row order), or arrays of those.",
         .parameters = ParameterSchema(R"({"properties": {
             "path": {"type": "string"}, "attribute": {"type": "string"},
             "value": {}, "time": {"type": "number"}},

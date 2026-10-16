@@ -13,7 +13,7 @@ undo step. Payload loading changes stage load rules, without layer edits.
 
 | Area | Status / remaining work |
 |---|---|
-| Attribute editing | Actions for bool, integer, float/double, string, token, asset and vector attributes and arrays of these, at the default or a time sample. The inspector edits non-array values in place (double-click or click a selected Value): text parsed by USD type, at the current frame for animated attributes, one undo step. Arrays, half, quaternions, matrices, dictionaries and splines are not editable in the inspector yet. |
+| Attribute editing | Done: `set_attribute` and the inspector edit bool, integers (including uchar), float, double, half, timecode, string, token, asset, vectors (float, double, half, int), quaternions (real first), matrices (2, 3 and 4, by rows) and arrays of all of these, at the default or the current frame for animated attributes, one undo step. Arrays edit as bracketed text ("[(1, 2, 3), (4, 5, 6)]", strings quoted) up to 1,000 elements, and small arrays show in full. Dictionaries and splines are not editable. |
 | Variants | Done: the Variants tab chooses or clears a selection from a pop-up (`set_variant`), one undo step. |
 | Load / unload | Actions for a prim/subtree and the selection; Prim menu. |
 | Activation | Actions for a prim and selection; Prim menu; undo across recomposition. |
