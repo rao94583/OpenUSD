@@ -66,6 +66,20 @@ NSString *ShortcutOf(NSMenuItem *item) {
     return controller;
 }
 
++ (void)installShortcut {
+    static id monitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown
+                                                              handler:^NSEvent *(NSEvent *event) {
+        const NSEventModifierFlags modifiers = event.modifierFlags &
+            NSEventModifierFlagDeviceIndependentFlagsMask & ~NSEventModifierFlagCapsLock;
+        if (event.keyCode == 49 /* space */ && modifiers == NSEventModifierFlagOption) {
+            [[VelaPaletteController shared] toggle:nil];
+            return nil;
+        }
+        return event;
+    }];
+    (void)monitor;
+}
+
 - (instancetype)init {
     VelaPalettePanel *panel = [[VelaPalettePanel alloc]
         initWithContentRect:NSMakeRect(0, 0, 560, 360)
@@ -308,8 +322,9 @@ NSString *ShortcutOf(NSMenuItem *item) {
     menu = [cell viewWithTag:1];
     shortcut = [cell viewWithTag:2];
     const vela::PaletteEntry &entry = _results[size_t(row)];
-    cell.textField.stringValue = [NSString stringWithFormat:@"%@%s",
-        entry.checked ? @"✓ " : @"", entry.title.c_str()];
+    // UTF-8 throughout ("›", "…"); %s would read the system encoding.
+    NSString *title = @(entry.title.c_str());
+    cell.textField.stringValue = entry.checked ? [@"✓ " stringByAppendingString:title] : title;
     menu.stringValue = @(entry.menu.c_str());
     shortcut.stringValue = @(entry.shortcut.c_str());
     return cell;

@@ -10,4 +10,8 @@
 + (instancetype)shared;
 // Shows the palette over the front window, or hides it if shown.
 - (void)toggle:(id)sender;
+// Makes ⌥Space toggle the palette everywhere in the app, text fields
+// included (they would take it as a non-breaking space before the menu's
+// key equivalent is tried).
++ (void)installShortcut;
 @end

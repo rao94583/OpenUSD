@@ -300,9 +300,27 @@ NSMenu *VelaBuildMainMenu() {
         }
     }
 
+    // Text editing in fields (filters, forms, the palette) needs the
+    // standard items: AppKit routes ⌘X, ⌘C, ⌘V and ⌘A through them.
+    NSMenu *edit = addMenu(@"Edit");
+    NSInteger at = 0;
+    for (NSMenuItem *item in edit.itemArray) {
+        ++at;
+        if ([item.representedObject isEqual:@"redo"]) break;
+    }
+    [edit insertItem:[NSMenuItem separatorItem] atIndex:at++];
+    for (NSArray *standard in @[@[@"Cut", @"cut:", @"x"], @[@"Copy", @"copy:", @"c"],
+                                @[@"Paste", @"paste:", @"v"],
+                                @[@"Select All", @"selectAll:", @"a"]]) {
+        [edit insertItem:[[NSMenuItem alloc] initWithTitle:standard[0]
+                                                    action:NSSelectorFromString(standard[1])
+                                             keyEquivalent:standard[2]]
+                 atIndex:at++];
+    }
+
     NSMenu *window = addMenu(@"Window");
-    // Everything Vela can do, searchable. ⌥Space works in text fields too:
-    // menu key equivalents come before typing.
+    // Everything Vela can do, searchable. An event monitor handles ⌥Space
+    // (see installShortcut); the key equivalent shows it in the menu.
     NSMenuItem *palette = [window addItemWithTitle:@"Command Palette"
         action:@selector(toggle:) keyEquivalent:@" "];
     palette.keyEquivalentModifierMask = NSEventModifierFlagOption;

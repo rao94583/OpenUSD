@@ -10,6 +10,7 @@
 #import "browser_view.h"
 #import "form_sheet.h"
 #import "menus.h"
+#import "palette.h"
 #import "settings_window.h"
 #import "viewport/viewport_view.h"
 #include "app/vela/core/actions.h"
@@ -72,6 +73,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
 - (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender { return NO; }
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     [NSApp activateIgnoringOtherApps:YES];
+    [VelaPaletteController installShortcut];
     if (_launchFile) {
         [NSDocumentController.sharedDocumentController openDocumentWithContentsOfURL:_launchFile
             display:YES completionHandler:^(NSDocument *document, BOOL, NSError *error) {

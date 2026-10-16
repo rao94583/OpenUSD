@@ -25,6 +25,11 @@ void TestFuzzy() {
     CHECK(FuzzyScore("wire", "Wireframe") > FuzzyScore("wire", "Show Interiors Repeatedly"));
     CHECK(FuzzyScore("fs", "Frame Selected") > FuzzyScore("fs", "Default Material"));
     CHECK(FuzzyScore("DRAW", "draw mode") > 0);  // case-insensitive
+    // Anchored: the first letter begins a word.
+    CHECK(FuzzyScore("ire", "Wireframe", true) == -1);
+    CHECK(FuzzyScore("ire", "Wireframe") > 0);
+    CHECK(FuzzyScore("frame", "Wireframe", true) == -1);
+    CHECK(FuzzyScore("wire", "View Display", true) == -1);
 }
 
 void TestEntries() {
@@ -65,6 +70,16 @@ void TestEntries() {
     found = SearchPalette(entries, "points draw", {}, 5);  // any word order
     CHECK(!found.empty() && found[0].title == "Draw Mode › Points");
     CHECK(SearchPalette(entries, "qqqzzz", {}, 5).empty());
+    // Only word-start matches: "wire" finds the wireframe modes alone.
+    for (const PaletteEntry &entry : SearchPalette(entries, "wire", {}, 50)) {
+        CHECK(entry.title.find("Wireframe") != std::string::npos);
+    }
+    // App commands match by menu and title, not their keys.
+    std::vector<PaletteEntry> withApp = entries;
+    withApp.push_back({"Reopen with Options…", "File", "", "app:File/Reopen with Options…"});
+    for (const PaletteEntry &entry : SearchPalette(withApp, "wire", {}, 50)) {
+        CHECK(entry.action != "app:File/Reopen with Options…");
+    }
     // Recents first, most recent first, with or without a query.
     const std::vector<std::string> recents{Find(entries, "Frame All")->Key(), wire->Key()};
     found = SearchPalette(entries, "", recents, 3);

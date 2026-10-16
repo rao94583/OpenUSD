@@ -25,9 +25,10 @@ bool Runnable(const Action &action) {
         required->second.GetJsArray().empty();
 }
 
-// What a query is matched against: the menu, the title, and the action's
-// name in words ("set draw mode").
+// What a query is matched against: the menu, the title, and an action's
+// name in words ("set draw mode"). App commands' keys are not words.
 std::string SearchText(const PaletteEntry &entry) {
+    if (entry.action.find(':') != std::string::npos) return entry.menu + " " + entry.title;
     std::string name = entry.action;
     std::replace(name.begin(), name.end(), '_', ' ');
     return entry.menu + " " + entry.title + " " + name;
@@ -41,11 +42,12 @@ bool IsWordStart(const std::string &text, size_t i) {
 }
 
 // Each word of the query matches on its own, in any order ("points draw
-// mode" finds Draw Mode › Points); -1 unless all do.
+// mode" finds Draw Mode › Points), starting at a word start ("wire" finds
+// Wireframe, not the w in View); -1 unless all do.
 int WordsScore(const std::vector<std::string> &words, const std::string &text) {
     int total = 0;
     for (const std::string &word : words) {
-        const int score = FuzzyScore(word, text);
+        const int score = FuzzyScore(word, text, /*anchored=*/true);
         if (score < 0) return -1;
         total += score;
     }
@@ -107,7 +109,7 @@ std::vector<PaletteEntry> PaletteEntries(const ActionRegistry &registry,
     return entries;
 }
 
-int FuzzyScore(const std::string &query, const std::string &text) {
+int FuzzyScore(const std::string &query, const std::string &text, bool anchored) {
     int score = 0;
     size_t at = 0;
     bool run = false;
@@ -115,12 +117,13 @@ int FuzzyScore(const std::string &query, const std::string &text) {
         if (q == ' ') continue;
         const char lower = char(std::tolower(static_cast<unsigned char>(q)));
         size_t found = std::string::npos;
-        // Prefer the next word start with this letter, then any match.
+        // Prefer the next word start with this letter, then any match
+        // (except for an anchored query's first letter).
         for (size_t i = at; i < text.size(); ++i) {
             if (std::tolower(static_cast<unsigned char>(text[i])) != lower) continue;
             if (run && i == at) { found = i; break; }
             if (IsWordStart(text, i)) { found = i; break; }
-            if (found == std::string::npos) found = i;
+            if (found == std::string::npos && (run || !anchored)) found = i;
         }
         if (found == std::string::npos) return -1;
         const bool contiguous = run && found == at;

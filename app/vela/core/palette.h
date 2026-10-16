@@ -42,8 +42,9 @@ std::vector<PaletteEntry> PrimEntries(const Document &document,
 
 // How well query matches text, case-insensitively: its characters in
 // order, preferring word starts and runs. -1 when they are not all there.
-// Searches match each word of a query separately, in any order.
-int FuzzyScore(const std::string &query, const std::string &text);
+// Anchored, the first letter must begin a word. Searches match each word of
+// a query separately, anchored, in any order.
+int FuzzyScore(const std::string &query, const std::string &text, bool anchored = false);
 
 // The entries matching query, best first, at most limit. Recent entries
 // (keys, most recent first) rank higher; with an empty query they come
