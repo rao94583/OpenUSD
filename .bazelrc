@@ -16,6 +16,12 @@ common --enable_platform_specific_config
 # --config=offline then never download anything.
 common:offline --vendor_dir=bazel-vendor
 
+# No implicit __init__.py files in Python runfiles (deprecated in
+# rules_python): our packages ship their own, and this also covers external
+# targets such as rules_apple's json_tool, which MODULE.bazel's
+# explicit_init_py setting doesn't reach.
+common --incompatible_default_to_explicit_init_py
+
 # Keep test output readable.
 test --test_output=errors
 
