@@ -1,0 +1,41 @@
+# Converts NVIDIA Omniverse MDL materials to MaterialX networks for Storm.
+
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("@rules_python//python:py_library.bzl", "py_library")
+load("@rules_python//python:py_test.bzl", "py_test")
+
+package(default_visibility = ["//app/vela:__subpackages__"])
+
+py_library(
+    name = "lib",
+    srcs = [
+        "graph.py",
+        "omni.py",
+    ],
+    imports = ["."],
+    deps = ["//bazel/install:python"],
+)
+
+py_binary(
+    name = "mdl_to_mtlx",
+    srcs = ["convert.py"],
+    main = "convert.py",
+    deps = [":lib"],
+)
+
+py_binary(
+    name = "census",
+    srcs = ["census.py"],
+    deps = ["//bazel/install:python"],
+)
+
+py_test(
+    name = "convert_test",
+    size = "small",
+    srcs = ["test_convert.py"],
+    main = "test_convert.py",
+    deps = [
+        ":lib",
+        ":mdl_to_mtlx",
+    ],
+)
