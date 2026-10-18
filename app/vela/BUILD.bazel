@@ -145,6 +145,7 @@ cc_test(
     "launch_options_test",
     "log_test",
     "mcp_test",
+    "material_invalidation_test",
     "palette_test",
     "document_test",
     "undo_test",
@@ -432,4 +433,13 @@ cc_test(
     name = "embree_invalid_ray_test",
     srcs = ["embree_invalid_ray_test.cpp"],
     deps = ["//vendor/embree"],
+)
+
+py_test(
+    name = "material_resync_ui_test",
+    srcs = ["test_material_resync.py"],
+    main = "test_material_resync.py",
+    args = ["$(rootpath :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
 )

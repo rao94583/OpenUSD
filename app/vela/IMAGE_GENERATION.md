@@ -405,3 +405,13 @@ which scene input first produced the invalid ray.
 Checkpoint limitation: the user clarified that the viewport became blank
 before Claude switched to Embree as a troubleshooting step. The invalid-ray
 crash protection does not explain or resolve that earlier blank viewport.
+
+A second report exposed a separate Storm material-sync failure:
+`UsdExpiredPrimAccessError` while reading a cached shader's inputs. Replaying
+the conversation's transition from image-derived bump nodes to a procedural
+MaterialX network reproduced the expired `heighttonormal` access on a small
+scene. Material descendant updates now invalidate the material root, rebuilding
+the retained graph and cached connections together. Empty/structural resyncs
+are no longer mistaken for UI-only changes. Explicit node-position UI updates
+remain exempt. Regressions cover nested MaterialX graph replacement,
+shader deletion, whole-material replacement, undo/redo and continued capture.
