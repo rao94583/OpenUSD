@@ -199,6 +199,12 @@ C++ core with unit tests. The UI only translates input events.
 
 ### Skills
 
+Image generation for the embedded Claude is proposed in
+[IMAGE_GENERATION.md](IMAGE_GENERATION.md): Vela-owned asynchronous image
+jobs with pluggable providers (GPT Image first), exposed through MCP, with
+bundled instructions, native previews and
+separate optional USD texture application. This is a design, pending implementation.
+
 - **`usd-python`**: curated idioms and pitfalls (change blocks, edit
   targets, UsdShade binding, UsdLux, variants, time samples), plus a schema
   reference generated from this build's schema registry.
