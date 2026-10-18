@@ -33,11 +33,13 @@ struct AppSettings {
     // socket.
     bool mcpServer = true;
     // The Claude panel: the claude CLI to run ("" finds it), whether
-    // Claude's edits need approval first, and the model ("" for the
-    // CLI's default, or an alias such as "opus").
+    // Claude's edits need approval first, the model ("" for the CLI's
+    // default, or an alias such as "opus") and the effort ("" for the
+    // CLI's default, or low, medium, high, xhigh or max).
     std::string claudePath;
     bool claudeAsksBeforeEdits = false;
     std::string claudeModel;
+    std::string claudeEffort;
 
     // Provider secrets live in Keychain, never in these persisted settings.
     bool imageGeneration = false;

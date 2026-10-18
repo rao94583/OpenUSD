@@ -14,6 +14,7 @@ JsObject ToJson(const AppSettings &settings) {
         {"claudePath", JsValue(settings.claudePath)},
         {"claudeAsksBeforeEdits", JsValue(settings.claudeAsksBeforeEdits)},
         {"claudeModel", JsValue(settings.claudeModel)},
+        {"claudeEffort", JsValue(settings.claudeEffort)},
         {"imageGeneration", JsValue(settings.imageGeneration)},
         {"imageAsk", JsValue(settings.imageAsk)},
         {"imageHighQuality", JsValue(settings.imageHighQuality)},
@@ -49,6 +50,7 @@ void FromJson(const JsObject &json, AppSettings *settings) {
     };
     text("claudePath", &settings->claudePath);
     text("claudeModel", &settings->claudeModel);
+    text("claudeEffort", &settings->claudeEffort);
     text("imageConnection", &settings->imageConnection);
     if (const JsValue *v = get("threadLimit"); v && (v->IsInt() || v->IsUInt64())) {
         settings->threadLimit = int(v->IsUInt64() ? int64_t(v->GetUInt64()) : v->GetInt64());

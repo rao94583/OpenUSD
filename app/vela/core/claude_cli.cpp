@@ -160,11 +160,29 @@ std::vector<std::string> Arguments(const LaunchOptions &options) {
         args.push_back("--model");
         args.push_back(options.model);
     }
+    if (!options.effort.empty()) {
+        args.push_back("--effort");
+        args.push_back(options.effort);
+    }
     if (!options.systemPrompt.empty()) {
         args.push_back("--append-system-prompt");
         args.push_back(options.systemPrompt);
     }
     return args;
+}
+
+const std::vector<Choice> &ModelChoices() {
+    static const std::vector<Choice> choices = {
+        {"", "Default model"}, {"opus", "Opus"}, {"sonnet", "Sonnet"},
+        {"haiku", "Haiku"}, {"fable", "Fable"}};
+    return choices;
+}
+
+const std::vector<Choice> &EffortChoices() {
+    static const std::vector<Choice> choices = {
+        {"", "Default effort"}, {"low", "Low effort"}, {"medium", "Medium effort"},
+        {"high", "High effort"}, {"xhigh", "Extra high effort"}, {"max", "Max effort"}};
+    return choices;
 }
 
 std::string InitializeRequest(const std::string &requestId) {

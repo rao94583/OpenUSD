@@ -40,6 +40,7 @@ void TestArguments() {
     options.mcpHelper = "/App/vela-mcp";
     options.mcpSocket = "/tmp/s.sock";
     options.model = "opus";
+    options.effort = "high";
     std::vector<std::string> args = Arguments(options);
     auto after = [&](const std::string &flag) {
         for (size_t i = 0; i + 1 < args.size(); ++i) if (args[i] == flag) return args[i + 1];
@@ -49,7 +50,8 @@ void TestArguments() {
     CHECK(after("--input-format") == "stream-json" && after("--output-format") == "stream-json");
     CHECK(after("--permission-prompt-tool") == "stdio");
     CHECK(after("--session-id") == "abc" && after("--resume") == "<missing>");
-    CHECK(after("--model") == "opus");
+    CHECK(after("--model") == "opus" && after("--effort") == "high");
+    CHECK(ModelChoices()[0].value == std::string() && EffortChoices().size() == 6);
     CHECK(after("--tools") == "Read,Glob,Grep");
     const JsObject config = Json(after("--mcp-config"));
     const JsObject &server = config.at("mcpServers").GetJsObject().at("vela").GetJsObject();
@@ -57,9 +59,10 @@ void TestArguments() {
     CHECK(server.at("env").GetJsObject().at("VELA_MCP_SOCKET").GetString() == "/tmp/s.sock");
     options.resume = "old";
     options.model.clear();
+    options.effort.clear();
     args = Arguments(options);
     CHECK(after("--resume") == "old" && after("--session-id") == "<missing>");
-    CHECK(after("--model") == "<missing>");
+    CHECK(after("--model") == "<missing>" && after("--effort") == "<missing>");
 }
 
 void TestMessages() {

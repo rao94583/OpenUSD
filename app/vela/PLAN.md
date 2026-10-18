@@ -675,6 +675,26 @@ Left for later:
 - Screenshots are kept in the history as base64, so conversations with many
   screenshots make large files.
 
+## Claude panel, more like the editor integrations (2026-10-18)
+
+The panel now behaves like Claude Code's VS Code panel:
+
+- **Header:** a History button opens a popover with this document's
+  conversations, a search field, relative times, Open and Delete. The
+  conversation's title, a spinner with a Stop button while Claude works,
+  and "+" for a new conversation complete it. Switching conversations
+  while Claude works stops the request first.
+- **Queueing:** typing while Claude works queues the message (shown
+  dimmed), which sends when the request ends. Stop returns it to the
+  input.
+- **Pickers under the input:** model, effort (`--effort`, new
+  `AppSettings::claudeEffort`) and edit mode, stored in the settings and
+  shared with Settings. A model or effort change ends the CLI before the
+  next message, which resumes the conversation with the new flags
+  (checked: `--resume <id> --effort high`).
+- `stop_claude` action. `claude_ui_test` covers it with a slow reply from
+  the stand-in CLI that honors interrupts.
+
 ## Testing
 
 - `cc_test` for the core: document, actions, undo, camera math

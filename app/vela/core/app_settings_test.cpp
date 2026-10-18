@@ -57,6 +57,7 @@ void TestAppSettings() {
     a.claudePath = "/opt/claude";
     a.claudeAsksBeforeEdits = true;
     a.claudeModel = "opus";
+    a.claudeEffort = "high";
     a.imageGeneration = true;
     a.imageAsk = false;
     a.imageHighQuality = true;

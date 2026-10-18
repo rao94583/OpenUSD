@@ -15,6 +15,8 @@
 // Sends a request as if typed; NO (with a reason) while one is running or
 // the CLI can't start.
 - (BOOL)ask:(NSString *)request error:(NSString **)error;
+// Stops the running request, as the Stop button does.
+- (void)stopRequest;
 // Puts the insertion point in the input.
 - (void)focusInput;
 // Ends the conversation's CLI, e.g. as the window closes.
@@ -22,5 +24,5 @@
 @end
 
 // Registers ask_claude, which sends a request to a document's panel (the
-// palette's "Ask Claude", and scripts).
+// palette's "Ask Claude", and scripts), and stop_claude.
 void VelaRegisterClaudeActions(void);

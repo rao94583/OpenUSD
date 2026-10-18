@@ -18,7 +18,7 @@ import tempfile
 import time
 
 FAKE = r'''#!PYTHON
-import json, os, subprocess, sys
+import json, os, select, subprocess, sys, time
 LOG = os.environ['FAKE_CLAUDE_LOG']
 args = sys.argv[1:]
 if args == ['--version']:
@@ -160,6 +160,25 @@ while True:
         record('image_job', job)
         say('The image is awaiting approval in Generated Images.')
         result('ok')
+    elif request.startswith('slow'):
+        # Streams for a while, ending early on an interrupt.
+        stopped = False
+        for i in range(100):
+            ready, _, _ = select.select([sys.stdin], [], [], 0.1)
+            if ready:
+                message = read()
+                if message['type'] == 'control_request':
+                    record('control', message['request']['subtype'])
+                    emit({'type': 'control_response', 'response': {'subtype': 'success',
+                          'request_id': message['request_id'], 'response': {}}})
+                    if message['request']['subtype'] == 'interrupt':
+                        stopped = True
+                        break
+            emit({'type': 'stream_event', 'event': {'type': 'content_block_delta', 'index': 0,
+                  'delta': {'type': 'text_delta', 'text': 'word '}},
+                  'parent_tool_use_id': None, 'session_id': session})
+        say('word ' * 10)
+        result('Interrupted' if stopped else 'ok', error=stopped)
     elif request.startswith('crash'):
         sys.stderr.write('Not logged in. Please run /login\n')
         sys.exit(1)
@@ -306,6 +325,16 @@ def main():
         assert len(shot) == 1, 'the screenshot was not kept'
         assert any(l['kind'] == 'note' and 'Changed the scene' in l['text'] for l in lines), kinds
 
+        # Stop, as the panel's Stop button does: the CLI is interrupted and
+        # the request ends.
+        ask('slow story')
+        wait(lambda: len(records('user')) == 3, 'the slow request')
+        time.sleep(0.5)
+        result = call('ui_action', action='stop_claude')
+        assert not result['isError'], result
+        wait(lambda: 'interrupt' in records('control'), 'the interrupt')
+        wait(lambda: '"text":"Stopped."' in logged.read_text(), 'Stopped in the history')
+
         # The CLI stopping is reported, and the next request resumes the
         # conversation in a new CLI.
         ask('crash now')
@@ -314,7 +343,7 @@ def main():
         wait(lambda: len(records('argv')) == 2, 'a new CLI')
         argv = records('argv')[1]
         assert argv[argv.index('--resume') + 1] == session, argv
-        wait(lambda: len(records('user')) == 4, 'the resumed request')
+        wait(lambda: len(records('user')) == 5, 'the resumed request')
 
         # The embedded agent discovers providers and submits a reference edit.
         # This creates a native pending approval, without HTTP or a key.

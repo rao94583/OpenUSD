@@ -162,16 +162,34 @@ to see the code and its result, and viewport screenshots show as
 thumbnails. The camera button attaches an image of the viewport to a
 request. Each request carries the selection, edit target and time, and
 becomes one undo step ("Claude: …"), which the panel's Undo button or ⌘Z
-reverts. Return sends, Shift-Return adds a line, and Escape or the stop
-button interrupts. The menu above the transcript starts a new conversation
-or resumes one of this document's earlier ones. The command palette sends
-text that matches no command to Claude ("Ask Claude: …"), and the
+reverts.
+
+The panel works like Claude Code's editor panels:
+
+- **History:** the clock button lists this document's earlier
+  conversations, newest first, with a search field. Click one (or Return)
+  to open it: the transcript replays and the conversation continues where
+  it left off. Delete or the context menu removes one. "+" starts a new
+  conversation.
+- **Stop:** while Claude works, a spinner and a Stop button show in the
+  header, and the send button becomes a stop button. Escape stops too, as
+  does the `stop_claude` action. You can keep typing: Return queues the
+  message, which sends when Claude finishes. Stop puts it back in the
+  input.
+- **Model, effort and edit mode:** the menus under the input choose the
+  model (Claude Code's default, Opus, Sonnet, Haiku or Fable), the effort
+  (default, low, medium, high, extra high or max) and whether Claude edits
+  automatically or asks first. Vela remembers these, and Settings → Claude
+  and MCP shows them too. A new model or effort applies from the next
+  message; the conversation carries on.
+
+Return sends, and Shift-Return adds a line. The command palette sends text
+that matches no command to Claude ("Ask Claude: …"), and the
 `ask_claude` action does the same from scripts.
 
 The panel runs your `claude` CLI (Claude Code 2.1.296 or later, logged in),
 which Vela finds in `~/.local/bin`, Homebrew or your shell's `PATH`.
-Settings → Claude and MCP can point it elsewhere, choose the model, and turn
-on "Ask before Claude edits the scene". Questions never need approval;
+Settings → Claude and MCP can point it elsewhere. Questions never need approval;
 edits do only with that setting. Anything outside Vela's tools always asks.
 
 Image generation is configured through Settings → Image Generation Settings….

@@ -46,6 +46,7 @@ struct LaunchOptions {
     std::string sessionId;  // a new conversation's id (a UUID)
     std::string resume;     // or the conversation to continue
     std::string model;      // "" for the CLI's default
+    std::string effort;     // "" for the CLI's default
     // vela-mcp, and the socket it should connect to.
     std::string mcpHelper;
     std::string mcpSocket;
@@ -53,6 +54,15 @@ struct LaunchOptions {
 };
 // The command line, executable first.
 std::vector<std::string> Arguments(const LaunchOptions &options);
+
+// The choices the panel and Settings offer, as (value, title); the first
+// is the CLI's default ("").
+struct Choice {
+    const char *value;
+    const char *title;
+};
+const std::vector<Choice> &ModelChoices();
+const std::vector<Choice> &EffortChoices();
 
 // Messages to the CLI, one line each (without the newline).
 std::string InitializeRequest(const std::string &requestId);
