@@ -289,6 +289,52 @@ void TestSequenceAndGrouping() {
     CHECK(f.undo.GetUndoName() == name);
 }
 
+// Claude's requests: the steps a request adds become one, and a query's
+// edits are reverted without a redo step.
+void TestCoalesceAndDiscard() {
+    Fixture f;
+    UsdEditContext context(f.stage, f.sub);
+    { UndoBlock block(f.undo, "Before"); Radius(f.stage).Set(7.0); }
+    const auto before = f.Snapshot();
+
+    uint64_t mark = f.undo.Mark();
+    CHECK(!f.undo.Coalesce(mark, "Nothing"));
+    for (int i = 0; i < 3; ++i) {
+        UndoBlock block(f.undo, "Python");
+        UsdGeomSphere::Define(f.stage, SdfPath("/World/C" + std::to_string(i)));
+    }
+    Radius(f.stage).Set(8.0);  // an implicit step, ended by Coalesce
+    CHECK(f.undo.Coalesce(mark, "Claude: add spheres"));
+    CHECK(f.undo.GetUndoName() == "Claude: add spheres");
+    f.CheckRoundTrip(before, "coalesced request");
+    CHECK(f.undo.Undo());
+    CHECK(f.Snapshot() == before);
+    CHECK(f.undo.GetUndoName() == "Before");
+    CHECK(f.undo.Redo());
+
+    // Undoing below the mark during a request leaves those steps alone.
+    mark = f.undo.Mark();
+    { UndoBlock block(f.undo, "One"); Radius(f.stage).Set(9.0); }
+    CHECK(f.undo.Undo());
+    CHECK(f.undo.Undo());  // the earlier request
+    { UndoBlock block(f.undo, "Two"); Radius(f.stage).Set(10.0); }
+    CHECK(f.undo.Coalesce(mark, "Claude: radius"));
+    CHECK(f.undo.GetUndoName() == "Claude: radius");
+    CHECK(f.undo.Undo());
+    CHECK(f.undo.GetUndoName() == "Before");
+    CHECK(f.Snapshot() == before);
+
+    // Discard reverts and forgets.
+    mark = f.undo.Mark();
+    CHECK(!f.undo.Discard(mark));
+    { UndoBlock block(f.undo, "Query"); UsdGeomSphere::Define(f.stage, SdfPath("/World/Q")); }
+    CHECK(f.undo.Discard(mark));
+    CHECK(!f.stage->GetPrimAtPath(SdfPath("/World/Q")));
+    CHECK(f.Snapshot() == before);
+    CHECK(f.undo.GetUndoName() == "Before");
+    CHECK(!f.undo.CanRedo());
+}
+
 void TestUntrackedAndCleanup() {
     SdfLayerRefPtr layer = SdfLayer::CreateAnonymous("loose.usda");
     {
@@ -333,6 +379,7 @@ int main() {
     TestAcrossLayers();
     TestWholeLayer();
     TestSequenceAndGrouping();
+    TestCoalesceAndDiscard();
     TestUntrackedAndCleanup();
     return test::Finish("undo");
 }

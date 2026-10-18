@@ -109,9 +109,11 @@ try:
     assert init['protocolVersion'] == '2025-06-18' and 'tools' in init['capabilities'], init
     send('notifications/initialized', notify=True)
     tools = {t['name']: t for t in send('tools/list')['tools']}
-    assert {'run_python', 'ui_action', 'list_actions', 'get_app_state',
+    assert {'run_python', 'query_python', 'ui_action', 'list_actions', 'get_app_state',
             'viewport_screenshot', 'open_document'} <= tools.keys(), tools.keys()
     assert tools['get_app_state']['annotations']['readOnlyHint']
+    assert tools['query_python']['annotations']['readOnlyHint']
+    assert 'annotations' not in tools['run_python']
 
     state = call('get_app_state')['structuredContent']
     assert os.path.samefile(state['document']['path'], scene), state
@@ -133,6 +135,17 @@ try:
     # Errors come back as tracebacks, marked as errors.
     failed = call('run_python', code='1/0')
     assert failed['isError'] and 'ZeroDivisionError' in failed['content'][0]['text'], failed
+
+    # Queries read, and their edits are reverted without an undo step.
+    query = call('query_python', code="cube.GetAttribute('size').Get()")
+    assert not query['isError'] and query['content'][0]['text'] == '5.0', query
+    query = call('query_python', code="cube.GetAttribute('size').Set(9.0)\n"
+                                      "vela.stage.DefinePrim('/World/Q')")
+    assert query['isError'] and 'run_python' in query['content'][0]['text'], query
+    assert python("cube.GetAttribute('size').Get()") == '5.0'
+    assert python("bool(vela.stage.GetPrimAtPath('/World/Q'))") == 'False'
+    state = call('get_app_state')['structuredContent']['document']
+    assert state['undo'] == 'Python' and not state['redo'], state
 
     # Menu commands by name: select, then undo the edit.
     actions = call('list_actions')['structuredContent']['actions']

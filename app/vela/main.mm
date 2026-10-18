@@ -10,6 +10,7 @@
 #import "browser_view.h"
 #import "form_sheet.h"
 #import "menus.h"
+#import "claude_panel.h"
 #import "palette.h"
 #import "scripting.h"
 #import "settings_window.h"
@@ -491,6 +492,8 @@ static void LoadSettings(bool clear, bool useDefaults) {
 
 int main(int argc, const char *argv[]) {
     @autoreleasepool {
+        // App actions the core can't provide, before menus and --describe-actions.
+        VelaRegisterClaudeActions();
         NSString *runtime = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"Runtime/usd"];
         PlugRegistry::GetInstance().RegisterPlugins(
             [[runtime stringByAppendingPathComponent:@"lib/usd/plugInfo.json"] UTF8String]);

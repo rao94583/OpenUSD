@@ -8,8 +8,7 @@ querying scenes in plain English, with skills for the USD Python API and for
 driving the app.
 
 This document records the decisions made so far, the architecture and the
-phases. Phases 1 and 2 are done, Phase 3 is implemented, and Phase 4
-browsing has started; see
+phases. Phases 1 to 7 are done; see
 [README.md](README.md) for building, using and testing the app.
 
 ## Decisions
@@ -562,6 +561,111 @@ way to interrupt a long script, and the console's Clear command.
   `Action::saveTypes` gives the save panel a Format pop-up. Fixed while
   testing: the panels' completion blocks captured the `params` reference
   (C++ references are captured by reference), which dangled.
+
+## Phase 7 design (2026-10-18)
+
+Branch `vela-claude-panel`. Checked against Claude Code 2.1.296.
+
+- **CLI protocol** (verified by hand): `claude -p --input-format stream-json
+  --output-format stream-json --verbose --include-partial-messages
+  --permission-prompt-tool stdio`. The host sends an `initialize` control
+  request, then user messages (text and image blocks) as lines on stdin. The
+  CLI streams `system/init` (session id), `stream_event` deltas, `assistant`
+  and `user` (tool results) messages and a `result` per turn. It asks for
+  approval with a `can_use_tool` control request, which the host answers
+  with `allow` (with `updatedInput`) or `deny`. Stop sends an `interrupt`
+  control request. Resuming a conversation passes `--resume <session id>`.
+- **Adapter** (`core/claude_cli.*`): everything CLI-specific. It builds the
+  arguments, parses lines into events, writes control and user messages,
+  finds the executable (a setting, then the usual install folders, then a
+  login shell's `command -v claude`) and checks the minimum version.
+  `core/claude_process.*` runs it with pipes, and a reader thread hands
+  lines to the main thread.
+- **Tools:** the panel's CLI gets the app's MCP server, and only that:
+  `--strict-mcp-config`, plus the built-in `Read`, `Glob` and `Grep` for
+  the scene's files. So Claude has the whole `pxr` API (`run_python`,
+  `query_python`) and every action (`ui_action`, `list_actions`,
+  `get_app_state`, `viewport_screenshot`). Each panel runs a private
+  socket server bound to its document (each message runs with that
+  document current), so the panel works even with Settings' public MCP
+  server off, and two windows never act on each other's scene.
+- **`query_python`** (new, read-only): runs code like `run_python`, but
+  reverts and rejects any edit to the stage's layers, so queries never
+  need approval.
+- **Approvals:** read-only tools, and `ui_action` with a query action,
+  run without asking. Edits (`run_python`, other actions, `open_document`)
+  follow a setting: *Edit, then summarize* (the default; each request is
+  one undo step anyway) or *Ask first*. Anything else the CLI asks about
+  shows the same in-panel card: Allow, Allow for This Conversation, Deny.
+- **Undo:** each request becomes one undo step, "Claude: <request>".
+  The panel marks the undo stack when the request starts and, when its
+  result arrives, merges the steps added since into one
+  (`UndoStack::Mark`/`Coalesce`). Undo stays available while Claude
+  works.
+- **Context:** each prompt carries the document's path, selection, edit
+  target and time in a short preamble, as Claude Code includes an editor
+  selection. Screenshot tool results show as thumbnails; a toggle attaches
+  the viewport's image to a prompt.
+- **History:** the panel writes its own log of each conversation (prompts,
+  replies, tool calls, results) to `~/Library/Application Support/Vela/
+  Claude/<session id>.jsonl`. The panel's menu lists the document's past
+  conversations; choosing one replays the log and resumes the CLI session.
+- **Mac-native:** Window → Claude (⌥⌘K); an `ask_claude` action (menu,
+  palette and scripting); palette text that matches nothing offers "Ask
+  Claude"; Settings → Claude and MCP gains the CLI's location, the approval
+  mode and the model.
+
+## Phase 7 progress
+
+Done (2026-10-18), as designed above. The README's four example requests
+worked end to end with Claude Code 2.1.296 on
+`examples/living_room` (in a launched Vela, through the panel):
+
+- "make every light in this room 20% warmer": Claude read the four lights'
+  colors with `query_python`, then shifted each toward 5200 K with
+  `run_python`. One undo step reverted all four.
+- "add a variant set for the chair's fabric": a `fabric` variant set with
+  four variants, each binding a different material to the seat and back,
+  with the direct bindings moved into the variants. One undo step.
+- "which prims have no material bound?": Rug, Vase and Book, which is
+  correct. No undo step.
+- "why is this mesh invisible in the render?" (with the plant selected):
+  its parent Shelf is `invisible`. No undo step.
+
+Also checked in the window: typing and Return, streaming Markdown, tool
+rows and their details, screenshot thumbnails, an approval card (with
+"Ask before Claude edits" on) and the panel's Undo button, Stop (Escape),
+the conversation menu replaying and resuming an earlier conversation,
+Settings → Claude and MCP, and the palette's "Ask Claude" entry. The CLI
+exits when its window closes or the app quits.
+
+- Core: `claude_cli.*` (the adapter), `claude_process.*` (child process),
+  `claude_history.*`, `UndoStack::Mark`/`Coalesce`/`Discard`, the
+  `query_python` MCP tool, and Claude settings in `AppSettings`.
+- App: `claude_panel.*` (panel, `ask_claude`), `claude_markdown.*`.
+- Tests: `claude_test` (protocol lines recorded from the CLI, approvals,
+  processes, history), `undo_test` (coalescing, discarding), `mcp_ui_test`
+  (`query_python`), and `claude_ui_test`, a launched Vela with a stand-in
+  CLI that speaks the stream-JSON protocol and calls Vela's tools through
+  the panel's `vela-mcp`. It checks the arguments, context, approvals, one
+  undo step per request, history, the CLI stopping, and resuming.
+- Found along the way: a query that changes a variant selection to inspect
+  each variant is an edit, so `query_python` reverts it and says so. Claude
+  read the results anyway and left the selection as it was.
+
+Left for later:
+
+- Edits the user makes while a request runs join that request's undo step.
+- Python still runs on the main thread, so a long script freezes the
+  window. Panels share the `mcp` Python namespace with outside MCP
+  clients.
+- With "Ask before edits" on, every `run_python` asks, even for code that
+  only reads. Claude uses `query_python` for questions, which never asks.
+- The CLI loads the user's own Claude Code settings (CLAUDE.md, hooks,
+  plugins). That is intended, since it is their Claude, but it is untested
+  with unusual setups.
+- Screenshots are kept in the history as base64, so conversations with many
+  screenshots make large files.
 
 ## Testing
 

@@ -24,9 +24,10 @@ const char *const Instructions =
     "Vela is a USD scene viewer and editor. These tools act on the scenes "
     "open in it: the current document is the front window's unless a tool "
     "names another by id (get_app_state lists them). run_python runs code "
-    "against the live stage with the pxr modules and a vela module "
+    "against the live stage with the whole pxr API and a vela module "
     "(vela.stage, vela.selection, vela.time, vela.run(action, **params)); "
     "edits appear in the window at once and each call is one undo step. "
+    "query_python is the same for questions: it never edits. "
     "ui_action runs any menu command by name (list_actions describes them, "
     "e.g. undo, frame_selection, set_draw_mode). viewport_screenshot shows "
     "what the viewport renders; the export_image and export_movie actions "
@@ -106,6 +107,35 @@ const SessionDocument *TargetDocument(const JsObject &arguments, std::string *er
     return entry;
 }
 
+// run_python and query_python. A query's edits to the document's layers
+// are reverted (and dropped from undo).
+JsObject RunPythonTool(const JsObject &arguments, bool query) {
+    auto code = arguments.find("code");
+    if (code == arguments.end() || !code->second.IsString()) {
+        return ToolResult("code must be a string", true);
+    }
+    std::string error;
+    const SessionDocument *entry = TargetDocument(arguments, &error);
+    if (!entry && arguments.count("document")) return ToolResult(error, true);
+    const std::shared_ptr<Document> document = entry ? entry->document : nullptr;
+    const uint64_t mark = query && document ? document->GetUndoStack().Mark() : 0;
+    const PythonResult result = RunPython(code->second.GetString(), "mcp", entry ? entry->id : 0);
+    std::string text = result.output;
+    const std::string &tail = result.ok ? result.value : result.error;
+    if (!tail.empty()) {
+        if (!text.empty() && text.back() != '\n') text += '\n';
+        text += tail;
+    }
+    if (query && document && document->GetUndoStack().Discard(mark)) {
+        if (!text.empty() && text.back() != '\n') text += '\n';
+        text += "query_python cannot edit the stage, so its edits were reverted. "
+                "Use run_python to make changes.";
+        return ToolResult(text, true);
+    }
+    if (text.empty()) text = "(no output)";
+    return ToolResult(text, !result.ok);
+}
+
 const char *const DocumentProperty =
     R"("document": {"type": "integer", "description": "A document id from get_app_state; the current document when omitted"})";
 
@@ -182,37 +212,31 @@ const std::vector<Tool> &ToolTable() {
         },
         {
             "run_python", "Run Python",
-            "Run Python 3.11 in Vela, against the live stage. The namespace "
-            "persists between calls and has vela, Usd, Sdf, Gf, Vt, Tf, "
-            "UsdGeom, UsdShade, UsdLux, UsdUtils and Kind imported. "
-            "vela.stage is the document's Usd.Stage (the one the window "
-            "shows); vela.selection and vela.time can be read and assigned; "
-            "vela.run(action, **params) runs an action. Returns what the "
-            "code printed and the value of a final expression; edits are "
-            "one undo step.",
+            "Run Python 3.11 in Vela, against the live stage, to query or "
+            "edit it. The namespace persists between calls and has the whole "
+            "pxr package available, with vela, Usd, Sdf, Gf, Vt, Tf, UsdGeom, "
+            "UsdShade, UsdLux, UsdUtils and Kind imported. vela.stage is the "
+            "document's Usd.Stage (the one the window shows); vela.selection "
+            "and vela.time can be read and assigned; vela.run(action, "
+            "**params) runs an action. Returns what the code printed and the "
+            "value of a final expression; edits are one undo step.",
             std::string(R"({"type": "object", "properties": {
                 "code": {"type": "string", "description": "Python source"},
                 )") + DocumentProperty + R"(}, "required": ["code"]})",
             false,
-            [](const JsObject &arguments) {
-                auto code = arguments.find("code");
-                if (code == arguments.end() || !code->second.IsString()) {
-                    return ToolResult("code must be a string", true);
-                }
-                std::string error;
-                const SessionDocument *entry = TargetDocument(arguments, &error);
-                if (!entry && arguments.count("document")) return ToolResult(error, true);
-                const PythonResult result =
-                    RunPython(code->second.GetString(), "mcp", entry ? entry->id : 0);
-                std::string text = result.output;
-                const std::string &tail = result.ok ? result.value : result.error;
-                if (!tail.empty()) {
-                    if (!text.empty() && text.back() != '\n') text += '\n';
-                    text += tail;
-                }
-                if (text.empty()) text = "(no output)";
-                return ToolResult(text, !result.ok);
-            },
+            [](const JsObject &arguments) { return RunPythonTool(arguments, false); },
+        },
+        {
+            "query_python", "Query with Python",
+            "Like run_python, with the same namespace, but only to read: "
+            "any edit to the stage's layers is reverted and reported as an "
+            "error. Prefer it for questions about the scene, since it never "
+            "needs the user's approval.",
+            std::string(R"({"type": "object", "properties": {
+                "code": {"type": "string", "description": "Python source"},
+                )") + DocumentProperty + R"(}, "required": ["code"]})",
+            true,
+            [](const JsObject &arguments) { return RunPythonTool(arguments, true); },
         },
         {
             "viewport_screenshot", "Viewport Screenshot",

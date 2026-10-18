@@ -1,41 +1,16 @@
 #import "bottom_panel.h"
+#import "claude_panel.h"
 #import "log_view.h"
 #import "python_console.h"
 
 #include "app/vela/core/log.h"
-
-namespace {
-
-NSViewController *ClaudePlaceholder() {
-    NSTextField *title = [NSTextField labelWithString:@"The Claude console is coming."];
-    title.font = [NSFont boldSystemFontOfSize:NSFont.systemFontSize];
-    NSTextField *text = [NSTextField wrappingLabelWithString:
-        @"Meanwhile, Claude Code in Terminal can work with this scene over MCP: "
-        @"Vela → Settings → Claude and MCP shows the command that connects it."];
-    text.textColor = NSColor.secondaryLabelColor;
-    text.alignment = NSTextAlignmentCenter;
-    text.preferredMaxLayoutWidth = 440;
-    NSStackView *stack = [NSStackView stackViewWithViews:@[title, text]];
-    stack.orientation = NSUserInterfaceLayoutOrientationVertical;
-    stack.spacing = 6;
-    NSView *root = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 800, 220)];
-    stack.translatesAutoresizingMaskIntoConstraints = NO;
-    [root addSubview:stack];
-    [NSLayoutConstraint activateConstraints:@[
-        [stack.centerXAnchor constraintEqualToAnchor:root.centerXAnchor],
-        [stack.centerYAnchor constraintEqualToAnchor:root.centerYAnchor]]];
-    NSViewController *controller = [NSViewController new];
-    controller.view = root;
-    return controller;
-}
-
-} // namespace
 
 @implementation VelaBottomPanel {
     NSSegmentedControl *_tabs;
     NSTabView *_pages;
     VelaPythonConsoleController *_python;
     VelaLogViewController *_log;
+    VelaClaudePanelController *_claude;
     // Errors and warnings logged since the Log tab was last shown.
     uint64_t _seenLogId;
     NSInteger _unseen;
@@ -45,10 +20,12 @@ NSViewController *ClaudePlaceholder() {
     if (!(self = [super initWithNibName:nil bundle:nil])) return nil;
     _python = [VelaPythonConsoleController new];
     _log = [VelaLogViewController new];
+    _claude = [VelaClaudePanelController new];
     return self;
 }
 
 - (VelaPythonConsoleController *)python { return _python; }
+- (VelaClaudePanelController *)claude { return _claude; }
 - (VelaPanelTab)tab { return VelaPanelTab(_tabs.selectedSegment); }
 
 - (void)loadView {
@@ -59,7 +36,7 @@ NSViewController *ClaudePlaceholder() {
     _tabs.selectedSegment = 0;
     _pages = [NSTabView new];
     _pages.tabViewType = NSNoTabsNoBorder;
-    for (NSViewController *page in @[_python, _log, ClaudePlaceholder()]) {
+    for (NSViewController *page in @[_python, _log, _claude]) {
         NSTabViewItem *item = [NSTabViewItem tabViewItemWithViewController:page];
         [_pages addTabViewItem:item];
         [self addChildViewController:page];
@@ -104,6 +81,7 @@ NSViewController *ClaudePlaceholder() {
 
 - (void)focusTab {
     if (self.tab == VelaPanelTabPython) [_python focusInput];
+    else if (self.tab == VelaPanelTabClaude) [_claude focusInput];
     else [self.view.window makeFirstResponder:_pages.selectedTabViewItem.view];
 }
 

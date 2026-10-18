@@ -152,6 +152,33 @@ step, named "Python". Return runs a complete statement (a block runs on a
 blank line), Shift-Return adds a line, ⌘Return runs everything, ↑ and ↓
 browse history.
 
+Window → Claude (⌥⌘K) opens the Claude panel: describe what you want, and
+Claude Code does it in this document. Ask questions ("which prims have no
+material bound?", "why is this mesh invisible in the render?") or for
+changes ("make every light in this room 20% warmer", "add a variant set for
+the chair's fabric"). Claude has the whole USD Python API and every Vela
+action. Its replies stream in. Each tool call shows as a row you can expand
+to see the code and its result, and viewport screenshots show as
+thumbnails. The camera button attaches an image of the viewport to a
+request. Each request carries the selection, edit target and time, and
+becomes one undo step ("Claude: …"), which the panel's Undo button or ⌘Z
+reverts. Return sends, Shift-Return adds a line, and Escape or the stop
+button interrupts. The menu above the transcript starts a new conversation
+or resumes one of this document's earlier ones. The command palette sends
+text that matches no command to Claude ("Ask Claude: …"), and the
+`ask_claude` action does the same from scripts.
+
+The panel runs your `claude` CLI (Claude Code 2.1.296 or later, logged in),
+which Vela finds in `~/.local/bin`, Homebrew or your shell's `PATH`.
+Settings → Claude and MCP can point it elsewhere, choose the model, and turn
+on "Ask before Claude edits the scene". Questions never need approval;
+edits do only with that setting. Anything outside Vela's tools always asks.
+The CLI gets Vela's tools on a private socket bound to the window's
+document, plus Read, Glob and Grep for the scene's files, and nothing else.
+The panel keeps its own record of each conversation in
+`~/Library/Application Support/Vela/Claude/`. Try it on
+[examples/living_room](examples/living_room/README.md).
+
 Vela is also an MCP server, so Claude Code in a terminal can query and edit
 the open scene. Settings → Claude and MCP shows the command to add it (and
 can turn the server off):
@@ -164,7 +191,8 @@ claude mcp add vela -- '/Applications/Vela.app/Contents/MacOS/vela-mcp'
 (`~/Library/Application Support/Vela/mcp.sock`, mode 0600, this user only);
 no TCP port opens. If Vela isn't running, the first message launches it.
 Tools: `get_app_state`, `list_actions`, `ui_action`, `run_python` (a
-persistent namespace, as in the console), `viewport_screenshot` and
+persistent namespace, as in the console), `query_python` (the same, but
+read-only: any edit is reverted and reported), `viewport_screenshot` and
 `open_document`. Edits are undoable like any other. The server speaks both
 MCP protocol eras: the stateless 2026-07-28 revision (per-request `_meta`,
 `server/discover`) and the `initialize` handshake of 2025-11-25 and

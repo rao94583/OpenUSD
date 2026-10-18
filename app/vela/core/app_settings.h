@@ -9,6 +9,7 @@
 #include "pxr/base/js/value.h"
 
 #include <functional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -31,6 +32,12 @@ struct AppSettings {
     // Accept MCP clients (Claude Code through vela-mcp) on the app's
     // socket.
     bool mcpServer = true;
+    // The Claude panel: the claude CLI to run ("" finds it), whether
+    // Claude's edits need approval first, and the model ("" for the
+    // CLI's default, or an alias such as "opus").
+    std::string claudePath;
+    bool claudeAsksBeforeEdits = false;
+    std::string claudeModel;
 
     bool operator==(const AppSettings &other) const = default;
 };

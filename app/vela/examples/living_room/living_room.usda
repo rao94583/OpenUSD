@@ -1,0 +1,437 @@
+#usda 1.0
+(
+    defaultPrim = "Room"
+    doc = """A living room for trying Vela's Claude panel (see README.md)."""
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Xform "Room" (
+    kind = "assembly"
+)
+{
+    def Scope "Lights"
+    {
+        def SphereLight "Ceiling"
+        {
+            color3f inputs:color = (1, 0.97, 0.92)
+            float inputs:intensity = 30
+            float inputs:radius = 0.15
+            double3 xformOp:translate = (0, 2.6, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def RectLight "Window"
+        {
+            color3f inputs:color = (0.8, 0.88, 1)
+            float inputs:intensity = 8
+            float inputs:width = 1.6
+            float inputs:height = 1.2
+            double3 xformOp:translate = (-2.95, 1.5, 0)
+            float3 xformOp:rotateXYZ = (0, -90, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def DiskLight "Reading"
+        {
+            color3f inputs:color = (1, 0.85, 0.65)
+            float inputs:intensity = 40
+            float inputs:radius = 0.12
+            double3 xformOp:translate = (2.1, 1.55, -1.9)
+            float3 xformOp:rotateXYZ = (-90, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+        }
+
+        def DomeLight "Sky"
+        {
+            color3f inputs:color = (0.6, 0.7, 0.85)
+            float inputs:intensity = 0.3
+        }
+    }
+
+    def Xform "Structure"
+    {
+        def Cube "Floor" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            double size = 1
+            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+            double3 xformOp:translate = (0, -0.05, 0)
+            float3 xformOp:scale = (6, 0.1, 6)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            rel material:binding = </Room/Looks/Oak>
+        }
+        def Cube "BackWall" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            double size = 1
+            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+            double3 xformOp:translate = (0, 1.4, -3.05)
+            float3 xformOp:scale = (6, 2.8, 0.1)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            rel material:binding = </Room/Looks/Plaster>
+        }
+        def Cube "SideWall" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            double size = 1
+            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+            double3 xformOp:translate = (3.05, 1.4, 0)
+            float3 xformOp:scale = (0.1, 2.8, 6)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+            rel material:binding = </Room/Looks/Plaster>
+        }
+        def Cube "Rug" 
+        {
+            double size = 1
+            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+            double3 xformOp:translate = (0, 0.01, 0.2)
+            float3 xformOp:scale = (2.6, 0.02, 1.8)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+        }
+    }
+
+    def Xform "Furniture"
+    {
+        def Xform "Chair" (
+            kind = "component"
+        )
+        {
+            double3 xformOp:translate = (-0.9, 0, 0.6)
+            float3 xformOp:rotateXYZ = (0, 30, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+
+            def Cube "Seat" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (0, 0.45, 0)
+                float3 xformOp:scale = (0.6, 0.12, 0.6)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Fabric>
+            }
+            def Cube "Back" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (0, 0.85, -0.27)
+                float3 xformOp:scale = (0.6, 0.7, 0.08)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Fabric>
+            }
+            def Cube "Leg1" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (-0.25, 0.2, -0.25)
+                float3 xformOp:scale = (0.05, 0.4, 0.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+            def Cube "Leg2" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (0.25, 0.2, -0.25)
+                float3 xformOp:scale = (0.05, 0.4, 0.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+            def Cube "Leg3" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (-0.25, 0.2, 0.25)
+                float3 xformOp:scale = (0.05, 0.4, 0.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+            def Cube "Leg4" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (0.25, 0.2, 0.25)
+                float3 xformOp:scale = (0.05, 0.4, 0.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+        }
+
+        def Xform "Table" (
+            kind = "component"
+        )
+        {
+            double3 xformOp:translate = (0.6, 0, 0.1)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+
+            def Cube "Top" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (0, 0.72, 0)
+                float3 xformOp:scale = (1.4, 0.05, 0.8)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+            def Cube "Leg1" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (-0.62, 0.35, -0.32)
+                float3 xformOp:scale = (0.05, 0.7, 0.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+            def Cube "Leg2" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (0.62, 0.35, -0.32)
+                float3 xformOp:scale = (0.05, 0.7, 0.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+            def Cube "Leg3" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (-0.62, 0.35, 0.32)
+                float3 xformOp:scale = (0.05, 0.7, 0.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+            def Cube "Leg4" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (0.62, 0.35, 0.32)
+                float3 xformOp:scale = (0.05, 0.7, 0.05)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+        }
+
+        def Xform "FloorLamp" (
+            kind = "component"
+        )
+        {
+            double3 xformOp:translate = (2.1, 0, -1.9)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+
+            def Cylinder "Pole" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                uniform token axis = "Y"
+                double height = 1.5
+                double radius = 0.02
+                float3[] extent = [(-0.02, -0.75, -0.02), (0.02, 0.75, 0.02)]
+                double3 xformOp:translate = (0, 0.75, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+                rel material:binding = </Room/Looks/Brass>
+            }
+
+            def Cone "Shade" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                uniform token axis = "Y"
+                double height = 0.3
+                double radius = 0.22
+                float3[] extent = [(-0.22, -0.15, -0.22), (0.22, 0.15, 0.22)]
+                double3 xformOp:translate = (0, 1.62, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+                rel material:binding = </Room/Looks/Linen>
+            }
+        }
+    }
+
+    def Xform "Decor"
+    {
+        def Cylinder "Vase"
+        {
+            uniform token axis = "Y"
+            double height = 0.3
+            double radius = 0.08
+            float3[] extent = [(-0.08, -0.15, -0.08), (0.08, 0.15, 0.08)]
+            double3 xformOp:translate = (0.9, 0.895, 0.1)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Cube "Book" 
+        {
+            double size = 1
+            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+            double3 xformOp:translate = (0.3, 0.765, 0.2)
+            float3 xformOp:scale = (0.22, 0.04, 0.3)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+        }
+
+        # The shelf and everything on it are hidden.
+        def Xform "Shelf" (
+            kind = "component"
+        )
+        {
+            token visibility = "invisible"
+            double3 xformOp:translate = (-1.5, 0, -2.85)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+
+            def Cube "Board" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double size = 1
+                float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+                double3 xformOp:translate = (0, 1.2, 0)
+                float3 xformOp:scale = (1.2, 0.04, 0.25)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+                rel material:binding = </Room/Looks/Walnut>
+            }
+
+            def Sphere "Plant" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                double radius = 0.15
+                float3[] extent = [(-0.15, -0.15, -0.15), (0.15, 0.15, 0.15)]
+                double3 xformOp:translate = (0.3, 1.37, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate"]
+                rel material:binding = </Room/Looks/Leaf>
+            }
+        }
+    }
+
+    def Scope "Looks"
+    {
+        def Material "Oak"
+        {
+            token outputs:surface.connect = </Room/Looks/Oak/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.55, 0.38, 0.22)
+                float inputs:metallic = 0.0
+                float inputs:roughness = 0.5
+                token outputs:surface
+            }
+        }
+        def Material "Walnut"
+        {
+            token outputs:surface.connect = </Room/Looks/Walnut/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.3, 0.18, 0.1)
+                float inputs:metallic = 0.0
+                float inputs:roughness = 0.45
+                token outputs:surface
+            }
+        }
+        def Material "Plaster"
+        {
+            token outputs:surface.connect = </Room/Looks/Plaster/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.86, 0.84, 0.8)
+                float inputs:metallic = 0.0
+                float inputs:roughness = 0.9
+                token outputs:surface
+            }
+        }
+        def Material "Fabric"
+        {
+            token outputs:surface.connect = </Room/Looks/Fabric/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.2, 0.35, 0.55)
+                float inputs:metallic = 0.0
+                float inputs:roughness = 0.95
+                token outputs:surface
+            }
+        }
+        def Material "Linen"
+        {
+            token outputs:surface.connect = </Room/Looks/Linen/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.93, 0.9, 0.82)
+                float inputs:metallic = 0.0
+                float inputs:roughness = 0.9
+                token outputs:surface
+            }
+        }
+        def Material "Brass"
+        {
+            token outputs:surface.connect = </Room/Looks/Brass/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.78, 0.6, 0.3)
+                float inputs:metallic = 1.0
+                float inputs:roughness = 0.3
+                token outputs:surface
+            }
+        }
+        def Material "Leaf"
+        {
+            token outputs:surface.connect = </Room/Looks/Leaf/Surface.outputs:surface>
+
+            def Shader "Surface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.2, 0.45, 0.18)
+                float inputs:metallic = 0.0
+                float inputs:roughness = 0.6
+                token outputs:surface
+            }
+        }
+    }
+}
+
+def Xform "Cameras"
+{
+    def Camera "main_cam"
+    {
+        float focalLength = 24
+        float horizontalAperture = 36
+        float verticalAperture = 24
+        float2 clippingRange = (0.05, 100)
+        double3 xformOp:translate = (-1.2, 2.3, 4.6)
+        float3 xformOp:rotateXYZ = (-18, -18, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+    }
+}
