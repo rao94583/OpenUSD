@@ -7,6 +7,7 @@
 #include "pxr/usd/sdf/layer.h"
 
 #include <functional>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -34,6 +35,17 @@ public:
     // redo.
     void BeginGroup(const std::string &name);
     void EndGroup();
+
+    // Marks the stack's current top: Coalesce and Discard then act on the
+    // steps added after it. Ends an implicit step first.
+    uint64_t Mark();
+    // Merges the steps added since mark (those still on the undo stack)
+    // into one named name, e.g. one per Claude request. Returns whether
+    // there were any. Not inside a group.
+    bool Coalesce(uint64_t mark, const std::string &name);
+    // Reverts the steps added since mark and forgets them (no redo), e.g.
+    // a query's accidental edits. Returns whether there were any.
+    bool Discard(uint64_t mark);
 
     bool CanUndo() const;
     bool CanRedo() const;

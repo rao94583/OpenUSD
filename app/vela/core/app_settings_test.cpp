@@ -54,6 +54,9 @@ void TestAppSettings() {
     a.loadPayloads = false;
     a.threadLimit = -2;
     a.mcpServer = false;
+    a.claudePath = "/opt/claude";
+    a.claudeAsksBeforeEdits = true;
+    a.claudeModel = "opus";
     a.view.background = Background::Black;
     AppSettings read;
     FromJson(JsParseString(JsWriteToString(JsValue(ToJson(a)))).GetJsObject(), &read);

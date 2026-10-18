@@ -11,6 +11,9 @@ JsObject ToJson(const AppSettings &settings) {
         {"usePrimaryCamera", JsValue(settings.usePrimaryCamera)},
         {"threadLimit", JsValue(settings.threadLimit)},
         {"mcpServer", JsValue(settings.mcpServer)},
+        {"claudePath", JsValue(settings.claudePath)},
+        {"claudeAsksBeforeEdits", JsValue(settings.claudeAsksBeforeEdits)},
+        {"claudeModel", JsValue(settings.claudeModel)},
     };
 }
 
@@ -28,6 +31,12 @@ void FromJson(const JsObject &json, AppSettings *settings) {
     flag("loadPayloads", &settings->loadPayloads);
     flag("usePrimaryCamera", &settings->usePrimaryCamera);
     flag("mcpServer", &settings->mcpServer);
+    flag("claudeAsksBeforeEdits", &settings->claudeAsksBeforeEdits);
+    auto text = [&](const char *name, std::string *out) {
+        if (const JsValue *v = get(name); v && v->IsString()) *out = v->GetString();
+    };
+    text("claudePath", &settings->claudePath);
+    text("claudeModel", &settings->claudeModel);
     if (const JsValue *v = get("threadLimit"); v && (v->IsInt() || v->IsUInt64())) {
         settings->threadLimit = int(v->IsUInt64() ? int64_t(v->GetUInt64()) : v->GetInt64());
     }

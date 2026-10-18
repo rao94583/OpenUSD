@@ -16,6 +16,8 @@ using Inverse = std::function<void()>;
 struct Step {
     std::string name;
     std::vector<Inverse> inverses;
+    // Order of creation, for Mark; undoing and redoing keep it.
+    uint64_t serial = 0;
 };
 
 } // namespace
@@ -28,6 +30,7 @@ struct UndoStack::State {
     std::unique_ptr<Step> recording;
     int depth = 0;
     bool implicit = false;
+    uint64_t nextSerial = 1;
     std::vector<SdfLayerHandle> layers;
     std::function<void()> changed;
 
@@ -53,6 +56,7 @@ struct UndoStack::State {
         if (step.inverses.empty()) {
             return;
         }
+        if (!step.serial) step.serial = nextSerial++;
         undo.push_back(std::move(step));
         redo.clear();
         if (changed) changed();
@@ -69,6 +73,7 @@ struct UndoStack::State {
             }
         }
         Step result = std::move(*recording);
+        result.serial = step.serial;
         recording.reset();
         return result;
     }
@@ -278,6 +283,48 @@ void UndoStack::EndGroup() {
         _state->recording.reset();
         _state->Push(std::move(step));
     }
+}
+
+uint64_t UndoStack::Mark() {
+    if (_state->depth == 0) _state->FlushImplicit();
+    return _state->nextSerial;
+}
+
+bool UndoStack::Coalesce(uint64_t mark, const std::string &name) {
+    if (!TF_VERIFY(_state->depth == 0)) {
+        return false;
+    }
+    _state->FlushImplicit();
+    std::vector<Step> &undo = _state->undo;
+    auto first = undo.end();
+    while (first != undo.begin() && std::prev(first)->serial >= mark) --first;
+    if (first == undo.end()) {
+        return false;
+    }
+    Step merged{name, {}, first->serial};
+    for (auto it = first; it != undo.end(); ++it) {
+        for (Inverse &inverse : it->inverses) merged.inverses.push_back(std::move(inverse));
+    }
+    undo.erase(first, undo.end());
+    undo.push_back(std::move(merged));
+    if (_state->changed) _state->changed();
+    return true;
+}
+
+bool UndoStack::Discard(uint64_t mark) {
+    if (!TF_VERIFY(_state->depth == 0)) {
+        return false;
+    }
+    _state->FlushImplicit();
+    bool any = false;
+    while (!_state->undo.empty() && _state->undo.back().serial >= mark) {
+        Step step = std::move(_state->undo.back());
+        _state->undo.pop_back();
+        _state->Apply(step);
+        any = true;
+    }
+    if (any && _state->changed) _state->changed();
+    return any;
 }
 
 bool UndoStack::CanUndo() const {

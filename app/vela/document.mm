@@ -3,6 +3,7 @@
 #import "validation_panel.h"
 #import "python_console.h"
 #import "bottom_panel.h"
+#import "claude_panel.h"
 #import "browser_view.h"
 #import "window_layout.h"
 #import "menus.h"
@@ -450,6 +451,12 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
         [NSNotificationCenter.defaultCenter removeObserver:_becameMainObserver];
         _becameMainObserver = nil;
     }
+    // The Claude panel's CLI ends with its document.
+    for (NSWindowController *controller in self.windowControllers) {
+        if ([controller isKindOfClass:[VelaWindowController class]]) {
+            [((VelaWindowController *)controller).bottomPanel.claude shutDown];
+        }
+    }
     if (_sessionId) {
         vela::Session::Get().Remove(_sessionId);
         _sessionId = 0;
@@ -565,6 +572,7 @@ void VelaSetLaunchTime(double seconds) { LaunchTime() = seconds; }
     };
     _sessionId = vela::Session::Get().Add(std::move(entry));
     controller.bottomPanel.python.sessionId = _sessionId;
+    controller.bottomPanel.claude.sessionId = _sessionId;
     const int sessionId = _sessionId;
     __weak VelaDocument *weakSelf = self;
     _becameMainObserver = [NSNotificationCenter.defaultCenter

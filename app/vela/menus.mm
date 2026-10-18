@@ -433,7 +433,9 @@ NSMenu *VelaBuildMainMenu() {
     console.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
     NSMenuItem *log = [window addItemWithTitle:@"Log" action:@selector(showLog:) keyEquivalent:@"l"];
     log.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
-    [window addItemWithTitle:@"Claude" action:@selector(showClaudeConsole:) keyEquivalent:@""];
+    NSMenuItem *claude = [window addItemWithTitle:@"Claude" action:@selector(showClaudeConsole:)
+                                    keyEquivalent:@"k"];
+    claude.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagOption;
     [window addItem:[NSMenuItem separatorItem]];
     [window addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:)
                keyEquivalent:@"m"];

@@ -91,7 +91,8 @@ void TestProtocol() {
         CHECK(t.at("inputSchema").GetJsObject().at("type").GetString() == "object");
     }
     CHECK((names == std::vector<std::string>{"get_app_state", "list_actions", "ui_action",
-                                             "run_python", "viewport_screenshot",
+                                             "run_python", "query_python",
+                                             "viewport_screenshot",
                                              "open_document"}));
     CHECK(ErrorCode(ToolCall("no_such_tool", "{}")) == -32602);
     CHECK(Result(R"({"jsonrpc": "2.0", "id": 5, "method": "ping"})").empty());

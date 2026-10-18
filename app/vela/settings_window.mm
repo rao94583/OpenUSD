@@ -37,6 +37,15 @@ vela::Document *FrontDocument() {
     return nullptr;
 }
 
+// The Claude panel's model choices: the CLI's default, or an alias for the
+// latest of a family.
+NSArray<NSString *> *ModelTitles() {
+    return @[@"Claude Code's default", @"Opus", @"Sonnet", @"Haiku", @"Fable"];
+}
+NSArray<NSString *> *ModelValues() {
+    return @[@"", @"opus", @"sonnet", @"haiku", @"fable"];
+}
+
 } // namespace
 
 @implementation VelaSettingsWindowController {
@@ -49,6 +58,9 @@ vela::Document *FrontDocument() {
     NSButton *_mcpServer;
     NSTextField *_mcpStatus;
     NSTextField *_mcpCommand;
+    NSPopUpButton *_claudeModel;
+    NSButton *_claudeAsks;
+    NSTextField *_claudePath;
     int _observer;
 }
 
@@ -92,6 +104,20 @@ vela::Document *FrontDocument() {
     NSButton *copyCommand = [NSButton buttonWithTitle:@"Copy"
                                                target:self action:@selector(copyMcpCommand:)];
     NSStackView *command = [NSStackView stackViewWithViews:@[_mcpCommand, copyCommand]];
+    // The Claude panel: model, approvals and where Claude Code is.
+    _claudeModel = [NSPopUpButton new];
+    for (NSString *title in ModelTitles()) [_claudeModel addItemWithTitle:title];
+    _claudeModel.target = self;
+    _claudeModel.action = @selector(optionChanged:);
+    NSStackView *model = [NSStackView stackViewWithViews:@[
+        [NSTextField labelWithString:@"Model:"], _claudeModel]];
+    _claudeAsks = checkbox(@"Ask before Claude edits the scene");
+    _claudePath = Note(@"");
+    NSButton *choosePath = [NSButton buttonWithTitle:@"Choose…" target:self
+                                              action:@selector(chooseClaude:)];
+    NSButton *automaticPath = [NSButton buttonWithTitle:@"Find Automatically" target:self
+                                                 action:@selector(findClaude:)];
+    NSStackView *pathButtons = [NSStackView stackViewWithViews:@[choosePath, automaticPath]];
     NSButton *resetAll = [NSButton buttonWithTitle:@"Reset All Settings"
                                             target:self action:@selector(resetAll:)];
 
@@ -114,6 +140,11 @@ vela::Document *FrontDocument() {
         Note(@"0 uses every core; a negative number leaves that many free. "
              @"Takes effect the next time Vela starts."),
         mcp,
+        model,
+        _claudeAsks,
+        Note(@"Otherwise Claude edits at once and the panel says what changed. Either "
+             @"way, each request is one step that Undo reverts."),
+        _claudePath, pathButtons,
         _mcpServer, _mcpStatus,
         Note(@"To use Vela from Claude Code in Terminal, add it as an MCP server:"),
         command,
@@ -159,6 +190,16 @@ vela::Document *FrontDocument() {
     _threadLimit.stringValue = [NSString stringWithFormat:@"%d", s.threadLimit];
     _mcpServer.state = s.mcpServer ? NSControlStateValueOn : NSControlStateValueOff;
     _mcpStatus.stringValue = VelaMcpStatus();
+    [_claudeModel selectItemAtIndex:0];
+    for (NSUInteger i = 0; i < ModelValues().count; ++i) {
+        if ([ModelValues()[i] isEqualToString:@(s.claudeModel.c_str())]) {
+            [_claudeModel selectItemAtIndex:NSInteger(i)];
+        }
+    }
+    _claudeAsks.state = s.claudeAsksBeforeEdits ? NSControlStateValueOn : NSControlStateValueOff;
+    _claudePath.stringValue = s.claudePath.empty()
+        ? @"Vela finds Claude Code by itself."
+        : [NSString stringWithFormat:@"Claude Code: %@", @(s.claudePath.c_str())];
     _useCurrentView.enabled = FrontDocument() != nullptr;
 }
 
@@ -173,7 +214,12 @@ vela::Document *FrontDocument() {
     const bool camera = _primaryCamera.state == NSControlStateValueOn;
     const bool bounds = _unloadedAsBounds.state == NSControlStateValueOn;
     const bool mcp = _mcpServer.state == NSControlStateValueOn;
+    const bool asks = _claudeAsks.state == NSControlStateValueOn;
+    const NSInteger modelIndex = MAX(0, _claudeModel.indexOfSelectedItem);
+    const std::string model = ModelValues()[NSUInteger(modelIndex)].UTF8String;
     [self update:^(vela::AppSettings &s) {
+        s.claudeAsksBeforeEdits = asks;
+        s.claudeModel = model;
         s.mcpServer = mcp;
         s.loadPayloads = payloads;
         s.usePrimaryCamera = camera;
@@ -205,6 +251,25 @@ vela::Document *FrontDocument() {
     [NSPasteboard.generalPasteboard clearContents];
     [NSPasteboard.generalPasteboard setString:_mcpCommand.stringValue
                                       forType:NSPasteboardTypeString];
+}
+
+// The claude executable, for installs Vela doesn't find.
+- (void)chooseClaude:(id)sender {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.message = @"Choose the claude program (Claude Code).";
+    panel.showsHiddenFiles = YES;
+    panel.treatsFilePackagesAsDirectories = YES;
+    panel.directoryURL = [NSURL fileURLWithPath:[NSHomeDirectory()
+        stringByAppendingPathComponent:@".local/bin"]];
+    [panel beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response) {
+        if (response != NSModalResponseOK) return;
+        const std::string path = panel.URL.fileSystemRepresentation;
+        [self update:^(vela::AppSettings &s) { s.claudePath = path; }];
+    }];
+}
+
+- (void)findClaude:(id)sender {
+    [self update:^(vela::AppSettings &s) { s.claudePath.clear(); }];
 }
 
 - (void)resetAll:(id)sender {

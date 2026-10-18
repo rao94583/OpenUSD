@@ -216,6 +216,14 @@ NSString *ShortcutOf(NSMenuItem *item) {
             recents.push_back(Text(key));
         }
         _results = vela::SearchPalette(_entries, query, recents, MaxResults);
+        // Words that match no command can go to Claude: the only entry
+        // then, else the last.
+        if (!query.empty() && document) {
+            vela::PaletteEntry ask{"Ask Claude: \u201C" + query + "\u201D", "Claude", "", "ask_claude",
+                                   JsObject{{"prompt", JsValue(query)}}};
+            if (_results.size() >= MaxResults) _results.pop_back();
+            _results.push_back(ask);
+        }
     }
     [_table reloadData];
     if (!_results.empty()) {
@@ -232,7 +240,7 @@ NSString *ShortcutOf(NSMenuItem *item) {
     const vela::PaletteEntry entry = _results[size_t(row)];
     NSWindow *target = _target;
     [self close];
-    [self remember:entry];
+    if (entry.action != "ask_claude") [self remember:entry];
     if (entry.action.rfind(AppPrefix, 0) == 0) {
         NSMenuItem *item = _appItems[@(entry.action.c_str())];
         if (item) [NSApp sendAction:item.action to:item.target from:item];
