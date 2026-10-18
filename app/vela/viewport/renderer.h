@@ -89,6 +89,8 @@ public:
         std::vector<uint8_t> data;
     };
     bool ReadPixels(const View &view, bool linear, Pixels *pixels);
+    // Camera/dimension validation error from the last render attempt.
+    std::string GetRenderError() const;
     // Renders until converged and writes the image Draw would show, or for
     // .exr and .hdr files the linear color.
     bool WriteImage(const View &view, const std::string &path);

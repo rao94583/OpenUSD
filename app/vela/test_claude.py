@@ -153,6 +153,13 @@ while True:
         tool('run_python', {'code': 'vela.stage.DefinePrim("/Denied")'})
         say('You said no.')
         result('ok')
+    elif request.startswith('generate an image'):
+        models = tool('list_image_models', {})
+        reference = tool('capture_image_reference', {'width': 128, 'height': 128})['structuredContent']['artifact_id']
+        job = tool('generate_image', {'request_id': 'claude-image', 'prompt': 'Sunset concept', 'reference_ids': [reference]})['structuredContent']['job_id']
+        record('image_job', job)
+        say('The image is awaiting approval in Generated Images.')
+        result('ok')
     elif request.startswith('crash'):
         sys.stderr.write('Not logged in. Please run /login\n')
         sys.exit(1)
@@ -185,7 +192,10 @@ def main():
                          '    def Cube "Box" {\n    }\n'
                          '}\n')
         socket = socket_dir / 'mcp.sock'
-        env = {**os.environ, 'VELA_MCP_SOCKET': str(socket), 'VELA_CLAUDE': str(fake),
+        fixture = temp / 'fixture.png'
+        import base64
+        fixture.write_bytes(base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aI1sAAAAASUVORK5CYII='))
+        env = {**os.environ, 'VELA_IMAGE_FIXTURE': str(fixture), 'VELA_IMAGE_LIBRARY': str(temp / 'images'), 'VELA_MCP_SOCKET' : str(socket), 'VELA_CLAUDE': str(fake),
                'VELA_CLAUDE_HISTORY': str(history), 'FAKE_CLAUDE_LOG': str(log)}
         app = subprocess.Popen([vela, scene, '--defaultsettings'], env=env,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -306,6 +316,19 @@ def main():
         assert argv[argv.index('--resume') + 1] == session, argv
         wait(lambda: len(records('user')) == 4, 'the resumed request')
 
+        # The embedded agent discovers providers and submits a reference edit.
+        # This creates a native pending approval, without HTTP or a key.
+        ask('generate an image of this scene at sunset')
+        wait(lambda: len(records('image_job')) == 1, 'the image job')
+        job = records('image_job')[0]
+        image_state = call('get_image_job', job_id=job)['structuredContent']
+        assert image_state['state'] == 'awaiting_approval', image_state
+        assert image_state['reference_ids'], image_state
+        assert state()['undo'] == 'Claude: ' + prompt, state()
+        assert 'Image generation in Vela' in records('argv')[0][records('argv')[0].index('--append-system-prompt') + 1]
+        assert [p['tool'] for p in records('permission')[-3:]] == ['list_image_models', 'capture_image_reference', 'generate_image']
+        assert all(p['behavior'] == 'allow' for p in records('permission')[-3:])
+        call('cancel_image_job', job_id=job)
         print('Claude panel checks passed')
     finally:
         if helper:

@@ -1,6 +1,7 @@
 #import "settings_window.h"
 #import "document.h"
 #import "scripting.h"
+#import "image_generation.h"
 
 #include "app/vela/core/actions.h"
 #include "app/vela/core/app_settings.h"
@@ -145,6 +146,7 @@ NSArray<NSString *> *ModelValues() {
         Note(@"Otherwise Claude edits at once and the panel says what changed. Either "
              @"way, each request is one step that Undo reverts."),
         _claudePath, pathButtons,
+        [NSButton buttonWithTitle:@"Image Generation Settings…" target:self action:@selector(imageSettings:)],
         _mcpServer, _mcpStatus,
         Note(@"To use Vela from Claude Code in Terminal, add it as an MCP server:"),
         command,
@@ -267,6 +269,8 @@ NSArray<NSString *> *ModelValues() {
         [self update:^(vela::AppSettings &s) { s.claudePath = path; }];
     }];
 }
+
+- (void)imageSettings:(id)sender { VelaShowImageSettings(); }
 
 - (void)findClaude:(id)sender {
     [self update:^(vela::AppSettings &s) { s.claudePath.clear(); }];

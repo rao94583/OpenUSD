@@ -29,6 +29,37 @@ GfMatrix4d UpAxisMatrix(bool zUp) {
 
 } // namespace
 
+std::string CameraRenderError(const GfCamera &camera, bool embree) {
+    const auto clip = camera.GetClippingRange();
+    if (!std::isfinite(clip.GetMin()) || !std::isfinite(clip.GetMax()) ||
+        clip.GetMin() >= clip.GetMax() ||
+        (camera.GetProjection() == GfCamera::Perspective && clip.GetMin() <= 0)) {
+        return "The camera has an invalid clipping range";
+    }
+    const GfFrustum frustum = camera.GetFrustum();
+    for (const GfMatrix4d &matrix : {camera.GetTransform(), frustum.ComputeViewMatrix(),
+                                    frustum.ComputeProjectionMatrix()}) {
+        for (int row = 0; row < 4; ++row) for (int col = 0; col < 4; ++col) {
+            if (!std::isfinite(matrix[row][col])) return "The camera contains a non-finite transform or projection";
+        }
+        double determinant = 0;
+        const GfMatrix4d inverse = matrix.GetInverse(&determinant);
+        if (!std::isfinite(determinant) || determinant == 0) return "The camera transform or projection is singular";
+        for (int row = 0; row < 4; ++row) for (int col = 0; col < 4; ++col) {
+            if (!std::isfinite(inverse[row][col])) return "The camera inverse is non-finite";
+        }
+    }
+    if (embree) {
+        // vendor/embree/kernels/common/ray.h: ray.valid() uses FLT_LARGE,
+        // not FLT_MAX, to leave headroom for traversal arithmetic.
+        const GfVec3d position = frustum.GetPosition();
+        for (int i = 0; i < 3; ++i) if (std::abs(position[i]) > 1.844e18f) {
+            return "The camera position exceeds Embree's supported coordinate range";
+        }
+    }
+    return {};
+}
+
 CameraDrag CameraDragFor(unsigned buttons, bool option, bool command) {
     if (!option) {
         return CameraDrag::None;

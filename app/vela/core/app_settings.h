@@ -39,6 +39,13 @@ struct AppSettings {
     bool claudeAsksBeforeEdits = false;
     std::string claudeModel;
 
+    // Provider secrets live in Keychain, never in these persisted settings.
+    bool imageGeneration = false;
+    bool imageAsk = true;
+    bool imageHighQuality = false;
+    std::string imageConnection = "openai";
+    int imageRequestLimit = 20;
+
     bool operator==(const AppSettings &other) const = default;
 };
 

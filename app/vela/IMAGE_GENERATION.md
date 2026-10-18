@@ -338,3 +338,70 @@ manual preview inspection. This design-only change needs documentation checks.
 Before coding, confirm API account/model access, accepted option combinations
 and the minimum Claude CLI's handling of returned image blocks. No live API
 key, new dependency or scene modification is required to review this proposal.
+
+
+## Implementation record (2026-10-18)
+
+The initial implementation uses `core/image_jobs.*` for document-scoped jobs,
+policy and a versioned artifact manifest, `image_provider.*` for native HTTP,
+Keychain, image validation and the OpenAI/Gemini wire adapters, and
+`image_generation.*` for setup, approval, previews, import/export and native
+commands. `resources/image_generation.md` is compiled into the Claude prompt.
+Seven MCP tools expose the capability without provider credentials.
+
+The first built-in choices are GPT Image Flare and Gemini 2.5 Flash Image.
+The latter uses Google's documented, supported `generateContent` route;
+it accepts a smaller option set. Both accept up to three references in Vela.
+Additional adapters register a `Provider` with a capability-bearing `Model`,
+a readiness callback, and a submit callback returning cancellation. Completion
+must return validated PNG and preview bytes on the main queue. Connection
+IDs distinguish deployments; Claude discovers these through `list_image_models`.
+Hugging Face and local inference adapters are extension points, not shipped
+connections. Provider-specific options are currently rejected.
+
+The ChatGPT-plan investigation found an explicit restriction in OpenAI's
+[preview limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations):
+image generation is currently unsupported on that authorization route. The
+implementation therefore offers API-key credentials rather than a ChatGPT
+sign-in button. Revisit this adapter if the documented restriction changes.
+
+Native entry points: Settings → Image Generation Settings…, and Window →
+Generate Image…, Generated Images… and Image Generation Settings…. Enable the
+feature and save the selected provider's API key in Keychain. Default policy
+asks before every request; its controls cannot be changed by `set_settings`.
+The result window remains available after Claude's turn finishes and offers
+Continue with Claude. A separate full-size window, reference import, Save As
+and Reveal support inspecting and exporting results. Scene authoring continues
+through existing USD tools, after saving the texture into the project.
+
+Completed artifacts and interrupted job outcomes survive restart. Saved-scene
+paths are associated with UUIDs in Vela's user defaults; unsaved-document
+associations last for the current app session. The current app does not offer
+Save As for USD documents. Automatic asset dependency tracking remains future work. Approvals show all
+reference thumbnails, with IDs retained in the job record. History may contain bounded preview
+images using the existing panel image logging; full output images live only
+in the artifact library. Model catalogs are deliberately small and static;
+capability discovery describes the adapters, not live account access.
+
+Validation includes core lifecycle/policy tests, request/response fixtures for
+both providers, malformed image rejection, and an app/MCP fixture test for
+cross-provider references, previews, cancellation, native commands, document
+isolation, texture binding undo/redo and relative asset resolution after moving
+a scene folder. The Claude stand-in test also discovers image models and submits a
+viewport-based edit to native approval. Fixture providers are accepted only
+under `--defaultsettings`; no network requests or real keys are used by tests.
+Live provider generation and visual quality require a configured API account
+and remain an explicit opt-in smoke check.
+
+Viewport-capture crash follow-up: the supplied report aborts in Embree's
+`ray.valid()` assertion during local `viewport_screenshot` rendering. A nonempty instanced-scene regression reproduced that assertion.
+The Embree build now enables invalid-ray filtering; Vela also validates camera
+clipping, transforms/projection and Embree's coordinate range before rendering.
+Capture reports invalid-camera errors through MCP, and a live-app regression
+checks both screenshot tools plus recovery after repairing the camera. The
+report does not contain the original camera/ray values, so it does not establish
+which scene input first produced the invalid ray.
+
+Checkpoint limitation: the user clarified that the viewport became blank
+before Claude switched to Embree as a troubleshooting step. The invalid-ray
+crash protection does not explain or resolve that earlier blank viewport.

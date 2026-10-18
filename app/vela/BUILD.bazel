@@ -60,6 +60,7 @@ cc_library(
         "core/file_actions.cpp",
         "core/free_camera.cpp",
         "core/hud.cpp",
+        "core/image_jobs.cpp",
         "core/launch_options.cpp",
         "core/log.cpp",
         "core/mcp.cpp",
@@ -87,6 +88,7 @@ cc_library(
         "core/export_framing.h",
         "core/free_camera.h",
         "core/hud.h",
+        "core/image_jobs.h",
         "core/launch_options.h",
         "core/log.h",
         "core/mcp.h",
@@ -139,6 +141,7 @@ cc_test(
     "export_framing_test",
     "file_actions_test",
     "hud_test",
+    "image_jobs_test",
     "launch_options_test",
     "log_test",
     "mcp_test",
@@ -169,6 +172,9 @@ objc_library(
         "log_view.h",
         "log_view.mm",
         "main.mm",
+        "image_generation.h",
+        "image_generation.mm",
+
         "menus.h",
         "menus.mm",
         "palette.h",
@@ -194,7 +200,7 @@ objc_library(
         "viewport/viewport_view.h",
         "viewport/viewport_view.mm",
     ],
-    copts = ["-fobjc-arc"],
+    copts = ["-fobjc-arc", "-std=c++20"],
     sdk_frameworks = [
         "AVFoundation",
         "AppKit",
@@ -202,10 +208,14 @@ objc_library(
         "CoreVideo",
         "Metal",
         "QuartzCore",
+        "Security",
+        "ImageIO",
         "UniformTypeIdentifiers",
     ],
+    textual_hdrs = [":image_instructions"],
     deps = [
         ":core",
+        ":image_provider",
         ":usd_headers",
         ":usd_shared",
         "@rules_python//python/cc:current_py_cc_libs",
@@ -378,4 +388,48 @@ py_test(
     args = ["$(rootpath :archive)"],
     data = [":archive"],
     tags = ["requires-darwin"],
+)
+
+genrule(
+    name = "image_instructions",
+    srcs = ["resources/image_generation.md"],
+    outs = ["resources/image_generation.inc"],
+    cmd = "(echo 'R\"vela_image('; cat $<; echo ')vela_image\"') > $@",
+)
+
+objc_library(
+    name = "image_provider",
+    srcs = ["image_provider.mm"],
+    hdrs = ["image_provider.h"],
+    copts = ["-fobjc-arc", "-std=c++20"],
+    sdk_frameworks = ["Foundation", "ImageIO", "Security", "CoreGraphics", "UniformTypeIdentifiers"],
+    deps = [":core"],
+)
+
+objc_library(
+    name = "image_provider_fixtures",
+    srcs = ["image_provider_test.mm"],
+    textual_hdrs = ["core/test_support.h"],
+    copts = ["-fobjc-arc", "-std=c++20"],
+    deps = [":image_provider", ":core"],
+)
+cc_test(
+    name = "image_provider_test",
+    srcs = ["image_provider_test_main.cpp"],
+    deps = [":image_provider_fixtures"],
+)
+
+py_test(
+    name = "image_generation_ui_test",
+    srcs = ["test_image_generation.py"],
+    main = "test_image_generation.py",
+    args = ["$(rootpath :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
+)
+
+cc_test(
+    name = "embree_invalid_ray_test",
+    srcs = ["embree_invalid_ray_test.cpp"],
+    deps = ["//vendor/embree"],
 )

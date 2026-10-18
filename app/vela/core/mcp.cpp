@@ -4,6 +4,8 @@
 #include "log.h"
 #include "python.h"
 #include "session.h"
+#include "image_jobs.h"
+#include <set>
 
 #include "pxr/base/js/json.h"
 
@@ -98,6 +100,10 @@ const SessionDocument *TargetDocument(const JsObject &arguments, std::string *er
             *error = "document must be an integer id";
             return nullptr;
         }
+        if (Session::Get().ScopedId() && id != Session::Get().ScopedId()) {
+            *error = "This MCP connection is bound to another document";
+            return nullptr;
+        }
         const SessionDocument *entry = Session::Get().Find(int(id));
         if (!entry) *error = "No open document has id " + JsWriteToString(it->second);
         return entry;
@@ -136,6 +142,60 @@ JsObject RunPythonTool(const JsObject &arguments, bool query) {
     return ToolResult(text, !result.ok);
 }
 
+JsObject ImageTool(const std::string &name, const JsObject &arguments) {
+    using images::Text;
+    auto &service = images::Service::Get();
+    if (name == "list_image_models") {
+        if (!arguments.empty()) return ToolResult("list_image_models takes no arguments",true);
+        return JsonResult(JsValue(JsObject{{"models",JsValue(service.Models())}}));
+    }
+    std::string error;
+    const auto *entry = TargetDocument(arguments,&error);
+    if (!entry) return ToolResult(error,true);
+    const int bound = Session::Get().ScopedId();
+    if (bound && entry->id != bound) return ToolResult("Image tools are bound to this panel's document",true);
+    JsObject input = arguments; input.erase("document");
+    if (name == "generate_image") {
+        auto r = service.Submit(entry->id,input);
+        return r ? JsonResult(JsValue(r.value)) : ToolResult(r.error,true);
+    }
+    const std::set<std::string> fields = name == "capture_image_reference" ? std::set<std::string>{"width","height"} :
+        name == "get_generated_image" ? std::set<std::string>{"artifact_id","include_preview"} :
+        name == "list_generated_images" ? std::set<std::string>{} : std::set<std::string>{"job_id"};
+    for (const auto &[k,v] : input) if (!fields.count(k)) return ToolResult("Unknown argument: " + k,true);
+    if (name == "capture_image_reference") {
+        int width=1024,height=0;
+        for (const auto &[k,v] : input) {
+            int64_t n=0; if (!Integer(v,&n) || n<16 || n>2048) return ToolResult("Capture dimensions must be 16–2048",true);
+            if (k=="width") width=int(n); else height=int(n);
+        }
+        if (!entry->screenshot || !service.normalize) return ToolResult("Image capture unavailable",true);
+        images::Bytes png;
+        if (!entry->screenshot(width,height,&png,&error)) return ToolResult(error,true);
+        auto o=service.normalize(png); if (!o.error.empty()) return ToolResult(o.error,true);
+        auto r=service.AddReference(entry->id,std::move(o),JsObject{{"source",JsValue(DocumentState(*entry))}});
+        return r ? JsonResult(JsValue(r.value)) : ToolResult(r.error,true);
+    }
+    if (name == "list_generated_images") return JsonResult(JsValue(JsObject{{"artifacts",JsValue(service.Artifacts(entry->id))}}));
+    if (name == "get_generated_image") {
+        auto r=service.Artifact(entry->id,Text(input,"artifact_id")); if (!r) return ToolResult(r.error,true);
+        auto result=JsonResult(JsValue(r.value));
+        if (auto it=input.find("include_preview");it!=input.end()) {
+            if (!it->second.IsBool()) return ToolResult("include_preview must be boolean",true);
+            if (it->second.GetBool()) {
+                auto bytes=service.Read(entry->id,Text(input,"artifact_id"),true);
+                if (bytes.empty()) return ToolResult("Preview is missing",true);
+                auto content=result.at("content").GetJsArray();
+                content.push_back(JsValue(JsObject{{"type",JsValue("image")},{"mimeType",JsValue("image/png")},{"data",JsValue(Base64(bytes.data(),bytes.size()))}}));
+                result["content"]=JsValue(content);
+            }
+        }
+        return result;
+    }
+    auto r=name=="cancel_image_job" ? service.Cancel(entry->id,Text(input,"job_id")) : service.Job(entry->id,Text(input,"job_id"));
+    return r ? JsonResult(JsValue(r.value)) : ToolResult(r.error,true);
+}
+
 const char *const DocumentProperty =
     R"("document": {"type": "integer", "description": "A document id from get_app_state; the current document when omitted"})";
 
@@ -150,6 +210,34 @@ struct Tool {
 
 const std::vector<Tool> &ToolTable() {
     static const std::vector<Tool> tools = {
+        {"list_image_models", "List Image Models",
+         "Discover image provider connections, readiness, models and supported options.",
+         R"({"type": "object", "properties": {}, "additionalProperties": false})", true,
+         [](const JsObject &a) { return ImageTool("list_image_models",a); }},
+        {"capture_image_reference", "Capture Image Reference",
+         "Capture a local viewport reference for image editing. Does not upload it.",
+         R"({"type": "object", "properties": {"width": {"type": "integer"}, "height": {"type": "integer"}, "document": {"type": "integer"}}, "additionalProperties": false})", true,
+         [](const JsObject &a) { return ImageTool("capture_image_reference",a); }},
+        {"generate_image", "Generate Image",
+         "Submit an asynchronous image generation/edit job. Native approval controls uploads and paid calls. Poll sparingly; Generated Images updates independently.",
+         R"({"type": "object", "properties": {"request_id": {"type": "string"}, "prompt": {"type": "string"}, "purpose": {"type": "string"}, "reference_ids": {"type": "array", "items": {"type": "string"}}, "connection_id": {"type": "string"}, "model": {"type": "string"}, "size": {"type": "string"}, "quality": {"type": "string"}, "background": {"type": "string"}, "provider_options": {"type": "object"}, "document": {"type": "integer"}}, "additionalProperties": false, "required": ["request_id", "prompt"]})", false,
+         [](const JsObject &a) { return ImageTool("generate_image",a); }},
+        {"get_image_job", "Get Image Job",
+         "Query image job state.",
+         R"({"type": "object", "properties": {"job_id": {"type": "string"}, "document": {"type": "integer"}}, "additionalProperties": false, "required": ["job_id"]})", true,
+         [](const JsObject &a) { return ImageTool("get_image_job",a); }},
+        {"cancel_image_job", "Cancel Image Job",
+         "Cancel this image job; charges may already have occurred.",
+         R"({"type": "object", "properties": {"job_id": {"type": "string"}, "document": {"type": "integer"}}, "additionalProperties": false, "required": ["job_id"]})", false,
+         [](const JsObject &a) { return ImageTool("cancel_image_job",a); }},
+        {"list_generated_images", "List Generated Images",
+         "List saved image artifacts for this document.",
+         R"({"type": "object", "properties": {"document": {"type": "integer"}}, "additionalProperties": false})", true,
+         [](const JsObject &a) { return ImageTool("list_generated_images",a); }},
+        {"get_generated_image", "Get Generated Image",
+         "Read artifact metadata and optionally a bounded image preview.",
+         R"({"type": "object", "properties": {"artifact_id": {"type": "string"}, "include_preview": {"type": "boolean"}, "document": {"type": "integer"}}, "additionalProperties": false, "required": ["artifact_id"]})", true,
+         [](const JsObject &a) { return ImageTool("get_generated_image",a); }},
         {
             "get_app_state", "Get App State",
             "The open documents, and for the current (or named) document: "

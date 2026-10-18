@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <limits>
 
 using namespace vela;
 
@@ -218,7 +219,31 @@ static void TestDragModes() {
     CHECK(CameraDragFor(0, true, false) == CameraDrag::None);
 }
 
+static void TestRenderCameraValidation() {
+    GfCamera camera;
+    CHECK(CameraRenderError(camera).empty());
+    camera.SetClippingRange(GfRange1f(1, 1));
+    CHECK(!CameraRenderError(camera).empty());
+    camera.SetClippingRange(GfRange1f(0, 100));
+    CHECK(!CameraRenderError(camera).empty());
+    camera.SetProjection(GfCamera::Orthographic);
+    CHECK(CameraRenderError(camera).empty());
+    camera = GfCamera();
+    camera.SetTransform(GfMatrix4d(0.0));
+    CHECK(!CameraRenderError(camera).empty());
+    GfMatrix4d transform(1.0);
+    transform[3][0] = std::numeric_limits<double>::quiet_NaN();
+    camera.SetTransform(transform);
+    CHECK(!CameraRenderError(camera).empty());
+    transform.SetTranslate(GfVec3d(2e18, 0, 0)); camera.SetTransform(transform);
+    CHECK(CameraRenderError(camera).empty());
+    CHECK(!CameraRenderError(camera, true).empty());
+    camera = GfCamera(); camera.SetHorizontalAperture(0);
+    CHECK(!CameraRenderError(camera).empty());
+}
+
 int main() {
+    TestRenderCameraValidation();
     TestDefaultOrientation();
     TestTumbleStaysUprightAndOnSphere();
     TestTrackKeepsPointUnderCursor();

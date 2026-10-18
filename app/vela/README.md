@@ -173,6 +173,22 @@ which Vela finds in `~/.local/bin`, Homebrew or your shell's `PATH`.
 Settings → Claude and MCP can point it elsewhere, choose the model, and turn
 on "Ask before Claude edits the scene". Questions never need approval;
 edits do only with that setting. Anything outside Vela's tools always asks.
+
+Image generation is configured through Settings → Image Generation Settings….
+Enable it, choose OpenAI (GPT Image) or Google (Gemini), and save that provider's
+API key in Keychain. Then ask Claude to generate a texture or create a concept
+from the viewport. Image requests have their own approval setting and API
+billing. Window → Generated Images… shows approvals, job status, references,
+previews, Save As and Continue with Claude. Window → Generate Image… also works
+without Claude. Save textures into your project before asking Claude to bind
+them; generating an image itself does not edit the USD scene.
+
+The provider interface supports adding other hosted or local models; Hugging
+Face and local adapters are not included yet. ChatGPT-plan image generation is
+currently unsupported by its integration API. See
+[IMAGE_GENERATION.md](IMAGE_GENERATION.md) for architecture, supported options,
+validation and limitations. Tests use fixture providers without network calls;
+live image output requires a configured provider account.
 The CLI gets Vela's tools on a private socket bound to the window's
 document, plus Read, Glob and Grep for the scene's files, and nothing else.
 The panel keeps its own record of each conversation in

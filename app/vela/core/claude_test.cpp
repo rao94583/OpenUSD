@@ -149,6 +149,10 @@ void TestDecisions() {
         CHECK(Decide(tool, none, false, isQuery) == Decision::Allow);
         CHECK(Decide(tool, none, true, isQuery) == Decision::Ask);
     }
+    for (const char *tool : {"mcp__vela__generate_image", "mcp__vela__capture_image_reference",
+                             "mcp__vela__get_image_job", "mcp__vela__get_generated_image"}) {
+        CHECK(Decide(tool, none, true, isQuery) == Decision::Allow);
+    }
     const JsObject edit = Json(R"j({"action": "set_visibility"})j");
     CHECK(Decide("mcp__vela__ui_action", edit, false, isQuery) == Decision::Allow);
     CHECK(Decide("mcp__vela__ui_action", edit, true, isQuery) == Decision::Ask);

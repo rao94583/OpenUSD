@@ -168,7 +168,8 @@ struct Renderer::Impl {
     id<MTLRenderPipelineState> Pipeline(MTLPixelFormat format);
     void ConfigureEngine();
     void ApplyRendererChoices(const ViewSettings &settings);
-    void Render(const View &view);
+    bool Render(const View &view);
+    std::string cameraError;
 };
 
 // Settings the engine forgets when it switches renderer plugins (which
@@ -264,8 +265,17 @@ id<MTLRenderPipelineState> Renderer::Impl::Pipeline(MTLPixelFormat format) {
     return pipeline;
 }
 
-void Renderer::Impl::Render(const View &view) {
+bool Renderer::Impl::Render(const View &view) {
     ApplyRendererChoices(view.settings);
+    const std::string error = CameraRenderError(view.camera,
+        engine->GetCurrentRendererId() == TfToken("HdEmbreeRendererPlugin"));
+    if (!error.empty() || view.size[0] <= 0 || view.size[1] <= 0) {
+        const std::string message = error.empty() ? "Invalid render dimensions" : error;
+        if (message != cameraError) TF_WARN("Cannot render view: %s", message.c_str());
+        cameraError = message;
+        return false;
+    }
+    cameraError.clear();
     const GfFrustum frustum = view.camera.GetFrustum();
     if (view.cameraPath.IsEmpty()) {
         engine->SetCameraState(frustum.ComputeViewMatrix(),
@@ -322,6 +332,7 @@ void Renderer::Impl::Render(const View &view) {
         selectionPending = false;
     }
     engine->Render(stage->GetPseudoRoot(), params);
+    return true;
 }
 
 Renderer::Renderer() : _impl(std::make_unique<Impl>()) {
@@ -412,7 +423,7 @@ bool Renderer::Draw(const View &view, id<MTLTexture> target,
     if (!_impl->engine) {
         return false;
     }
-    _impl->Render(view);
+    if (!_impl->Render(view)) return false;
     // HgiMetal leaves render passes in its primary command buffer and
     // commits it only after a blit (color correction does one), so commit it
     // now: our pass, later on the same queue, then runs after Storm's.
@@ -450,6 +461,8 @@ bool Renderer::IsConverged() const {
     return !_impl->engine || _impl->engine->IsConverged();
 }
 
+std::string Renderer::GetRenderError() const { return _impl->cameraError; }
+
 bool Renderer::ReadPixels(const View &givenView, bool linear, Pixels *out) {
     if (!_impl->engine) {
         return false;
@@ -472,7 +485,7 @@ bool Renderer::ReadPixels(const View &givenView, bool linear, Pixels *out) {
     } restore{engine, interactive};
     // As usdrecord does: render until converged before reading back.
     for (unsigned sleep = 10; ; sleep = std::min(100u, sleep + 5)) {
-        _impl->Render(view);
+        if (!_impl->Render(view)) return false;
         if (_impl->engine->IsConverged()) break;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
     }

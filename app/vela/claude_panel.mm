@@ -1,3 +1,4 @@
+#include "app/vela/core/image_jobs.h"
 #import "claude_panel.h"
 #import "claude_markdown.h"
 #import "document.h"
@@ -990,6 +991,12 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
                               stringByAppendingPathComponent:@"vela-mcp"]);
     options.mcpSocket = socketPath;
     options.systemPrompt = SystemPrompt;
+    if (vela::AppSettingsStore::Get().GetSettings().imageGeneration) {
+        static const char *instructions =
+#include "app/vela/resources/image_generation.inc"
+        ;
+        options.systemPrompt += instructions;
+    }
 
     // The CLI works in the scene's folder, so it can read its layers.
     std::string directory = DocumentPath(*document);
@@ -1063,6 +1070,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
         return NO;
     }
     _request = request;
+    vela::images::Service::Get().SetOwner(_sessionId, Text(_conversationId) + ":" + Text(NSUUID.UUID.UUIDString));
     _undoMark = entry->document->GetUndoStack().Mark();
     [self addUser:request];
     if (!images.empty()) {
@@ -1085,6 +1093,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
 - (void)stop {
     if (!_busy || !_process) return;
     _stopping = YES;
+    vela::images::Service::Get().CancelOwner(_sessionId, vela::images::Service::Get().Owner(_sessionId));
     _status.stringValue = @"Stopping…";
     _process->Write(vela::claude::InterruptRequest("stop-" + std::to_string(++_nextRequest)));
     for (NSString *requestId in _approvals.allKeys) [self answer:requestId allow:NO always:NO];
@@ -1188,6 +1197,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     [self log:JsObject{{"kind", JsValue("result")}, {"isError", JsValue(bool(error))},
                        {"costUsd", JsValue(_cost)}}];
     _request = nil;
+    vela::images::Service::Get().SetOwner(_sessionId, "");
     _stopping = NO;
     // Tool calls the CLI never answered.
     for (VelaToolCallView *view in _tools.allValues) {

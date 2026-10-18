@@ -331,6 +331,12 @@ Decision Decide(const std::string &toolName, const JsObject &input, bool asksBef
     static const std::set<std::string> readOnly = {
         "get_app_state", "list_actions", "query_python", "viewport_screenshot"};
     if (readOnly.count(tool)) return Decision::Allow;
+    // Image submission only creates a job; the service enforces its own
+    // paid-request/upload policy for every caller.
+    static const std::set<std::string> imageTools = {
+        "list_image_models", "capture_image_reference", "generate_image",
+        "get_image_job", "cancel_image_job", "list_generated_images", "get_generated_image"};
+    if (imageTools.count(tool)) return Decision::Allow;
     if (tool == "ui_action") {
         const std::string action = String(input, "action");
         if (isQuery && isQuery(action)) return Decision::Allow;

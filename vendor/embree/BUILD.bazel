@@ -74,6 +74,9 @@ cc_library(
 # lowest ISA's flags, FLAGS_SSE2 for EMBREE_ARM).
 _DEFINES = [
     "TASKING_TBB",
+    # Discard invalid rays (NaN, infinity, or outside the traversal range)
+    # instead of asserting in viewport screenshots or instance traversal.
+    "EMBREE_IGNORE_INVALID_RAYS",
     "EMBREE_TARGET_SSE2",
     "__SSE__",
     "__SSE2__",
