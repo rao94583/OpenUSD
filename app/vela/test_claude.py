@@ -288,7 +288,9 @@ def main():
         assert '--strict-mcp-config' in argv and '--session-id' in argv, argv
         session = argv[argv.index('--session-id') + 1]
         assert records('control')[0] == 'initialize'
-        assert os.path.samefile(records('cwd')[0], scene_dir), records('cwd')
+        # The CLI runs in Vela's workspace and may read the scene's folder.
+        assert os.path.samefile(records('cwd')[0], history / 'Workspace'), records('cwd')
+        assert os.path.samefile(argv[argv.index('--add-dir') + 1], scene_dir), argv
         user = records('user')[0]['text']
         assert user.startswith('<vela-context>') and 'Selection: /Room/Box' in user, user
         assert 'room.usda' in user and user.endswith(prompt), user
@@ -317,6 +319,7 @@ def main():
         # The history has the conversation, for the panel's menu.
         lines = [json.loads(l) for l in logged.read_text().splitlines()]
         assert lines[0]['kind'] == 'conversation' and lines[0]['title'] == prompt, lines[0]
+        assert os.path.samefile(lines[0]['directory'], history / 'Workspace'), lines[0]
         assert os.path.samefile(lines[0]['document'], scene), lines[0]
         kinds = [l['kind'] for l in lines[1:]]
         assert kinds[:2] == ['user', 'assistant'], kinds
@@ -344,6 +347,7 @@ def main():
         argv = records('argv')[1]
         assert argv[argv.index('--resume') + 1] == session, argv
         wait(lambda: len(records('user')) == 5, 'the resumed request')
+        assert os.path.samefile(records('cwd')[-1], history / 'Workspace'), records('cwd')
 
         # The embedded agent discovers providers and submits a reference edit.
         # This creates a native pending approval, without HTTP or a key.

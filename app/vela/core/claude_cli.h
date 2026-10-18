@@ -47,6 +47,8 @@ struct LaunchOptions {
     std::string resume;     // or the conversation to continue
     std::string model;      // "" for the CLI's default
     std::string effort;     // "" for the CLI's default
+    // Folders Claude may read besides its working folder (the scene's).
+    std::vector<std::string> addDirectories;
     // vela-mcp, and the socket it should connect to.
     std::string mcpHelper;
     std::string mcpSocket;

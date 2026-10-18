@@ -41,6 +41,7 @@ void TestArguments() {
     options.mcpSocket = "/tmp/s.sock";
     options.model = "opus";
     options.effort = "high";
+    options.addDirectories = {"/scenes/room"};
     std::vector<std::string> args = Arguments(options);
     auto after = [&](const std::string &flag) {
         for (size_t i = 0; i + 1 < args.size(); ++i) if (args[i] == flag) return args[i + 1];
@@ -51,6 +52,7 @@ void TestArguments() {
     CHECK(after("--permission-prompt-tool") == "stdio");
     CHECK(after("--session-id") == "abc" && after("--resume") == "<missing>");
     CHECK(after("--model") == "opus" && after("--effort") == "high");
+    CHECK(after("--add-dir") == "/scenes/room");
     CHECK(ModelChoices()[0].value == std::string() && EffortChoices().size() == 6);
     CHECK(after("--tools") == "Read,Glob,Grep");
     const JsObject config = Json(after("--mcp-config"));
@@ -242,8 +244,8 @@ void TestHistory() {
     std::filesystem::remove_all(folder);
     const std::string dir = (folder / "Claude").string();
     CHECK(ListConversations(dir).empty());
-    Conversation a{"aaaa-1", "Make the lights warmer", "/scenes/room.usda", 100.0};
-    Conversation b{"bbbb-2", "Which prims have no material?", "/scenes/other.usda", 200.0};
+    Conversation a{"aaaa-1", "Make the lights warmer", "/scenes/room.usda", "/vela/Workspace", 100.0};
+    Conversation b{"bbbb-2", "Which prims have no material?", "/scenes/other.usda", "", 200.0};
     CHECK(CreateConversation(dir, a));
     CHECK(AppendEntry(dir, a.id, JsObject{{"kind", JsValue("user")}, {"text", JsValue("hi\nthere")}}));
     CHECK(AppendEntry(dir, a.id, JsObject{{"kind", JsValue("assistant")}, {"text", JsValue("done")}}));
@@ -255,10 +257,11 @@ void TestHistory() {
     std::vector<Conversation> all = ListConversations(dir);
     CHECK(all.size() == 2 && all[0].id == "bbbb-2" && all[1].title == "Make the lights warmer");
     CHECK(all[1].document == "/scenes/room.usda" && all[1].created == 100.0 && all[1].updated > 0);
+    CHECK(all[1].directory == "/vela/Workspace" && all[0].directory.empty());
     all = ListConversations(dir, "/scenes/room.usda");
     CHECK(all.size() == 1 && all[0].id == "aaaa-1");
     // Ids can't name other files.
-    CHECK(!CreateConversation(dir, Conversation{"../escape", "", "", 0}));
+    CHECK(!CreateConversation(dir, Conversation{"../escape", "", "", "", 0}));
     CHECK(!AppendEntry(dir, "../escape", JsObject()));
     CHECK(LoadEntries(dir, "nope").empty());
     CHECK(DeleteConversation(dir, a.id) && ListConversations(dir).size() == 1);

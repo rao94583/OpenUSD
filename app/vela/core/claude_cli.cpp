@@ -160,6 +160,10 @@ std::vector<std::string> Arguments(const LaunchOptions &options) {
         args.push_back("--model");
         args.push_back(options.model);
     }
+    for (const std::string &directory : options.addDirectories) {
+        args.push_back("--add-dir");
+        args.push_back(directory);
+    }
     if (!options.effort.empty()) {
         args.push_back("--effort");
         args.push_back(options.effort);

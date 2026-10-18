@@ -674,6 +674,9 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     NSString *_conversationId;   // the CLI's session id
     BOOL _conversationStarted;   // the CLI knows it (so it can be resumed)
     BOOL _logged;                // its history file exists
+    // The CLI's working folder for this conversation ("" until it starts:
+    // the workspace); resuming must use the same one.
+    std::string _directory;
     std::vector<JsObject> _pendingLog;
     std::set<std::string> _allowedTools;  // "Allow for This Conversation"
     double _cost;
@@ -1180,6 +1183,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
         _conversationStarted = NO;
         [self endProcess];
         _conversationId = NewUuid();
+        _directory.clear();
         [self updateControls];
     }
 }
@@ -1209,6 +1213,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     _conversationId = NewUuid();
     _conversationStarted = NO;
     _logged = NO;
+    _directory.clear();
     _pendingLog.clear();
     _allowedTools.clear();
     _cost = 0;
@@ -1224,6 +1229,17 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     [self clearTranscript];
     _conversationId = identifier;
     _conversationStarted = YES;  // the CLI resumes it
+    // It resumes in the folder it started in: older conversations ran in
+    // their document's folder.
+    _directory.clear();
+    for (const auto &c : vela::claude::ListConversations(vela::claude::DefaultHistoryFolder())) {
+        if (c.id != Text(identifier)) continue;
+        _directory = c.directory;
+        if (_directory.empty()) {
+            _directory = c.document.empty() ? vela::claude::DefaultHistoryFolder()
+                                            : c.document.substr(0, c.document.rfind('/'));
+        }
+    }
     _logged = YES;
     _pendingLog.clear();
     _allowedTools.clear();
@@ -1295,6 +1311,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     conversation.id = Text(_conversationId);
     conversation.title = vela::claude::TitleFor(Text(_request ?: @""));
     conversation.document = document ? DocumentPath(*document) : std::string();
+    conversation.directory = _directory;
     conversation.created = NSDate.date.timeIntervalSince1970;
     std::string error;
     if (!vela::claude::CreateConversation(vela::claude::DefaultHistoryFolder(), conversation, &error)) {
@@ -1363,12 +1380,18 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
         options.systemPrompt += instructions;
     }
 
-    // The CLI works in the scene's folder, so it can read its layers.
-    std::string directory = DocumentPath(*document);
-    directory = directory.empty() ? vela::claude::DefaultHistoryFolder()
-                                  : directory.substr(0, directory.rfind('/'));
+    // Every conversation runs in Vela's own workspace folder, so Claude
+    // Code keeps them together (and no CLAUDE.md near the scene applies);
+    // Claude may also read the scene's folder.
+    if (_directory.empty()) _directory = vela::claude::WorkspaceFolder();
+    const std::string directory = _directory;
     [NSFileManager.defaultManager createDirectoryAtPath:String(directory)
                             withIntermediateDirectories:YES attributes:nil error:nil];
+    const std::string scene = DocumentPath(*document);
+    if (!scene.empty()) {
+        const std::string sceneFolder = scene.substr(0, scene.rfind('/'));
+        if (sceneFolder != directory) options.addDirectories.push_back(sceneFolder);
+    }
 
     __weak VelaClaudePanelController *weakSelf = self;
     vela::LineProcess::Callbacks callbacks;

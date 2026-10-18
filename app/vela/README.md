@@ -210,7 +210,11 @@ live image output requires a configured provider account.
 The CLI gets Vela's tools on a private socket bound to the window's
 document, plus Read, Glob and Grep for the scene's files, and nothing else.
 The panel keeps its own record of each conversation in
-`~/Library/Application Support/Vela/Claude/`. Try it on
+`~/Library/Application Support/Vela/Claude/`. The CLI runs in that
+folder's `Workspace` subfolder (with `--add-dir` for the scene's folder),
+so Claude Code keeps all of Vela's sessions in one project under
+`~/.claude/projects/`, whatever folder the scene is in, and no `CLAUDE.md`
+near the scene applies. Try it on
 [examples/living_room](examples/living_room/README.md).
 
 Vela is also an MCP server, so Claude Code in a terminal can query and edit

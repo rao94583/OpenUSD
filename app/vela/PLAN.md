@@ -694,6 +694,16 @@ The panel now behaves like Claude Code's VS Code panel:
   (checked: `--resume <id> --effort high`).
 - `stop_claude` action. `claude_ui_test` covers it with a slow reply from
   the stand-in CLI that honors interrupts.
+- **One working folder:** the CLI used to run in the scene's folder, so
+  Claude Code filed each session under that folder's project (and loaded
+  any `CLAUDE.md` above the scene, such as this repository's). It now
+  runs in `~/Library/Application Support/Vela/Claude/Workspace` with
+  `--add-dir` for the scene's folder. Each conversation's record keeps
+  that folder (`directory`), because resuming needs the same one;
+  conversations from before resume in their document's folder. Claude
+  Code's own transcripts stay under `~/.claude/projects/`: moving them
+  would take `CLAUDE_CONFIG_DIR`, which also moves the user's login and
+  settings.
 
 ## Testing
 
