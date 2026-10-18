@@ -215,7 +215,8 @@ def main():
         import base64
         fixture.write_bytes(base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aI1sAAAAASUVORK5CYII='))
         env = {**os.environ, 'VELA_IMAGE_FIXTURE': str(fixture), 'VELA_IMAGE_LIBRARY': str(temp / 'images'), 'VELA_MCP_SOCKET' : str(socket), 'VELA_CLAUDE': str(fake),
-               'VELA_CLAUDE_HISTORY': str(history), 'FAKE_CLAUDE_LOG': str(log)}
+               'VELA_CLAUDE_HISTORY': str(history),
+               'VELA_PLUGINS_FOLDER': str(temp / 'Plugins'), 'FAKE_CLAUDE_LOG': str(log)}
         app = subprocess.Popen([vela, scene, '--defaultsettings'], env=env,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         deadline = time.time() + 120
@@ -283,14 +284,17 @@ def main():
         assert after == ('(1.0, 1.0, 0.8333)', '(0.6, 0.5, 0.4167)'), after
         argv = records('argv')[0]
         for flag, value in [('--input-format', 'stream-json'), ('--output-format', 'stream-json'),
-                            ('--permission-prompt-tool', 'stdio'), ('--tools', 'Read,Glob,Grep')]:
+                            ('--permission-prompt-tool', 'stdio'), ('--tools', 'Read,Glob,Grep,Write,Edit')]:
             assert argv[argv.index(flag) + 1] == value, (flag, argv)
         assert '--strict-mcp-config' in argv and '--session-id' in argv, argv
         session = argv[argv.index('--session-id') + 1]
         assert records('control')[0] == 'initialize'
         # The CLI runs in Vela's workspace and may read the scene's folder.
         assert os.path.samefile(records('cwd')[0], history / 'Workspace'), records('cwd')
-        assert os.path.samefile(argv[argv.index('--add-dir') + 1], scene_dir), argv
+        added = [argv[i + 1] for i, a in enumerate(argv) if a == '--add-dir']
+        assert any(os.path.samefile(d, scene_dir) for d in added), added
+        # And the plugins folder, the one place Claude writes files.
+        assert any(os.path.samefile(d, temp / 'Plugins') for d in added), added
         user = records('user')[0]['text']
         assert user.startswith('<vela-context>') and 'Selection: /Room/Box' in user, user
         assert 'room.usda' in user and user.endswith(prompt), user

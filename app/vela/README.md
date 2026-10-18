@@ -236,6 +236,47 @@ MCP protocol eras: the stateless 2026-07-28 revision (per-request `_meta`,
 `server/discover`) and the `initialize` handshake of 2025-11-25 and
 earlier.
 
+## Plugins
+
+Vela loads plugins the way usdview does, with the same API under Vela's
+names, so usdview plugins port by changing their imports. A plugin is a
+Python package with a `plugInfo.json` that declares a container type
+derived from `vela.PluginContainer`. USD's plugin registry finds it in
+`~/Library/Application Support/Vela/Plugins` (Plugins → Show Plugins
+Folder) or on `PXR_PLUGINPATH_NAME`:
+
+```json
+{"Plugins": [{"Type": "python", "Name": "scene_stats", "Info": {"Types": {
+    "scene_stats.Container": {"bases": ["vela.PluginContainer"]}}}}]}
+```
+
+The container's `registerPlugins(registry, plugCtx)` calls
+`registry.registerCommandPlugin(name, displayName, callback, description)`,
+and `configureView(registry, builder)` adds commands to menus with
+`builder.findOrCreateMenu('Tools').addItem(command, shortcut='Ctrl+K')`,
+`findOrCreateSubmenu` and `addSeparator`. A menu's title can name one of
+Vela's menus (Edit, View, …) or a new one, placed before Window. Each
+command becomes a Vela action: it shows in the command palette, and
+`vela.run`, MCP and Claude can run it. Its callback gets the
+`vela.Document` it runs on, its printed output goes to the Log, and its
+edits are one undo step.
+
+Plugins can make AppKit UI with PyObjC (`pyobjc-core` and
+`pyobjc-framework-Cocoa` are in the bundle). Objective-C classes can't be
+defined twice, so for button and menu targets use
+`vela.Target(callback)` rather than subclassing `NSObject`, which would
+break reloading. Plugins → Reload Plugins (the `reload_plugins` action)
+finds new plugins and reloads changed ones, and reports errors with their
+tracebacks in the Log.
+
+Claude can write plugins: ask the Claude panel for a command, menu item
+or tool window that should stay in Vela. It writes the package into the
+Plugins folder, reloads plugins and tries the command. Writing files in
+that folder follows the panel's edit mode, and writing anywhere else
+always asks. [examples/plugins/scene_stats](examples/plugins/scene_stats)
+is a tool window Claude wrote from a one-line request; copy it into the
+Plugins folder to try it.
+
 ## Command line
 
 ```sh

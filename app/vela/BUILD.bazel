@@ -66,6 +66,7 @@ cc_library(
         "core/mcp.cpp",
         "core/mcp_socket.cpp",
         "core/palette.cpp",
+        "core/plugins.cpp",
         "core/python.cpp",
         "core/session.cpp",
         "core/standard_actions.cpp",
@@ -95,6 +96,7 @@ cc_library(
         "core/mcp_path.h",
         "core/mcp_socket.h",
         "core/palette.h",
+        "core/plugins.h",
         "core/python.h",
         "core/session.h",
         "core/undo.h",
@@ -147,6 +149,7 @@ cc_test(
     "mcp_test",
     "material_invalidation_test",
     "palette_test",
+    "plugins_test",
     "document_test",
     "undo_test",
     "validation_test",
@@ -180,6 +183,8 @@ objc_library(
         "menus.mm",
         "palette.h",
         "palette.mm",
+        "plugins_ui.h",
+        "plugins_ui.mm",
         "python_console.h",
         "python_console.mm",
         "scripting.h",
@@ -213,7 +218,10 @@ objc_library(
         "ImageIO",
         "UniformTypeIdentifiers",
     ],
-    textual_hdrs = [":image_instructions"],
+    textual_hdrs = [
+        ":image_instructions",
+        ":plugin_instructions",
+    ],
     deps = [
         ":core",
         ":image_provider",
@@ -225,7 +233,15 @@ objc_library(
 
 py_binary(name = "copy_runtime", srcs = ["copy_runtime.py"])
 py_binary(name = "sign_runtime", srcs = ["sign_runtime.py"])
-vela_runtime(name = "runtime", usd = ["//bazel/install:python"])
+vela_runtime(
+    name = "runtime",
+    # PyObjC, for plugins that make AppKit UI.
+    site_packages = [
+        "@pypi//pyobjc_core:pkg",
+        "@pypi//pyobjc_framework_cocoa:pkg",
+    ],
+    usd = ["//bazel/install:python"],
+)
 
 # vela-mcp, in Contents/MacOS: bridges an MCP client's stdio to the app's
 # socket. It links nothing of USD's.
@@ -398,6 +414,14 @@ genrule(
     cmd = "(echo 'R\"vela_image('; cat $<; echo ')vela_image\"') > $@",
 )
 
+# How Claude writes plugins, compiled into the Claude panel's prompt.
+genrule(
+    name = "plugin_instructions",
+    srcs = ["resources/plugins.md"],
+    outs = ["resources/plugins.inc"],
+    cmd = "(echo 'R\"vela_plugins('; cat $<; echo ')vela_plugins\"') > $@",
+)
+
 objc_library(
     name = "image_provider",
     srcs = ["image_provider.mm"],
@@ -439,6 +463,16 @@ py_test(
     name = "material_resync_ui_test",
     srcs = ["test_material_resync.py"],
     main = "test_material_resync.py",
+    args = ["$(rootpath :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
+)
+
+# Plugins, as usdview has them, with PyObjC UI.
+py_test(
+    name = "plugins_ui_test",
+    srcs = ["test_plugins.py"],
+    main = "test_plugins.py",
     args = ["$(rootpath :archive)"],
     data = [":archive"],
     tags = ["requires-darwin"],

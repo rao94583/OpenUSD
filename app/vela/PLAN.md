@@ -705,6 +705,55 @@ The panel now behaves like Claude Code's VS Code panel:
   would take `CLAUDE_CONFIG_DIR`, which also moves the user's login and
   settings.
 
+## Plugins (2026-10-18)
+
+Plugins load as usdview's do (`pxr/usdImaging/usdviewq/plugin.py`), with
+the same API under Vela's names: `vela.PluginContainer`
+(`registerPlugins`, `configureView`, `deferredImport`),
+`registerCommandPlugin`, and `findOrCreateMenu`, `findOrCreateSubmenu`,
+`addItem` (Qt-style shortcuts: Ctrl is Command) and `addSeparator`.
+
+- **Discovery:** USD's plugin registry, in
+  `~/Library/Application Support/Vela/Plugins` (`VELA_PLUGINS_FOLDER` in
+  tests) and on `PXR_PLUGINPATH_NAME`. Each plugin's parent folder goes on
+  `sys.path`, because Vela's isolated Python ignores PYTHONPATH. Plugins
+  load after launch, and only if a plugin declares a container
+  (`HasPlugins`, without starting Python), so launches without plugins
+  don't import pxr. Python plugins are imported with `importlib` before
+  `PlugPlugin::Load`, so a failure reports Python's traceback rather than
+  "Load ... failed".
+- **Commands become actions** (`core/plugins.*`): undoable, in their menu
+  for the palette, and runnable by `vela.run`, MCP and Claude. Their output
+  goes to the Log. `ActionRegistry::Unregister` removes them on reload.
+  `ActionRegistry::Run` now calls a copy of the handler, because
+  `reload_plugins` changes the registry while it runs.
+- **Menus** (`VelaInstallPluginMenus`): into menus named by title, or new
+  ones before Window; plugin items are tagged and replaced on reload.
+  Plugins → Reload Plugins (`reload_plugins`, which returns plugins,
+  commands, menus and errors) and Show Plugins Folder.
+- **Reloading:** new plugins are registered, changed modules reloaded (with
+  `Tf.Type.Define` tolerating types that already exist), and removed ones
+  dropped.
+- **PyObjC** 12.2.2 (`pyobjc-core`, `pyobjc-framework-Cocoa`) from PyPI,
+  pinned by hash in `bazel/requirements_lock.txt` and copied into
+  `Runtime/site-packages`. `vela.Target(callback)` is one NSObject
+  subclass for every plugin's targets.
+- **Claude:** the CLI gets `Write` and `Edit` plus `--add-dir` for the
+  Plugins folder, and a guide (`resources/plugins.md`) in its prompt.
+  Writes inside the Plugins folder follow the edit mode; writes anywhere
+  else ask (`claude::Decide`, `IsInside`).
+  Checked with the real CLI: asked for a Scene Stats tool window, Claude
+  wrote the package, reloaded with no errors, opened the window and checked
+  its contents in 26 s (now `examples/plugins/scene_stats`).
+- Tests: `plugins_test` (shortcuts, reports, unregistering) and
+  `plugins_ui_test`. The UI test runs a launched Vela with plugins in both
+  places and checks actions and undo, Vela's and new menus, a PyObjC panel
+  whose button works through `vela.Target`, reloading changed, new, broken
+  and removed plugins, and tracebacks.
+- Not done: running usdview plugins unchanged (they import
+  `pxr.Usdviewq` and Qt). Edits from UI callbacks are separate implicit
+  undo steps.
+
 ## Testing
 
 - `cc_test` for the core: document, actions, undo, camera math

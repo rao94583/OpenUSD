@@ -22,6 +22,20 @@ def _runtime_impl(ctx):
         if f.short_path.startswith(marker):
             entries.append([f.path, "usd/" + f.short_path[len(marker):]])
             inputs.append(f)
+    # Python packages from PyPI (PyObjC), as Runtime/site-packages.
+    packages = depset(transitive = [d[DefaultInfo].default_runfiles.files for d in ctx.attr.site_packages])
+    # Packages may share files (PyObjCTools/__init__.py): keep the first.
+    copied = {}
+    for f in packages.to_list():
+        marker = "/site-packages/"
+        at = f.path.find(marker)
+        if at >= 0 and "/__pycache__/" not in f.path:
+            destination = "site-packages/" + f.path[at + len(marker):]
+            if destination in copied:
+                continue
+            copied[destination] = True
+            entries.append([f.path, destination])
+            inputs.append(f)
     root = runtime.interpreter.dirname.rsplit("/", 1)[0] + "/"
     for f in runtime.files.to_list() + [runtime.interpreter]:
         if f.path.startswith(root):
@@ -44,6 +58,7 @@ vela_runtime = rule(
     implementation = _runtime_impl,
     attrs = {
         "usd": attr.label_list(),
+        "site_packages": attr.label_list(),
         "smoke": attr.label(default = ":bundle_smoke.py", allow_single_file = True),
         "_copy": attr.label(default = ":copy_runtime", executable = True, cfg = "exec"),
     },

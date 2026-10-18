@@ -11,6 +11,7 @@
 #import "form_sheet.h"
 #import "menus.h"
 #import "claude_panel.h"
+#import "plugins_ui.h"
 #import "image_generation.h"
 #import "palette.h"
 #import "scripting.h"
@@ -89,6 +90,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     [NSApp activateIgnoringOtherApps:YES];
     [VelaPaletteController installShortcut];
     VelaStartScripting();
+    VelaStartPlugins();
     if (_launchFile) {
         [NSDocumentController.sharedDocumentController openDocumentWithContentsOfURL:_launchFile
             display:YES completionHandler:^(NSDocument *document, BOOL, NSError *error) {
@@ -495,6 +497,7 @@ int main(int argc, const char *argv[]) {
     @autoreleasepool {
         // App actions the core can't provide, before menus and --describe-actions.
         VelaRegisterClaudeActions();
+        VelaRegisterPluginAppActions();
         VelaRegisterImageActions();
         NSString *runtime = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"Runtime/usd"];
         PlugRegistry::GetInstance().RegisterPlugins(

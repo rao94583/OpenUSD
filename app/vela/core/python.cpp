@@ -256,6 +256,30 @@ PythonResult RunPython(const std::string &code, const std::string &key, int docu
     return result;
 }
 
+bool CallPython(const std::string &function, const std::string &argsJson,
+                std::string *result, std::string *error) {
+    if (!initialized) {
+        if (error) *error = "Python is not available";
+        return false;
+    }
+    PyGILState_STATE gil = PyGILState_Ensure();
+    PyObject *args = Py_BuildValue("(s#s#)", function.data(), Py_ssize_t(function.size()),
+                                   argsJson.data(), Py_ssize_t(argsJson.size()));
+    PyObject *reply = args ? CallVela("_call", args) : nullptr;
+    Py_XDECREF(args);
+    const bool ok = reply && PyUnicode_Check(reply);
+    if (ok) {
+        if (result) *result = Text(reply);
+    } else if (error) {
+        *error = reply ? "vela._call returned no text" : TakeError();
+    } else {
+        PyErr_Clear();
+    }
+    Py_XDECREF(reply);
+    PyGILState_Release(gil);
+    return ok;
+}
+
 bool IsCompletePython(const std::string &code) {
     if (!initialized) return true;
     PyGILState_STATE gil = PyGILState_Ensure();

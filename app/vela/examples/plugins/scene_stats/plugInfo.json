@@ -1,0 +1,2 @@
+{"Plugins": [{"Type": "python", "Name": "scene_stats", "Info": {"Types": {
+    "scene_stats.Container": {"bases": ["vela.PluginContainer"]}}}}]}

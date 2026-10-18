@@ -30,6 +30,12 @@ struct PythonResult {
 // current document while it runs, and its edits become one undo step.
 PythonResult RunPython(const std::string &code, const std::string &key, int documentId = 0);
 
+// Calls vela.<function>(*args) with args a JSON array, returning its result
+// as JSON; false with the traceback in error if it raised. For the app's
+// own calls into Python, such as loading plugins.
+bool CallPython(const std::string &function, const std::string &argsJson,
+                std::string *result, std::string *error);
+
 // Whether a console should run its input on Return rather than start a
 // new line: the input is a complete statement, or not valid Python.
 bool IsCompletePython(const std::string &code);

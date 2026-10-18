@@ -15,6 +15,7 @@
 #include "app/vela/core/mcp.h"
 #include "app/vela/core/mcp_path.h"
 #include "app/vela/core/mcp_socket.h"
+#include "app/vela/core/plugins.h"
 #include "app/vela/core/session.h"
 
 #include "pxr/base/js/json.h"
@@ -1373,7 +1374,18 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
                               stringByAppendingPathComponent:@"vela-mcp"]);
     options.mcpSocket = socketPath;
     options.systemPrompt = SystemPrompt;
-    if (vela::AppSettingsStore::Get().GetSettings().imageGeneration) {
+    {
+        static const char *plugins =
+#include "app/vela/resources/plugins.inc"
+        ;
+        std::string text = plugins;
+        const std::string folder = vela::PluginsFolder();
+        for (size_t at; (at = text.find("PLUGINS_FOLDER")) != std::string::npos;) {
+            text.replace(at, 14, folder);
+        }
+        options.systemPrompt += text;
+    }
+        if (vela::AppSettingsStore::Get().GetSettings().imageGeneration) {
         static const char *instructions =
 #include "app/vela/resources/image_generation.inc"
         ;
@@ -1387,6 +1399,11 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     const std::string directory = _directory;
     [NSFileManager.defaultManager createDirectoryAtPath:String(directory)
                             withIntermediateDirectories:YES attributes:nil error:nil];
+    // Plugins are written there (see resources/plugins.md).
+    const std::string plugins = vela::PluginsFolder();
+    [NSFileManager.defaultManager createDirectoryAtPath:String(plugins)
+                            withIntermediateDirectories:YES attributes:nil error:nil];
+    options.addDirectories.push_back(plugins);
     const std::string scene = DocumentPath(*document);
     if (!scene.empty()) {
         const std::string sceneFolder = scene.substr(0, scene.rfind('/'));
@@ -1649,7 +1666,8 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
         const vela::Action *found = vela::ActionRegistry::Get().Find(action);
         return found && found->query;
     };
-    const auto decision = vela::claude::Decide(event.toolName, event.input, asks, isQuery);
+    const auto decision = vela::claude::Decide(event.toolName, event.input, asks, isQuery,
+                                               vela::PluginsFolder());
     if (decision == vela::claude::Decision::Allow || _allowedTools.count(event.toolName)) {
         _process->Write(vela::claude::AllowTool(event.requestId, event.input));
         return;

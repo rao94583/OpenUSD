@@ -1,5 +1,6 @@
 // The actions Vela offers. Menus are built from these, in this order.
 #include "actions.h"
+#include "plugins.h"
 #include "document.h"
 
 #include "pxr/base/gf/matrix4d.h"
@@ -362,6 +363,7 @@ void RegisterStandardActions(ActionRegistry &registry) {
     RegisterView(registry);
     RegisterViewActions(registry);
     RegisterPlayback(registry);
+    RegisterPluginActions(registry);
 }
 
 } // namespace vela

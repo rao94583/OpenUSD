@@ -54,7 +54,7 @@ void TestArguments() {
     CHECK(after("--model") == "opus" && after("--effort") == "high");
     CHECK(after("--add-dir") == "/scenes/room");
     CHECK(ModelChoices()[0].value == std::string() && EffortChoices().size() == 6);
-    CHECK(after("--tools") == "Read,Glob,Grep");
+    CHECK(after("--tools") == "Read,Glob,Grep,Write,Edit");
     const JsObject config = Json(after("--mcp-config"));
     const JsObject &server = config.at("mcpServers").GetJsObject().at("vela").GetJsObject();
     CHECK(server.at("command").GetString() == "/App/vela-mcp");
@@ -158,6 +158,17 @@ void TestDecisions() {
                              "mcp__vela__get_image_job", "mcp__vela__get_generated_image"}) {
         CHECK(Decide(tool, none, true, isQuery) == Decision::Allow);
     }
+    // Writing files: plugins only, as an edit; anywhere else asks.
+    const std::string plugins = "/Users/x/Library/Application Support/Vela/Plugins";
+    const JsObject inside = Json(R"j({"file_path": "/Users/x/Library/Application Support/Vela/Plugins/tools/__init__.py"})j");
+    const JsObject outside = Json(R"j({"file_path": "/Users/x/.zshrc"})j");
+    const JsObject escape = Json(R"j({"file_path": "/Users/x/Library/Application Support/Vela/Plugins/../../evil"})j");
+    CHECK(Decide("Write", inside, false, isQuery, plugins) == Decision::Allow);
+    CHECK(Decide("Edit", inside, true, isQuery, plugins) == Decision::Ask);
+    CHECK(Decide("Write", outside, false, isQuery, plugins) == Decision::Ask);
+    CHECK(Decide("Write", escape, false, isQuery, plugins) == Decision::Ask);
+    CHECK(Decide("Write", inside, false, isQuery) == Decision::Ask);  // no folder
+    CHECK(IsInside("/a/b/c", "/a/b/") && !IsInside("/a/bc", "/a/b") && !IsInside("/a/b", "/a/b"));
     const JsObject edit = Json(R"j({"action": "set_visibility"})j");
     CHECK(Decide("mcp__vela__ui_action", edit, false, isQuery) == Decision::Allow);
     CHECK(Decide("mcp__vela__ui_action", edit, true, isQuery) == Decision::Ask);

@@ -1,12 +1,19 @@
 // The main menu, built from the action registry, and keyboard shortcuts.
 #import <AppKit/AppKit.h>
 
+#include "app/vela/core/plugins.h"
+
 #include "app/vela/core/document.h"
 
 // The app, File and Window menus, with a menu for each menu named by an
 // action, in registration order. Items run actions on the current
 // document.
 NSMenu *VelaBuildMainMenu();
+
+// Puts plugins' commands in the menu bar, replacing what the last call
+// added: into the menus their paths name (the menu bar's own, by title, or
+// new ones before Window).
+void VelaInstallPluginMenus(const vela::PluginReport &report);
 
 // Runs an action as its menu item does: asking first for a form's fields or
 // a file when the action has them, and showing errors on window.

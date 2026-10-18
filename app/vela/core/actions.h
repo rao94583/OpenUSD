@@ -120,6 +120,9 @@ public:
 
     // Adds an action, replacing one with the same name.
     void Register(Action action);
+    // Removes an action, e.g. a plugin's on reload; false if none has the
+    // name.
+    bool Unregister(const std::string &name);
     const Action *Find(const std::string &name) const;
     // In registration order, which menus follow.
     const std::vector<Action> &GetActions() const { return _actions; }

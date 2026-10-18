@@ -107,10 +107,14 @@ std::vector<Event> Parse(const std::string &line);
 // Approvals: what the panel does with a can_use_tool request.
 enum class Decision { Allow, Ask };
 // Tools that only read run freely: the app's read-only tools, ui_action
-// with a query action (isQuery says which), and reading files. Edits ask
-// only when asksBeforeEdits; anything else always asks.
+// with a query action (isQuery says which), and reading files. Edits, and
+// writing files in writableFolder (plugins), ask only when
+// asksBeforeEdits; anything else (writing elsewhere) always asks.
 Decision Decide(const std::string &toolName, const JsObject &input, bool asksBeforeEdits,
-                const std::function<bool(const std::string &action)> &isQuery);
+                const std::function<bool(const std::string &action)> &isQuery,
+                const std::string &writableFolder = std::string());
+// Whether path is inside folder: absolute, with no "..".
+bool IsInside(const std::string &path, const std::string &folder);
 
 // A short title for a tool call, e.g. "Run Python", and a one-line summary
 // of its input, e.g. the code's first line or the action's name.

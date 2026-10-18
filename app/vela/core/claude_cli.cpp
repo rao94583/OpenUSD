@@ -138,7 +138,9 @@ std::vector<std::string> Arguments(const LaunchOptions &options) {
         "--permission-prompt-tool", "stdio",
         // Only the app's tools and reading files: the scene is edited
         // through Vela, where every edit can be undone.
-        "--tools", "Read,Glob,Grep",
+        // Writing is for plugins: Decide asks for anything outside their
+        // folder.
+        "--tools", "Read,Glob,Grep,Write,Edit",
         "--strict-mcp-config",
     };
     const JsObject server{
@@ -344,10 +346,28 @@ std::vector<Event> Parse(const std::string &line) {
     return events;
 }
 
+bool IsInside(const std::string &path, const std::string &folder) {
+    if (folder.empty() || path.empty() || path[0] != '/') return false;
+    if (path.find("/../") != std::string::npos || path.find("/./") != std::string::npos ||
+        (path.size() >= 3 && path.compare(path.size() - 3, 3, "/..") == 0)) {
+        return false;
+    }
+    std::string prefix = folder;
+    while (prefix.size() > 1 && prefix.back() == '/') prefix.pop_back();
+    return path.size() > prefix.size() + 1 && path.compare(0, prefix.size(), prefix) == 0 &&
+        path[prefix.size()] == '/';
+}
+
 Decision Decide(const std::string &toolName, const JsObject &input, bool asksBeforeEdits,
-                const std::function<bool(const std::string &action)> &isQuery) {
+                const std::function<bool(const std::string &action)> &isQuery,
+                const std::string &writableFolder) {
     static const std::set<std::string> reading = {"Read", "Glob", "Grep"};
     if (reading.count(toolName)) return Decision::Allow;
+    static const std::set<std::string> writing = {"Write", "Edit", "MultiEdit"};
+    if (writing.count(toolName)) {
+        if (!IsInside(String(input, "file_path"), writableFolder)) return Decision::Ask;
+        return asksBeforeEdits ? Decision::Ask : Decision::Allow;
+    }
     const std::string tool = AppTool(toolName);
     if (tool.empty()) return Decision::Ask;
     static const std::set<std::string> readOnly = {

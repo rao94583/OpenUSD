@@ -88,7 +88,8 @@ BOOL VelaStartPython(void) {
     NSString *runtime = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"Runtime"];
     std::string error;
     if (!vela::InitializePython([runtime stringByAppendingPathComponent:@"python"].UTF8String,
-                                {[runtime stringByAppendingPathComponent:@"usd/lib/python"].UTF8String},
+                                {[runtime stringByAppendingPathComponent:@"usd/lib/python"].UTF8String,
+                                 [runtime stringByAppendingPathComponent:@"site-packages"].UTF8String},
                                 &error)) {
         NSLog(@"Python: %s", error.c_str());
         return NO;
