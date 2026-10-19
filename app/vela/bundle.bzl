@@ -41,8 +41,6 @@ def _runtime_impl(ctx):
         if f.path.startswith(root):
             entries.append([f.path, "python/" + f.path[len(root):]])
             inputs.append(f)
-    entries.append([ctx.file.smoke.path, "bundle_smoke.py"])
-    inputs.append(ctx.file.smoke)
     manifest = ctx.actions.declare_file(ctx.label.name + ".json")
     ctx.actions.write(manifest, json.encode(entries))
     tree = ctx.actions.declare_directory("Runtime")
@@ -59,7 +57,6 @@ vela_runtime = rule(
     attrs = {
         "usd": attr.label_list(),
         "site_packages": attr.label_list(),
-        "smoke": attr.label(default = ":bundle_smoke.py", allow_single_file = True),
         "_copy": attr.label(default = ":copy_runtime", executable = True, cfg = "exec"),
     },
     toolchains = ["@rules_python//python:toolchain_type"],

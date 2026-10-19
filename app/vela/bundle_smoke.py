@@ -1,4 +1,5 @@
-"""Run with the bundled interpreter, in isolated mode, after relocation."""
+"""Run with the bundled interpreter, in isolated mode, after relocation:
+bundle_smoke.py RUNTIME (the bundle's Contents/Resources/Runtime)."""
 import json
 import os
 from pathlib import Path
@@ -6,7 +7,7 @@ import sys
 import subprocess
 import tempfile
 
-runtime = Path(__file__).resolve().parents[0]
+runtime = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(runtime / 'usd/lib/python'))
 from pxr import Plug, Usd, UsdGeom, UsdUtils
 

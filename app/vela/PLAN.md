@@ -21,7 +21,8 @@ still to come); see
 | Core | Plain C++ with no AppKit: document model, action registry, undo, embedded Python, MCP bridge. Keeps the core testable without a UI and a Linux front end possible later. |
 | Camera controls | Match Autodesk Maya (see [Camera controls](#camera-controls)). |
 | Claude integration | The `claude` CLI as a subprocess in stream-JSON mode, plus an MCP server inside the app. |
-| Still open (Phase 0) | Minimum macOS version (the build targets 13; 14 gives newer AppKit). Whether users install and log in to Claude Code themselves. Ad-hoc local signing or notarization. A name conflict check for "Vela". |
+| Distribution | Apple silicon only (user, 2026-10-19). A disk image signed with a Developer ID and notarized (`//app/vela:package`); ad hoc until the user has a Developer ID. Users install and log in to Claude Code themselves. |
+| Still open (Phase 0) | Minimum macOS version (the build targets 13; 14 gives newer AppKit). A name conflict check for "Vela". |
 
 ### Why Objective-C++ and AppKit
 
@@ -867,6 +868,40 @@ Done (2026-10-18), on branch `vela-skills`. The evals wait for later.
   calling `list_actions` (18 KB against 47 KB), and ran `set_view_camera`
   and `export_image`. Its first Grep looked for action headings, so actions
   are now `### name` headings, like schemas.
+
+## Packaging (2026-10-19, Phase 9)
+
+Branch `vela-packaging`. Goal: an app a colleague can install on a Mac with
+nothing set up. An audit of the old archive found it self-contained (every
+library from the bundle or the system, with `@rpath`; nothing from this
+machine; a run with an empty environment and home folder worked), but:
+
+- **Its signature broke on first launch.** Python wrote `__pycache__`
+  into the bundle, which invalidates the seal ("damaged" on another Mac).
+  Bytecode now goes to `~/Library/Caches/Vela/Python/<version>`
+  (`PyConfig.pycache_prefix`, and `PYTHONPYCACHEPREFIX` for pip).
+- **It was a `-O0` build** (Bazel's fastbuild): `--config=release` adds
+  `-c opt` in its own output tree. The app went from 961 MB to 232 MB.
+- **It shipped 330 MB it never used:** rules_apple copies linked dylibs
+  into `Contents/Frameworks`, but the rpath finds Runtime's first (dyld's
+  log showed only those load). `finish_bundle.py` (was `sign_runtime.py`)
+  removes them, debug symbol bundles and PyObjC's tests.
+- **No icon**, and only a zip. Now `icon/Vela.png` (the user's design, cut
+  out of its white background onto Apple's 824-pixel grid with a shadow)
+  becomes `Vela.icns`, and `//app/vela:package` builds the disk image.
+
+`package.py` signs inside-out with the hardened runtime (ad hoc, or a
+Developer ID with `--identity`), builds a disk image (APFS, LZFSE) with an
+Applications shortcut, and with `--notarize` notarizes and staples the app
+and then the image. Only `disable-library-validation` is needed: the
+release app, hardened and ad-hoc signed, passed the Python, plugins
+(PyObjC), packages (pip), Claude panel, browser, saving and menus tests.
+`bundle_smoke_test` now checks the contents, runs Vela in a clean
+environment with dyld's library log, and verifies the signature after.
+
+Not done: Developer ID signing and notarization themselves (no identity
+on this Mac yet; the commands are in the README). Intel Macs are out of
+scope.
 
 ## Testing
 

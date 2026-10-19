@@ -27,3 +27,7 @@ test --test_output=errors
 
 # Local, untracked overrides (e.g. --disk_cache).
 try-import %workspace%/user.bazelrc
+
+# Vela's release build (bazel run --config=release //app/vela:package):
+# optimized, in its own output tree beside the default fastbuild one.
+common:release -c opt

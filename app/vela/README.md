@@ -343,24 +343,73 @@ normal maps, dome light). `make_large_scene.py` writes the benchmark scene:
 
 Extract `bazel-bin/app/vela/archive.zip` with Archive Utility or `ditto -x -k`,
 then open `Vela.app`. The app can be moved independently of the checkout.
-The local bundle identifier is `org.openusd.vela`; release branding,
-notarization and distribution signing remain open decisions.
+The bundle identifier is `org.openusd.vela`.
+
+### Sharing Vela
+
+To give Vela to someone else, build the release package:
+
+```sh
+bazel run --config=release //app/vela:package
+```
+
+This writes `dist/Vela-<version>.dmg` (about 85 MB): the optimized app
+(`-c opt`) and a shortcut to Applications to drag it to. The app needs
+nothing installed: USD, Python 3.11, PyObjC and every plugin are inside
+it. It runs on Apple silicon Macs with macOS 13 or later. The Claude panel
+needs Claude Code installed and logged in, and plugins that need Python
+packages download them.
+
+Without an Apple Developer ID, the app is signed ad hoc. macOS blocks the
+first launch of a downloaded copy: open it once, then choose **Open
+Anyway** in System Settings → Privacy & Security. With a Developer ID,
+sign and notarize it so it opens without warnings:
+
+```sh
+# Once: save App Store Connect credentials for notarytool.
+xcrun notarytool store-credentials vela-notary --apple-id YOU --team-id TEAM
+bazel run --config=release //app/vela:package -- \
+    --identity "Developer ID Application: NAME (TEAM)" --notarize vela-notary
+```
+
+`package.py` signs every Mach-O file inside-out with the hardened runtime,
+using `Vela.entitlements` for the executables
+(`disable-library-validation`, because plugins import packages that pip
+installs on the user's Mac). Notarizing submits the app, then the disk
+image, and staples both tickets, so the app opens offline after it is
+copied out.
+
+### What's inside
 
 The bundle contains the existing monolithic USD install layout and the
-hermetic Python 3.11 runtime under `Contents/Resources/Runtime`. The native
-app and Python extensions link the same bundled `libusd_ms.dylib`. A
+hermetic Python 3.11 runtime under `Contents/Resources/Runtime`, and
+Claude's skills under `Contents/Resources/ClaudePlugin`. The native app
+and Python extensions link the same bundled `libusd_ms.dylib`. A
 compilation-only header interface prevents statically linking another copy
-of USD into the app. Runtime copies dereference Bazel symlinks; nested
-Mach-O files are ad-hoc signed before the outer app is signed.
+of USD into the app. Runtime copies dereference Bazel symlinks.
+`finish_bundle.py` (the app's post-processor) removes what the app never
+uses (rules_apple's second copies of the linked libraries in
+`Contents/Frameworks`, debug symbol bundles, PyObjC's test suite) and
+ad-hoc signs the nested Mach-O files before the outer app is signed.
 
-The smoke test extracts the signed archive into a temporary directory with
-spaces, removes Python/USD/dyld environment overrides, verifies signatures,
-and runs the bundled interpreter in isolated mode. It checks each plugin
-manifest against the registry, loads every plugin, and creates and opens all
-four supported formats through Python and the native document reader. It
-verifies the bundle signature again after execution. The native reader's
+Python never writes into the bundle, since a changed file breaks the app's
+signature: its bytecode (`.pyc`) goes to `~/Library/Caches/Vela/Python`
+(`pycache_prefix`), for Vela's interpreter and the pip it runs. The icon
+is `icon/Vela.png`, a 1024-pixel master on Apple's icon grid, turned into
+`Vela.icns` at build time.
+
+The bundle test extracts the signed archive into a temporary directory with
+spaces and checks what ships (no `Frameworks` copies, debug symbols,
+PyObjC tests or bytecode; the icon). In a clean environment with an empty
+home folder, it runs the bundled interpreter in isolated mode, checking each
+plugin manifest against the registry, loading every plugin, and creating
+and opening all four supported formats through Python and the native
+document reader. Then it runs Vela's Python check with dyld's library log,
+and requires every library to load from the bundle or the system, with
+one copy of USD and of Python. It verifies the bundle signature before and
+after, and that the bytecode went to the cache. The native reader's
 `--check-document PATH` mode uses the same document code as the window and
 prints the prim count without starting the AppKit event loop.
 
-The smoke test does not automate Finder or visually inspect the window.
+The bundle test does not automate Finder or visually inspect the window.
 Offline builds require refreshing `bazel vendor` for the new Apple rules.

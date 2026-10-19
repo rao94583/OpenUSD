@@ -19,6 +19,10 @@ bool InitializePython(const std::string &home, const std::vector<std::string> &p
                       std::string *error, const std::string &userSite = std::string());
 // The interpreter's version, e.g. "3.11".
 std::string PythonVersion();
+// Where Python reads and writes bytecode (.pyc) for every module,
+// ~/Library/Caches/Vela/Python/<version>: never beside the sources, since
+// a file written into the signed app breaks its signature.
+std::string BytecodeFolder();
 bool IsPythonInitialized();
 
 struct PythonResult {

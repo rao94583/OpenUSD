@@ -1,5 +1,6 @@
 #include "packages.h"
 #include "mcp.h"
+#include "python.h"
 
 #include "pxr/base/js/json.h"
 
@@ -204,6 +205,8 @@ PipCommand InstallCommand(const std::string &python, const std::string &base,
         "PIP_DISABLE_PIP_VERSION_CHECK=1",
         "PIP_NO_INPUT=1",
         "PYTHONUNBUFFERED=1",
+        // Bytecode outside the signed app, as the app's interpreter does.
+        "PYTHONPYCACHEPREFIX=" + BytecodeFolder(),
         "LANG=en_US.UTF-8",
         std::string("HOME=") + (home ? home : ""),
     };
