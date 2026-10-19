@@ -107,7 +107,8 @@ std::vector<Event> Parse(const std::string &line);
 // Approvals: what the panel does with a can_use_tool request.
 enum class Decision { Allow, Ask };
 // Tools that only read run freely: the app's read-only tools, ui_action
-// with a query action (isQuery says which), and reading files. Edits, and
+// with a query action or one that asks the user itself (isQuery says
+// which), and reading files. Edits, and
 // writing files in writableFolder (plugins), ask only when
 // asksBeforeEdits; anything else (writing elsewhere) always asks.
 Decision Decide(const std::string &toolName, const JsObject &input, bool asksBeforeEdits,

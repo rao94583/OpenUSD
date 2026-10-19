@@ -30,6 +30,18 @@ __init__.py:
 
     Tf.Type.Define(Container)
 
+Python packages: the bundle has pxr and PyObjC only. A plugin that needs
+others declares them in plugInfo.json's Info, next to Types:
+    "PythonRequires": ["numpy>=2", "requests"]
+Vela loads it once they are installed; until then reload_plugins lists it
+under "waiting". Then run ui_action install_plugin_packages: Vela asks the
+user and installs them with pip into the user's packages folder (never pip
+yourself, and never install from Python). For a one-off script, ui_action
+install_python_packages with packages: [...]. Prefer the standard library
+and pure-Python packages; packages that bring their own USD (usd-core) are
+refused. Packages install for every plugin at once, so keep requirements
+loose (numpy>=1.24, not numpy==1.26.4).
+
 Each command becomes a Vela action named as registered: it shows in its
 menu and the command palette, ui_action and vela.run run it, and its edits
 are one undo step. The document gives stage, selection, time, edit_target

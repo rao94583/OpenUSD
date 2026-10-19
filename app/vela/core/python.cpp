@@ -177,8 +177,12 @@ std::string Text(PyObject *object) {
 
 } // namespace
 
+std::string PythonVersion() {
+    return std::to_string(PY_MAJOR_VERSION) + "." + std::to_string(PY_MINOR_VERSION);
+}
+
 bool InitializePython(const std::string &home, const std::vector<std::string> &paths,
-                      std::string *error) {
+                      std::string *error, const std::string &userSite) {
     if (initialized) return true;
     PyImport_AppendInittab("_vela", &InitModule);
     PyConfig config;
@@ -204,6 +208,14 @@ bool InitializePython(const std::string &home, const std::vector<std::string> &p
         PyObject *path = String(paths[i]);
         PyList_Insert(sysPath, Py_ssize_t(i), path);
         Py_DECREF(path);
+    }
+    if (!userSite.empty()) {
+        PyObject *site = PyImport_ImportModule("site");
+        PyObject *added = site ? PyObject_CallMethod(site, "addsitedir", "s", userSite.c_str())
+                               : nullptr;
+        if (!added) PyErr_Clear();
+        Py_XDECREF(added);
+        Py_XDECREF(site);
     }
     if (PyRun_SimpleString(Bootstrap) != 0) {
         if (error) *error = "Could not install the vela module";

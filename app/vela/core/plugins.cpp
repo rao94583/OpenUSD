@@ -2,6 +2,7 @@
 #include "actions.h"
 #include "log.h"
 #include "mcp.h"
+#include "packages.h"
 #include "python.h"
 #include "session.h"
 
@@ -120,6 +121,17 @@ void Register(const PluginReport &report) {
 
 } // namespace
 
+std::vector<std::string> PluginReport::Missing() const {
+    std::vector<std::string> missing;
+    std::set<std::string> seen;
+    for (const PluginWaiting &plugin : waiting) {
+        for (const std::string &requirement : plugin.missing) {
+            if (seen.insert(requirement).second) missing.push_back(requirement);
+        }
+    }
+    return missing;
+}
+
 JsObject PluginReport::ToJson() const {
     JsArray pluginsJson, commandsJson, menusJson, errorsJson;
     for (const std::string &plugin : plugins) pluginsJson.push_back(JsValue(plugin));
@@ -140,8 +152,23 @@ JsObject PluginReport::ToJson() const {
         menusJson.push_back(JsValue(item));
     }
     for (const std::string &error : errors) errorsJson.push_back(JsValue(error));
+    JsObject requirementsJson;
+    for (const auto &[plugin, list] : requirements) {
+        JsArray items;
+        for (const std::string &requirement : list) items.push_back(JsValue(requirement));
+        requirementsJson[plugin] = JsValue(items);
+    }
+    JsArray waitingJson;
+    for (const PluginWaiting &plugin : waiting) {
+        JsArray missing;
+        for (const std::string &requirement : plugin.missing) missing.push_back(JsValue(requirement));
+        waitingJson.push_back(JsValue(JsObject{{"plugin", JsValue(plugin.plugin)},
+                                               {"missing", JsValue(missing)}}));
+    }
     return JsObject{{"plugins", JsValue(pluginsJson)}, {"commands", JsValue(commandsJson)},
-                    {"menus", JsValue(menusJson)}, {"errors", JsValue(errorsJson)}};
+                    {"menus", JsValue(menusJson)}, {"errors", JsValue(errorsJson)},
+                    {"requirements", JsValue(requirementsJson)},
+                    {"waiting", JsValue(waitingJson)}};
 }
 
 PluginReport ParsePluginReport(const JsObject &json) {
@@ -155,6 +182,19 @@ PluginReport ParsePluginReport(const JsObject &json) {
             if (String(c, "name").empty()) continue;
             report.commands.push_back({String(c, "name"), String(c, "title"),
                                        String(c, "description")});
+        }
+    }
+    if (Field(json, "requirements").IsObject()) {
+        for (const auto &[plugin, list] : Field(json, "requirements").GetJsObject()) {
+            report.requirements[plugin] = Strings(list);
+        }
+    }
+    if (Field(json, "waiting").IsArray()) {
+        for (const JsValue &item : Field(json, "waiting").GetJsArray()) {
+            if (!item.IsObject()) continue;
+            const JsObject &w = item.GetJsObject();
+            if (String(w, "plugin").empty()) continue;
+            report.waiting.push_back({String(w, "plugin"), Strings(Field(w, "missing"))});
         }
     }
     if (Field(json, "menus").IsArray()) {
@@ -204,6 +244,24 @@ PluginReport LoadPlugins(bool reload) {
     }
     for (const std::string &message : report.errors) {
         Log::Get().Add(LogEntry::Level::Error, "Plugins", message);
+    }
+    for (const PluginWaiting &plugin : report.waiting) {
+        std::string missing;
+        for (const std::string &r : plugin.missing) missing += (missing.empty() ? "" : ", ") + r;
+        Log::Get().Add(LogEntry::Level::Warning, "Plugins",
+                       plugin.plugin + " waits for Python packages: " + missing);
+    }
+    // The manifest follows the plugins there are (removed ones drop out).
+    if (IsPythonInitialized()) {
+        const std::string base = packages::BaseFolder(PythonVersion());
+        packages::Manifest manifest = packages::ReadManifest(base);
+        manifest.plugins.clear();
+        for (const auto &[plugin, list] : report.requirements) {
+            if (!list.empty()) manifest.plugins[plugin] = list;
+        }
+        if (manifest.ToJson() != packages::ReadManifest(base).ToJson()) {
+            packages::WriteManifest(base, manifest);
+        }
     }
     if (!report.plugins.empty()) {
         std::string names;

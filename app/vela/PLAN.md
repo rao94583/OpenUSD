@@ -754,6 +754,63 @@ the same API under Vela's names: `vela.PluginContainer`
   `pxr.Usdviewq` and Qt). Edits from UI callbacks are separate implicit
   undo steps.
 
+## Python packages for plugins (2026-10-18)
+
+The bundle can't hold every package a plugin might want, so packages
+install on the user's machine. What changed in the architecture:
+
+- **Three layers on `sys.path`, in a fixed order:** USD's `pxr`, the
+  bundle's pinned packages (`Runtime/site-packages`), then the per-user
+  folder, `~/Library/Application Support/Vela/Python/<3.11>` (pip's
+  `--user` scheme under `PYTHONUSERBASE`), added with `site.addsitedir` so
+  `.pth` files work. The folder is keyed by Python version, because
+  compiled packages only load in the Python they were built for. A
+  `requirements.json` manifest lets a newer Vela (or Reset Python
+  Packages) reinstall everything.
+- **Declared, not imported:** plugins list packages in `plugInfo.json`
+  (`"PythonRequires"`, PEP 508). Loading is two-phase: requirements are
+  checked first, with `importlib.metadata` and pip's vendored
+  `packaging`. Plugins with unmet requirements wait, rather than failing
+  on `import`. `plugInfo.json` is read again on every load for this, since
+  USD's registry reads it only once. Changing a plugin's container types
+  still needs a restart.
+- **One environment, resolved together:** one process can import only one
+  version of a module, so per-plugin environments are impossible
+  in-process. Every install passes pip all plugins' requirements, the
+  scripts' earlier requests (a new request for the same package replaces
+  an old one) and constraints pinning the bundle's distributions (from
+  their `dist-info`). A conflicting request fails instead of breaking a
+  plugin (tested). `usd-core`, options, paths and URLs are refused before
+  pip runs.
+- **One consent point:** `VelaInstallPythonPackages` (`packages_ui.mm`)
+  asks with Vela's own alert, whoever asked: a plugin at launch, Plugins →
+  Install Packages for Plugins, `install_python_packages` (scripts, MCP,
+  Claude) or `reset_python_packages`. Those actions set
+  `Action::asksUser`, so Claude's panel doesn't ask as well. pip is the
+  bundled interpreter in its own process (`LineProcess`), in a known
+  environment (the bundle's packages visible so they count as installed;
+  the user's pip configuration still applies), with a modal progress window
+  and Cancel. Its output goes to the Log.
+- **After installing:** Python forgets that the folder was missing at
+  startup (`sys.path_importer_cache` holds `None` for it, which
+  `importlib.invalidate_caches` keeps), and waiting plugins load. A
+  package already imported stays in use until Vela restarts.
+- **Claude:** its plugin guide says to declare packages and run
+  `install_plugin_packages`, never to run pip.
+- **Signing (Phase 9):** with the hardened runtime, loading downloaded
+  extension modules into Vela needs the
+  `com.apple.security.cs.disable-library-validation` entitlement. With
+  today's ad-hoc signing, numpy from the user folder imports and runs.
+- Tests: `packages_test` (folders, manifest, constraints, refusals, pip's
+  command, argument quoting) and `packages_ui_test`. The UI test runs
+  offline, with wheels it builds itself in a local index (`VELA_PIP_ARGS`)
+  and the confirmation answered (`VELA_PACKAGES_AUTO_APPROVE`). It checks a
+  plugin waiting at launch, then installed and loaded; a script's install
+  with a dependency; the path order; refusals; PyObjC's constraint; a
+  conflict with a plugin; a plugin raising its requirement; and Reset.
+  Checked by hand: the alert, and a real install of `humanize` from PyPI,
+  imported in the same session.
+
 ## Testing
 
 - `cc_test` for the core: document, actions, undo, camera math

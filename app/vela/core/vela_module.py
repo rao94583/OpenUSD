@@ -22,7 +22,7 @@ import types
 import _vela
 from pxr import Sdf, Usd, UsdUtils
 
-__all__ = ['ActionError', 'CommandPlugin', 'Target', 'Document', 'PluginContainer',
+__all__ = ['ActionError', 'CommandPlugin', 'Target', 'install_packages', 'Document', 'PluginContainer',
            'PluginMenu', 'PluginRegistry', 'PluginUIBuilder', 'actions', 'current',
            'documents', 'open', 'run']
 
@@ -342,6 +342,71 @@ def _plugin_module_names(name):
                   key=lambda m: m.count('.'), reverse=True)
 
 
+def _missing_requirements(requirements):
+    """The requirements (PEP 508) that installed distributions don't meet."""
+    from importlib import metadata
+    from pip._vendor.packaging.requirements import Requirement
+    missing = []
+    for text in requirements:
+        requirement = Requirement(text)
+        if requirement.marker is not None and not requirement.marker.evaluate():
+            continue
+        try:
+            version = metadata.version(requirement.name)
+        except metadata.PackageNotFoundError:
+            missing.append(text)
+            continue
+        if requirement.specifier and not requirement.specifier.contains(version, prereleases=True):
+            missing.append(text)
+    return missing
+
+
+def _plugin_requirements(plugin):
+    """A plugin's PythonRequires, read from its plugInfo.json each time
+    (USD's registry reads the file once, so edits would go unseen), or from
+    the registry's copy."""
+    import os
+    path = os.path.join(plugin.path or '', 'plugInfo.json')
+    try:
+        with io.open(path, encoding='utf-8') as f:  # vela.open opens documents
+            lines = [l for l in f if not l.lstrip().startswith('#')]
+        for entry in json.loads(''.join(lines)).get('Plugins', []):
+            if entry.get('Name') == plugin.name:
+                return entry.get('Info', {}).get('PythonRequires', [])
+    except (OSError, ValueError, AttributeError):
+        pass
+    return plugin.metadata.get('PythonRequires', [])
+
+
+def _refresh_packages(site_packages):
+    """After an install: the user's packages folder (and new .pth files) on
+    the path, and import caches cleared."""
+    import importlib
+    import importlib.metadata
+    import os
+    import site
+    # The folder may not have existed when Python started, and Python
+    # remembers that: forget it, and what importlib.metadata cached.
+    folder = os.path.normpath(site_packages)
+    for path in list(sys.path_importer_cache):
+        if sys.path_importer_cache[path] is None or os.path.normpath(path) == folder:
+            del sys.path_importer_cache[path]
+    fast_path = getattr(importlib.metadata, 'FastPath', None)
+    cached = getattr(getattr(fast_path, '__new__', None), 'cache_clear', None)
+    if cached:
+        cached()
+    site.addsitedir(site_packages)
+    importlib.invalidate_caches()
+    return True
+
+
+def install_packages(*requirements):
+    """Installs packages (PEP 508 requirements, e.g. 'numpy>=2') into Vela's
+    packages folder, after asking the user. Plugins should declare theirs in
+    plugInfo.json ("PythonRequires") instead."""
+    return run('install_python_packages', packages=list(requirements))
+
+
 def _load_plugins(folders, reload_modules):
     """Finds and loads plugins; returns for the app: plugins, commands, menu
     entries and errors (tracebacks)."""
@@ -365,11 +430,26 @@ def _load_plugins(folders, reload_modules):
         if plugin is not None:
             by_plugin.setdefault(plugin, []).append(containerType)
 
-    containers, names = [], []
+    containers, names, requirements, waiting = [], [], {}, []
     original_define = Tf.Type.Define
     for plugin in sorted(by_plugin, key=lambda p: p.name):
         # A plugin whose files are gone (deleted since launch).
         if plugin.path and not os.path.exists(plugin.path):
+            continue
+        # Python packages it needs: loaded once they are installed.
+        needs = _plugin_requirements(plugin)
+        if isinstance(needs, str):
+            needs = [needs]
+        try:
+            needs = [str(n) for n in needs]
+            missing = _missing_requirements(needs)
+        except BaseException:
+            errors.append('Plugin %s: unreadable PythonRequires:\n%s'
+                          % (plugin.name, traceback.format_exc()))
+            continue
+        requirements[plugin.name] = needs
+        if missing:
+            waiting.append({'plugin': plugin.name, 'missing': missing})
             continue
         # A Python plugin's package imports from the folder it is in (usdview
         # leaves that to PYTHONPATH, which Vela's Python doesn't read).
@@ -436,6 +516,8 @@ def _load_plugins(folders, reload_modules):
                      for c in commands._commandPlugins.values()],
         'menus': builder._entries,
         'errors': errors,
+        'requirements': requirements,
+        'waiting': waiting,
     }
 
 

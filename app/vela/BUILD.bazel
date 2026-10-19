@@ -65,6 +65,7 @@ cc_library(
         "core/log.cpp",
         "core/mcp.cpp",
         "core/mcp_socket.cpp",
+        "core/packages.cpp",
         "core/palette.cpp",
         "core/plugins.cpp",
         "core/python.cpp",
@@ -95,6 +96,7 @@ cc_library(
         "core/mcp.h",
         "core/mcp_path.h",
         "core/mcp_socket.h",
+        "core/packages.h",
         "core/palette.h",
         "core/plugins.h",
         "core/python.h",
@@ -148,6 +150,7 @@ cc_test(
     "log_test",
     "mcp_test",
     "material_invalidation_test",
+    "packages_test",
     "palette_test",
     "plugins_test",
     "document_test",
@@ -181,6 +184,8 @@ objc_library(
 
         "menus.h",
         "menus.mm",
+        "packages_ui.h",
+        "packages_ui.mm",
         "palette.h",
         "palette.mm",
         "plugins_ui.h",
@@ -473,6 +478,16 @@ py_test(
     name = "plugins_ui_test",
     srcs = ["test_plugins.py"],
     main = "test_plugins.py",
+    args = ["$(rootpath :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
+)
+
+# Python packages installed for plugins and scripts, from a local index.
+py_test(
+    name = "packages_ui_test",
+    srcs = ["test_packages.py"],
+    main = "test_packages.py",
     args = ["$(rootpath :archive)"],
     data = [":archive"],
     tags = ["requires-darwin"],

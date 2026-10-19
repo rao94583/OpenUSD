@@ -13,8 +13,12 @@ namespace vela {
 // Starts Python with home as its prefix (stdlib in home/lib/python3.11),
 // isolated from the user's environment, with paths ahead of the rest of
 // sys.path (the pxr package's directory). Returns false with a message.
+// userSite, the per-user packages folder (see packages.h), goes last, with
+// site.addsitedir so its .pth files apply.
 bool InitializePython(const std::string &home, const std::vector<std::string> &paths,
-                      std::string *error);
+                      std::string *error, const std::string &userSite = std::string());
+// The interpreter's version, e.g. "3.11".
+std::string PythonVersion();
 bool IsPythonInitialized();
 
 struct PythonResult {

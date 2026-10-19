@@ -1664,7 +1664,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     const bool asks = vela::AppSettingsStore::Get().GetSettings().claudeAsksBeforeEdits;
     auto isQuery = [](const std::string &action) {
         const vela::Action *found = vela::ActionRegistry::Get().Find(action);
-        return found && found->query;
+        return found && (found->query || found->asksUser);
     };
     const auto decision = vela::claude::Decide(event.toolName, event.input, asks, isQuery,
                                                vela::PluginsFolder());

@@ -269,6 +269,30 @@ break reloading. Plugins → Reload Plugins (the `reload_plugins` action)
 finds new plugins and reloads changed ones, and reports errors with their
 tracebacks in the Log.
 
+Plugins can use Python packages the bundle doesn't have. They declare
+them in `plugInfo.json`, next to `Types`: `"PythonRequires": ["numpy>=2"]`.
+A plugin whose packages aren't installed waits. At launch Vela offers to
+install them, and Plugins → Install Packages for Plugins does it later.
+Vela always asks first, listing the packages and where they come from.
+Then the bundled pip installs them for your user account into
+`~/Library/Application Support/Vela/Python/3.11` (Plugins → Show Python
+Packages Folder), with a progress window and Cancel, and the plugin loads.
+Scripts can ask too: `vela.install_packages('requests')` (the
+`install_python_packages` action).
+
+- **Search order:** Python searches USD's `pxr` first, then the bundle's
+  own packages, then yours. The bundle's packages can't be replaced:
+  asking for another PyObjC version fails. Packages that bring a second
+  USD (`usd-core`) are refused.
+- **One shared set:** every install resolves all plugins' requirements
+  together, so a request that conflicts with what a plugin needs fails
+  rather than breaking the plugin.
+- **Your pip configuration still applies:** its index, certificates and
+  proxy.
+- **Reset Python Packages** deletes the installed packages and installs
+  again what plugins and scripts asked for. The folder is per Python
+  version, so a Vela with a newer Python starts afresh.
+
 Claude can write plugins: ask the Claude panel for a command, menu item
 or tool window that should stay in Vela. It writes the package into the
 Plugins folder, reloads plugins and tries the command. Writing files in

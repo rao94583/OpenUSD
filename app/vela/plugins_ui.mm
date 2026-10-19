@@ -1,5 +1,6 @@
 #import "plugins_ui.h"
 #import "menus.h"
+#import "packages_ui.h"
 
 #import <AppKit/AppKit.h>
 
@@ -36,6 +37,9 @@ void VelaStartPlugins(void) {
     if (!vela::IsPythonInitialized()) return;
     // After the first window opens: loading imports pxr into Python.
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (vela::HasPlugins()) vela::LoadPlugins(false);
+        if (!vela::HasPlugins()) return;
+        vela::LoadPlugins(false);
+        // Plugins waiting for Python packages: offer to install them.
+        dispatch_async(dispatch_get_main_queue(), ^{ VelaOfferPluginPackages(); });
     });
 }

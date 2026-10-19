@@ -10,6 +10,7 @@
 #include "pxr/base/js/value.h"
 
 #include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -34,11 +35,22 @@ struct PluginMenuEntry {
     bool separator = false;
 };
 
+// A plugin that isn't loaded until Python packages it needs are installed.
+struct PluginWaiting {
+    std::string plugin;
+    std::vector<std::string> missing;  // its unmet requirements
+};
+
 struct PluginReport {
     std::vector<std::string> plugins;  // loaded, by name
     std::vector<PluginCommand> commands;
     std::vector<PluginMenuEntry> menus;
     std::vector<std::string> errors;   // tracebacks, for the Log and Claude
+    // Each plugin's PythonRequires, and the plugins waiting for packages.
+    std::map<std::string, std::vector<std::string>> requirements;
+    std::vector<PluginWaiting> waiting;
+    // The waiting plugins' unmet requirements, each once.
+    std::vector<std::string> Missing() const;
     JsObject ToJson() const;
 };
 // Reads what vela._load_plugins returns.
@@ -54,7 +66,9 @@ bool HasPlugins();
 
 // Loads plugins (again, reloading their modules, when reload is true):
 // registers their commands as actions, replacing the previous ones, and
-// tells the observer, which builds their menus.
+// tells the observer, which builds their menus. Plugins whose Python
+// packages aren't installed wait (see packages.h); their requirements go
+// in the packages manifest.
 PluginReport LoadPlugins(bool reload);
 const PluginReport &CurrentPlugins();
 void SetPluginsChangedCallback(std::function<void(const PluginReport &)> callback);
