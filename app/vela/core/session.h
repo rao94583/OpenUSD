@@ -50,6 +50,9 @@ public:
     // Opens a file as the app does (File → Open), returning its id; set by
     // the app.
     std::function<int(const std::string &path, std::string *error)> open;
+    std::function<void(const SessionDocument &)> added;
+    std::function<void(int)> removed;
+    int ScopedId() const { return _scoped; }
 
     // Makes a document current while it lives, e.g. for a console's script.
     class ScopedCurrent {

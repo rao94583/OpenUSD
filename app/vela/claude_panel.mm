@@ -1,3 +1,4 @@
+#include "app/vela/core/image_jobs.h"
 #import "claude_panel.h"
 #import "claude_markdown.h"
 #import "document.h"
@@ -14,11 +15,13 @@
 #include "app/vela/core/mcp.h"
 #include "app/vela/core/mcp_path.h"
 #include "app/vela/core/mcp_socket.h"
+#include "app/vela/core/plugins.h"
 #include "app/vela/core/session.h"
 
 #include "pxr/base/js/json.h"
 #include "pxr/usd/sdf/layer.h"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
@@ -430,6 +433,205 @@ static NSTextView *TextBlock(NSAttributedString *text) {
 
 @end
 
+#pragma mark - Conversation list
+
+// The History popover: this document's conversations, newest first, with
+// a search field. Clicking one opens it; Delete removes it.
+@interface VelaConversationTableView : NSTableView
+@property (nonatomic, copy) void (^deleteRow)(NSInteger row);
+@end
+@implementation VelaConversationTableView
+- (void)keyDown:(NSEvent *)event {
+    if ((event.keyCode == 51 || event.keyCode == 117) && self.selectedRow >= 0 && self.deleteRow) {
+        self.deleteRow(self.selectedRow);
+        return;
+    }
+    if ((event.keyCode == 36 || event.keyCode == 76) && self.selectedRow >= 0) {
+        [self sendAction:self.doubleAction to:self.target];
+        return;
+    }
+    [super keyDown:event];
+}
+@end
+
+@interface VelaConversationListController : NSViewController <NSTableViewDataSource,
+                                                                NSTableViewDelegate,
+                                                                NSSearchFieldDelegate>
+@property (nonatomic, copy) NSString *currentId;
+@property (nonatomic, copy) void (^open)(NSString *identifier);
+@property (nonatomic, copy) void (^remove)(NSString *identifier);
+- (void)setConversations:(const std::vector<vela::claude::Conversation> &)conversations;
+@end
+
+@implementation VelaConversationListController {
+    std::vector<vela::claude::Conversation> _all;
+    std::vector<vela::claude::Conversation> _shown;
+    NSSearchField *_search;
+    VelaConversationTableView *_table;
+    NSTextField *_empty;
+}
+
+- (void)loadView {
+    _search = [NSSearchField new];
+    _search.placeholderString = @"Search conversations";
+    _search.delegate = self;
+    _search.sendsSearchStringImmediately = YES;
+    _table = [VelaConversationTableView new];
+    NSTableColumn *column = [[NSTableColumn alloc] initWithIdentifier:@"conversation"];
+    [_table addTableColumn:column];
+    _table.headerView = nil;
+    _table.rowHeight = 38;
+    _table.style = NSTableViewStyleSourceList;
+    _table.dataSource = self;
+    _table.delegate = self;
+    _table.target = self;
+    _table.action = @selector(rowClicked:);
+    _table.doubleAction = @selector(rowClicked:);
+    __weak VelaConversationListController *weakSelf = self;
+    _table.deleteRow = ^(NSInteger row) { [weakSelf deleteRow:row]; };
+    NSMenu *menu = [NSMenu new];
+    [menu addItemWithTitle:@"Open" action:@selector(openClicked:) keyEquivalent:@""].target = self;
+    [menu addItemWithTitle:@"Delete Conversation" action:@selector(deleteClicked:)
+             keyEquivalent:@""].target = self;
+    _table.menu = menu;
+    NSScrollView *scroll = [NSScrollView new];
+    scroll.documentView = _table;
+    scroll.hasVerticalScroller = YES;
+    scroll.drawsBackground = NO;
+    _empty = [NSTextField labelWithString:@"No earlier conversations about this document."];
+    _empty.textColor = NSColor.secondaryLabelColor;
+    _empty.font = Small();
+    NSView *root = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 380, 340)];
+    for (NSView *view in @[_search, scroll, _empty]) {
+        view.translatesAutoresizingMaskIntoConstraints = NO;
+        [root addSubview:view];
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [_search.topAnchor constraintEqualToAnchor:root.topAnchor constant:10],
+        [_search.leadingAnchor constraintEqualToAnchor:root.leadingAnchor constant:10],
+        [_search.trailingAnchor constraintEqualToAnchor:root.trailingAnchor constant:-10],
+        [scroll.topAnchor constraintEqualToAnchor:_search.bottomAnchor constant:8],
+        [scroll.leadingAnchor constraintEqualToAnchor:root.leadingAnchor],
+        [scroll.trailingAnchor constraintEqualToAnchor:root.trailingAnchor],
+        [scroll.bottomAnchor constraintEqualToAnchor:root.bottomAnchor],
+        [_empty.centerXAnchor constraintEqualToAnchor:root.centerXAnchor],
+        [_empty.topAnchor constraintEqualToAnchor:_search.bottomAnchor constant:30],
+        [root.widthAnchor constraintEqualToConstant:380],
+        [root.heightAnchor constraintEqualToConstant:340],
+    ]];
+    self.view = root;
+    [self filter];
+}
+
+- (void)viewDidAppear {
+    [super viewDidAppear];
+    [self.view.window makeFirstResponder:_search];
+}
+
+- (void)setConversations:(const std::vector<vela::claude::Conversation> &)conversations {
+    _all = conversations;
+    _search.stringValue = @"";
+    [self filter];
+}
+
+- (void)filter {
+    NSString *query = [_search.stringValue stringByTrimmingCharactersInSet:
+        NSCharacterSet.whitespaceCharacterSet] ?: @"";
+    _shown.clear();
+    for (const auto &c : _all) {
+        if (!query.length || [String(c.title) rangeOfString:query
+                options:NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch].location != NSNotFound) {
+            _shown.push_back(c);
+        }
+    }
+    [_table reloadData];
+    _empty.hidden = !_shown.empty();
+    _empty.stringValue = _all.empty() ? @"No earlier conversations about this document."
+                                      : @"No conversations match.";
+    for (size_t i = 0; i < _shown.size(); ++i) {
+        if ([String(_shown[i].id) isEqualToString:_currentId]) {
+            [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:i] byExtendingSelection:NO];
+        }
+    }
+}
+
+- (void)controlTextDidChange:(NSNotification *)notification { [self filter]; }
+
+// Return and arrows in the search field go to the table.
+- (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)command {
+    if (command == @selector(moveDown:) || command == @selector(moveUp:)) {
+        const NSInteger count = NSInteger(_shown.size());
+        if (!count) return YES;
+        NSInteger row = _table.selectedRow + (command == @selector(moveDown:) ? 1 : -1);
+        row = MAX(0, MIN(count - 1, row));
+        [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:NSUInteger(row)] byExtendingSelection:NO];
+        [_table scrollRowToVisible:row];
+        return YES;
+    }
+    if (command == @selector(insertNewline:)) {
+        [self openRow:_table.selectedRow >= 0 ? _table.selectedRow : 0];
+        return YES;
+    }
+    return NO;
+}
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView { return NSInteger(_shown.size()); }
+
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column
+                  row:(NSInteger)row {
+    NSTableCellView *cell = [tableView makeViewWithIdentifier:@"row" owner:self];
+    NSTextField *title, *detail;
+    if (!cell) {
+        cell = [NSTableCellView new];
+        cell.identifier = @"row";
+        title = Label(@"", [NSFont systemFontOfSize:NSFont.systemFontSize], NSColor.labelColor);
+        detail = Label(@"", Small(), NSColor.secondaryLabelColor);
+        title.tag = 1;
+        detail.tag = 2;
+        NSStackView *stack = Column(@[title, detail], 1);
+        stack.translatesAutoresizingMaskIntoConstraints = NO;
+        [cell addSubview:stack];
+        [NSLayoutConstraint activateConstraints:@[
+            [stack.leadingAnchor constraintEqualToAnchor:cell.leadingAnchor constant:4],
+            [stack.trailingAnchor constraintEqualToAnchor:cell.trailingAnchor constant:-4],
+            [stack.centerYAnchor constraintEqualToAnchor:cell.centerYAnchor],
+        ]];
+        cell.textField = title;
+    }
+    title = [cell viewWithTag:1];
+    detail = [cell viewWithTag:2];
+    const auto &c = _shown[size_t(row)];
+    title.stringValue = c.title.empty() ? @"Untitled conversation" : String(c.title);
+    NSRelativeDateTimeFormatter *relative = [NSRelativeDateTimeFormatter new];
+    relative.unitsStyle = NSRelativeDateTimeFormatterUnitsStyleFull;
+    NSString *when = [relative localizedStringForDate:[NSDate dateWithTimeIntervalSince1970:c.updated]
+                                       relativeToDate:NSDate.date];
+    detail.stringValue = [String(c.id) isEqualToString:_currentId]
+        ? [when stringByAppendingString:@" · open now"] : when;
+    title.toolTip = String(c.title);
+    return cell;
+}
+
+- (void)openRow:(NSInteger)row {
+    if (row < 0 || size_t(row) >= _shown.size()) return;
+    if (self.open) self.open(String(_shown[size_t(row)].id));
+}
+
+- (void)rowClicked:(id)sender { [self openRow:_table.clickedRow >= 0 ? _table.clickedRow : _table.selectedRow]; }
+- (void)openClicked:(id)sender { [self openRow:_table.clickedRow]; }
+- (void)deleteClicked:(id)sender { [self deleteRow:_table.clickedRow]; }
+
+- (void)deleteRow:(NSInteger)row {
+    if (row < 0 || size_t(row) >= _shown.size()) return;
+    const std::string identifier = _shown[size_t(row)].id;
+    if (self.remove) self.remove(String(identifier));
+    _all.erase(std::remove_if(_all.begin(), _all.end(),
+        [&](const vela::claude::Conversation &c) { return c.id == identifier; }), _all.end());
+    [self filter];
+}
+
+@end
+
 #pragma mark - Panel
 
 // Panels by document, for ask_claude.
@@ -438,7 +640,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     return panels;
 }
 
-@interface VelaClaudePanelController ()
+@interface VelaClaudePanelController () <NSTextViewDelegate>
 - (void)handleLine:(const std::string &)line;
 - (void)processExited:(int)status errors:(const std::string &)errors;
 @end
@@ -450,8 +652,18 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     VelaClaudeInputView *_input;
     NSButton *_send;
     NSButton *_attach;
-    NSPopUpButton *_conversations;
+    NSButton *_historyButton;
+    NSButton *_newButton;
+    NSButton *_stopButton;
+    NSTextField *_title;
+    NSProgressIndicator *_spinner;
     NSTextField *_status;
+    NSPopUpButton *_modelPopUp;
+    NSPopUpButton *_effortPopUp;
+    NSPopUpButton *_modePopUp;
+    NSPopover *_history;
+    VelaConversationListController *_historyList;
+    int _settingsObserver;
     NSTextView *_live;            // Claude's reply as it streams
     NSMutableString *_liveText;
     NSMutableDictionary<NSString *, VelaToolCallView *> *_tools;
@@ -463,6 +675,9 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     NSString *_conversationId;   // the CLI's session id
     BOOL _conversationStarted;   // the CLI knows it (so it can be resumed)
     BOOL _logged;                // its history file exists
+    // The CLI's working folder for this conversation ("" until it starts:
+    // the workspace); resuming must use the same one.
+    std::string _directory;
     std::vector<JsObject> _pendingLog;
     std::set<std::string> _allowedTools;  // "Allow for This Conversation"
     double _cost;
@@ -476,6 +691,13 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     BOOL _stopping;
     // The transcript follows new content until the user scrolls up.
     BOOL _pinned;
+    // A message typed while Claude works, sent when the request ends.
+    NSString *_queued;
+    NSView *_queuedView;
+    // What the running CLI was started with; a change restarts it (the
+    // conversation resumes) before the next message.
+    std::string _launchedModel, _launchedEffort;
+    BOOL _restartAfterRequest;
 }
 
 - (void)loadView {
@@ -483,24 +705,31 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     _approvals = [NSMutableDictionary dictionary];
     _conversationId = NewUuid();
 
-    // A header: the conversation menu, and status.
-    _conversations = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:YES];
-    _conversations.controlSize = NSControlSizeSmall;
-    _conversations.font = Small();
-    _conversations.bezelStyle = NSBezelStyleInline;
-    [_conversations.cell setArrowPosition:NSPopUpArrowAtBottom];
-    _conversations.menu.delegate = (id<NSMenuDelegate>)self;
-    _conversations.toolTip = @"Start a new conversation or go back to an earlier one";
-    [_conversations setContentHuggingPriority:NSLayoutPriorityDefaultHigh
-                               forOrientation:NSLayoutConstraintOrientationHorizontal];
-    [_conversations setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow
-                                             forOrientation:NSLayoutConstraintOrientationHorizontal];
+    // A header, as in Claude Code's editor panels: history, the
+    // conversation's title, progress with Stop, and New.
+    _historyButton = [self toolButton:@"clock.arrow.circlepath" tip:@"Earlier conversations"
+                               action:@selector(showHistory:)];
+    _title = Label(@"New conversation", [NSFont boldSystemFontOfSize:NSFont.smallSystemFontSize],
+                   NSColor.labelColor);
+    _spinner = [NSProgressIndicator new];
+    _spinner.style = NSProgressIndicatorStyleSpinning;
+    _spinner.controlSize = NSControlSizeSmall;
+    _spinner.displayedWhenStopped = NO;
     _status = Label(@"", Small(), NSColor.secondaryLabelColor);
     _status.alignment = NSTextAlignmentRight;
+    _stopButton = [NSButton buttonWithTitle:@"Stop" target:self action:@selector(stopClicked:)];
+    _stopButton.controlSize = NSControlSizeSmall;
+    _stopButton.font = Small();
+    _stopButton.image = Symbol(@"stop.fill", @"Stop");
+    _stopButton.imagePosition = NSImageLeading;
+    _stopButton.toolTip = @"Stop Claude (Escape)";
+    _stopButton.hidden = YES;
+    _newButton = [self toolButton:@"plus" tip:@"New conversation" action:@selector(newConversation:)];
     NSView *spacer = [NSView new];
     [spacer setContentHuggingPriority:1 forOrientation:NSLayoutConstraintOrientationHorizontal];
-    NSStackView *header = Row(@[_conversations, spacer, _status]);
-    header.edgeInsets = NSEdgeInsetsMake(2, 8, 2, 10);
+    NSStackView *header = Row(@[_historyButton, _title, spacer, _spinner, _status, _stopButton, _newButton]);
+    header.detachesHiddenViews = YES;
+    header.edgeInsets = NSEdgeInsetsMake(3, 8, 3, 8);
     [header setHuggingPriority:1 forOrientation:NSLayoutConstraintOrientationHorizontal];
 
     // The transcript.
@@ -539,6 +768,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     _input.automaticDashSubstitutionEnabled = NO;
     __weak VelaClaudePanelController *weakSelf = self;
     _input.send = ^{ [weakSelf sendInput]; };
+    _input.delegate = self;
     _input.stop = ^{ [weakSelf cancelOperation:nil]; };
     NSScrollView *inputScroll = [NSScrollView new];
     inputScroll.hasVerticalScroller = YES;
@@ -558,7 +788,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
                                  target:nil action:nil];
     _attach.buttonType = NSButtonTypePushOnPushOff;
     _attach.bordered = NO;
-    _attach.toolTip = @"Attach an image of the viewport to the request";
+    _attach.toolTip = @"Attach an image of the viewport to the next message";
     _send = [NSButton buttonWithImage:Symbol(@"arrow.up.circle.fill", @"Send")
                                target:self action:@selector(sendOrStop:)];
     _send.bordered = NO;
@@ -568,25 +798,35 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     [_send.heightAnchor constraintEqualToConstant:22].active = YES;
     _send.imageScaling = NSImageScaleProportionallyUpOrDown;
 
+    // Below the text: model, effort and edit mode, then attach and send.
+    _modelPopUp = [self choicePopUp:vela::claude::ModelChoices() tip:@"The model Claude uses"];
+    _effortPopUp = [self choicePopUp:vela::claude::EffortChoices()
+                                 tip:@"How hard Claude thinks: more effort is slower and costs more"];
+    _modePopUp = [self choicePopUp:{{"edit", "Edit automatically"}, {"ask", "Ask before edits"}}
+                               tip:@"Whether Claude asks before it changes the scene"];
+    NSView *footerSpacer = [NSView new];
+    [footerSpacer setContentHuggingPriority:1 forOrientation:NSLayoutConstraintOrientationHorizontal];
+    NSStackView *footer = Row(@[_modelPopUp, _effortPopUp, _modePopUp, footerSpacer, _attach, _send], 4);
+    [footer setHuggingPriority:1 forOrientation:NSLayoutConstraintOrientationHorizontal];
+
     NSView *inputBox = [NSView new];
     inputBox.wantsLayer = YES;
     inputBox.layer.cornerRadius = 7;
     inputBox.layer.borderWidth = 1;
     inputBox.layer.borderColor = NSColor.separatorColor.CGColor;
-    for (NSView *view in @[inputScroll, _attach, _send]) {
+    for (NSView *view in @[inputScroll, footer]) {
         view.translatesAutoresizingMaskIntoConstraints = NO;
         [inputBox addSubview:view];
     }
     [NSLayoutConstraint activateConstraints:@[
         [inputScroll.leadingAnchor constraintEqualToAnchor:inputBox.leadingAnchor constant:4],
+        [inputScroll.trailingAnchor constraintEqualToAnchor:inputBox.trailingAnchor constant:-4],
         [inputScroll.topAnchor constraintEqualToAnchor:inputBox.topAnchor constant:2],
-        [inputScroll.bottomAnchor constraintEqualToAnchor:inputBox.bottomAnchor constant:-2],
-        [inputScroll.heightAnchor constraintEqualToConstant:46],
-        [_attach.leadingAnchor constraintEqualToAnchor:inputScroll.trailingAnchor constant:4],
-        [_attach.bottomAnchor constraintEqualToAnchor:inputBox.bottomAnchor constant:-7],
-        [_send.leadingAnchor constraintEqualToAnchor:_attach.trailingAnchor constant:6],
-        [_send.trailingAnchor constraintEqualToAnchor:inputBox.trailingAnchor constant:-6],
-        [_send.bottomAnchor constraintEqualToAnchor:inputBox.bottomAnchor constant:-5],
+        [inputScroll.heightAnchor constraintEqualToConstant:40],
+        [footer.topAnchor constraintEqualToAnchor:inputScroll.bottomAnchor],
+        [footer.leadingAnchor constraintEqualToAnchor:inputBox.leadingAnchor constant:4],
+        [footer.trailingAnchor constraintEqualToAnchor:inputBox.trailingAnchor constant:-6],
+        [footer.bottomAnchor constraintEqualToAnchor:inputBox.bottomAnchor constant:-4],
     ]];
 
     NSView *root = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 800, 220)];
@@ -614,11 +854,41 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     ]];
     self.view = root;
     [self showWelcome];
+    [self settingsChanged];
+    __weak VelaClaudePanelController *observer = self;
+    _settingsObserver = vela::AppSettingsStore::Get().AddObserver([observer] {
+        [observer settingsChanged];
+    });
     [self updateControls];
+}
+
+- (NSButton *)toolButton:(NSString *)symbol tip:(NSString *)tip action:(SEL)action {
+    NSButton *button = [NSButton buttonWithImage:Symbol(symbol, tip) target:self action:action];
+    button.bordered = NO;
+    button.toolTip = tip;
+    button.contentTintColor = NSColor.secondaryLabelColor;
+    [button.widthAnchor constraintEqualToConstant:22].active = YES;
+    return button;
+}
+
+- (NSPopUpButton *)choicePopUp:(const std::vector<vela::claude::Choice> &)choices tip:(NSString *)tip {
+    NSPopUpButton *popUp = [NSPopUpButton new];
+    popUp.controlSize = NSControlSizeSmall;
+    popUp.font = Small();
+    popUp.bordered = NO;
+    popUp.toolTip = tip;
+    for (const auto &choice : choices) {
+        [popUp addItemWithTitle:String(choice.title)];
+        popUp.lastItem.representedObject = String(choice.value);
+    }
+    popUp.target = self;
+    popUp.action = @selector(choiceChanged:);
+    return popUp;
 }
 
 - (void)dealloc {
     [NSNotificationCenter.defaultCenter removeObserver:self];
+    if (_settingsObserver) vela::AppSettingsStore::Get().RemoveObserver(_settingsObserver);
     [self shutDown];
 }
 
@@ -739,11 +1009,18 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
 
 - (void)updateControls {
     _send.image = _busy ? Symbol(@"stop.circle.fill", @"Stop") : Symbol(@"arrow.up.circle.fill", @"Send");
-    _send.toolTip = _busy ? @"Stop (Escape)" : @"Send (Return)";
-    _conversations.enabled = !_busy;
-    NSString *title = _logged || _conversationStarted ? [self conversationTitle] : @"New Conversation";
-    [_conversations removeAllItems];
-    [_conversations addItemWithTitle:title];
+    _send.contentTintColor = _busy && !_input.string.length ? NSColor.systemRedColor
+                                                           : NSColor.controlAccentColor;
+    _send.toolTip = _busy ? @"Stop (Escape); type to queue a message" : @"Send (Return)";
+    if (_busy && _input.string.length) {
+        _send.image = Symbol(@"arrow.up.circle.fill", @"Queue");
+        _send.toolTip = @"Queue this message: it sends when Claude finishes (Return)";
+    }
+    _stopButton.hidden = !_busy;
+    if (_busy) [_spinner startAnimation:nil];
+    else [_spinner stopAnimation:nil];
+    _title.stringValue = _logged || _conversationStarted ? [self conversationTitle] : @"New conversation";
+    _title.toolTip = _title.stringValue;
     [self statusChanged];
 }
 
@@ -751,11 +1028,11 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     for (const auto &c : vela::claude::ListConversations(vela::claude::DefaultHistoryFolder())) {
         if ([String(c.id) isEqualToString:_conversationId]) return String(c.title);
     }
-    return @"Conversation";
+    return _request ? String(vela::claude::TitleFor(Text(_request))) : @"Conversation";
 }
 
 - (void)statusChanged {
-    NSString *status = _busy ? @"Working…" : @"";
+    NSString *status = _stopping ? @"Stopping…" : _busy ? @"Working…" : @"";
     if (_cost > 0) {
         NSString *cost = [NSString stringWithFormat:@"$%.2f", _cost];
         status = status.length ? [NSString stringWithFormat:@"%@  %@", status, cost] : cost;
@@ -772,16 +1049,30 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     if (_busy) [self stop];
 }
 
+- (void)stopClicked:(id)sender {
+    [self stop];
+}
+
+- (void)stopRequest {
+    [self stop];
+}
+
 - (void)sendOrStop:(id)sender {
-    if (_busy) [self stop];
+    if (_busy && !_input.string.length) [self stop];
     else [self sendInput];
 }
 
 - (void)sendInput {
-    if (_busy) return;
     NSString *text = [_input.string stringByTrimmingCharactersInSet:
         NSCharacterSet.whitespaceAndNewlineCharacterSet];
     if (!text.length) return;
+    if (_busy) {
+        [self queue:text];
+        _input.string = @"";
+        [_input setNeedsDisplay:YES];
+        [self updateControls];
+        return;
+    }
     NSString *error = nil;
     if ([self ask:text error:&error]) {
         _input.string = @"";
@@ -791,45 +1082,120 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     }
 }
 
-#pragma mark Conversations
+// A message typed while Claude works waits, shown dimmed, until the request
+// ends; more typing joins it.
+- (void)queue:(NSString *)text {
+    _queued = _queued ? [NSString stringWithFormat:@"%@\n\n%@", _queued, text] : text;
+    [_queuedView removeFromSuperview];
+    NSTextField *label = [NSTextField wrappingLabelWithString:_queued];
+    label.font = [NSFont systemFontOfSize:FontSize];
+    label.textColor = NSColor.secondaryLabelColor;
+    NSTextField *note = Label(@"Queued: sends when Claude finishes", Small(), NSColor.tertiaryLabelColor);
+    _queuedView = Column(@[label, note], 2);
+    [self addItem:_queuedView];
+}
 
-// The conversation menu, filled as it opens: New Conversation, then this
-// document's earlier ones.
-- (void)menuNeedsUpdate:(NSMenu *)menu {
-    while (menu.numberOfItems > 1) [menu removeItemAtIndex:1];
-    NSMenuItem *fresh = [menu addItemWithTitle:@"New Conversation" action:@selector(newConversation:)
-                                 keyEquivalent:@""];
-    fresh.target = self;
-    const std::shared_ptr<vela::Document> document = [self document];
-    const std::string path = document ? DocumentPath(*document) : std::string();
-    const auto conversations = path.empty() ? std::vector<vela::claude::Conversation>()
-        : vela::claude::ListConversations(vela::claude::DefaultHistoryFolder(), path);
-    if (!conversations.empty()) [menu addItem:[NSMenuItem separatorItem]];
-    NSDateFormatter *format = [NSDateFormatter new];
-    format.dateStyle = NSDateFormatterShortStyle;
-    format.timeStyle = NSDateFormatterShortStyle;
-    format.doesRelativeDateFormatting = YES;
-    for (size_t i = 0; i < conversations.size() && i < 20; ++i) {
-        const auto &c = conversations[i];
-        NSString *date = [format stringFromDate:[NSDate dateWithTimeIntervalSince1970:c.updated]];
-        NSMenuItem *item = [menu addItemWithTitle:String(c.title)
-                                           action:@selector(openConversation:) keyEquivalent:@""];
-        item.target = self;
-        item.representedObject = String(c.id);
-        item.toolTip = date;
-        item.state = [String(c.id) isEqualToString:_conversationId] ? NSControlStateValueOn
-                                                                     : NSControlStateValueOff;
-        NSMutableAttributedString *title = [[NSMutableAttributedString alloc]
-            initWithString:String(c.title) attributes:@{NSFontAttributeName: [NSFont menuFontOfSize:0]}];
-        [title appendAttributedString:Plain([@"  " stringByAppendingString:date],
-                                            [NSFont menuFontOfSize:NSFont.smallSystemFontSize],
-                                            NSColor.secondaryLabelColor)];
-        item.attributedTitle = title;
+// Takes the queued message back, e.g. to the input after Stop.
+- (NSString *)takeQueued {
+    NSString *queued = _queued;
+    _queued = nil;
+    [_queuedView removeFromSuperview];
+    _queuedView = nil;
+    return queued;
+}
+
+- (void)textDidChange:(NSNotification *)notification {
+    if (_busy) [self updateControls];
+}
+
+#pragma mark Model, effort and mode
+
+// Shows the settings' choices; a different model or effort restarts the
+// CLI before the next message (the conversation resumes).
+- (void)settingsChanged {
+    const vela::AppSettings &settings = vela::AppSettingsStore::Get().GetSettings();
+    auto select = [](NSPopUpButton *popUp, const std::string &value) {
+        [popUp selectItemAtIndex:0];
+        for (NSMenuItem *item in popUp.itemArray) {
+            if ([item.representedObject isEqualToString:String(value)]) [popUp selectItem:item];
+        }
+    };
+    select(_modelPopUp, settings.claudeModel);
+    select(_effortPopUp, settings.claudeEffort);
+    select(_modePopUp, settings.claudeAsksBeforeEdits ? "ask" : "edit");
+    if (_process && (settings.claudeModel != _launchedModel || settings.claudeEffort != _launchedEffort)) {
+        if (_busy) _restartAfterRequest = YES;
+        else [self endProcess];
     }
 }
 
-- (BOOL)validateMenuItem:(NSMenuItem *)item {
-    return !_busy;
+- (void)choiceChanged:(NSPopUpButton *)sender {
+    const std::string value = Text(sender.selectedItem.representedObject);
+    vela::AppSettings settings = vela::AppSettingsStore::Get().GetSettings();
+    if (sender == _modelPopUp) settings.claudeModel = value;
+    else if (sender == _effortPopUp) settings.claudeEffort = value;
+    else settings.claudeAsksBeforeEdits = value == "ask";
+    vela::AppSettingsStore::Get().SetSettings(settings);
+    [self focusInput];
+}
+
+#pragma mark Conversations
+
+- (void)showHistory:(id)sender {
+    if (_history.shown) {
+        [_history close];
+        return;
+    }
+    if (!_history) {
+        _historyList = [VelaConversationListController new];
+        __weak VelaClaudePanelController *weakSelf = self;
+        _historyList.open = ^(NSString *identifier) { [weakSelf switchToConversation:identifier]; };
+        _historyList.remove = ^(NSString *identifier) { [weakSelf deleteConversation:identifier]; };
+        _history = [NSPopover new];
+        _history.behavior = NSPopoverBehaviorTransient;
+        _history.contentViewController = _historyList;
+    }
+    const std::shared_ptr<vela::Document> document = [self document];
+    const std::string path = document ? DocumentPath(*document) : std::string();
+    std::vector<vela::claude::Conversation> conversations;
+    for (const auto &c : vela::claude::ListConversations(vela::claude::DefaultHistoryFolder(), path)) {
+        // An unsaved document's conversations have no file to match.
+        if (c.document == path) conversations.push_back(c);
+    }
+    _historyList.currentId = _conversationStarted || _logged ? _conversationId : nil;
+    (void)_historyList.view;
+    [_historyList setConversations:conversations];
+    [_history showRelativeToRect:_historyButton.bounds ofView:_historyButton
+                   preferredEdge:_historyButton.isFlipped ? NSRectEdgeMinY : NSRectEdgeMaxY];
+}
+
+- (void)switchToConversation:(NSString *)identifier {
+    [_history close];
+    if ([identifier isEqualToString:_conversationId]) return;
+    [self abandonRequest];
+    [self openConversationId:identifier];
+}
+
+- (void)deleteConversation:(NSString *)identifier {
+    vela::claude::DeleteConversation(vela::claude::DefaultHistoryFolder(), Text(identifier));
+    // The open conversation keeps going, as a new one.
+    if ([identifier isEqualToString:_conversationId]) {
+        _logged = NO;
+        _conversationStarted = NO;
+        [self endProcess];
+        _conversationId = NewUuid();
+        _directory.clear();
+        [self updateControls];
+    }
+}
+
+// Ends a running request at once, for switching conversations: the CLI
+// is ended (the conversation can be resumed later).
+- (void)abandonRequest {
+    if (!_busy) return;
+    _stopping = YES;
+    [self endProcess];
+    [self finishRequest:@"Stopped." error:NO];
 }
 
 - (void)endProcess {
@@ -841,12 +1207,14 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
 }
 
 - (void)newConversation:(id)sender {
-    if (_busy) return;
+    [self abandonRequest];
+    [self takeQueued];
     [self endProcess];
     [self clearTranscript];
     _conversationId = NewUuid();
     _conversationStarted = NO;
     _logged = NO;
+    _directory.clear();
     _pendingLog.clear();
     _allowedTools.clear();
     _cost = 0;
@@ -855,13 +1223,24 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     [self focusInput];
 }
 
-- (void)openConversation:(NSMenuItem *)sender {
-    NSString *identifier = sender.representedObject;
-    if (_busy || !identifier || [identifier isEqualToString:_conversationId]) return;
+- (void)openConversationId:(NSString *)identifier {
+    if (_busy || !identifier) return;
+    [self takeQueued];
     [self endProcess];
     [self clearTranscript];
     _conversationId = identifier;
     _conversationStarted = YES;  // the CLI resumes it
+    // It resumes in the folder it started in: older conversations ran in
+    // their document's folder.
+    _directory.clear();
+    for (const auto &c : vela::claude::ListConversations(vela::claude::DefaultHistoryFolder())) {
+        if (c.id != Text(identifier)) continue;
+        _directory = c.directory;
+        if (_directory.empty()) {
+            _directory = c.document.empty() ? vela::claude::DefaultHistoryFolder()
+                                            : c.document.substr(0, c.document.rfind('/'));
+        }
+    }
     _logged = YES;
     _pendingLog.clear();
     _allowedTools.clear();
@@ -869,6 +1248,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     [self replay:vela::claude::LoadEntries(vela::claude::DefaultHistoryFolder(), Text(identifier))];
     [self updateControls];
     [self scrollToBottom];
+    [self focusInput];
 }
 
 // Shows a logged conversation as it went.
@@ -932,6 +1312,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     conversation.id = Text(_conversationId);
     conversation.title = vela::claude::TitleFor(Text(_request ?: @""));
     conversation.document = document ? DocumentPath(*document) : std::string();
+    conversation.directory = _directory;
     conversation.created = NSDate.date.timeIntervalSince1970;
     std::string error;
     if (!vela::claude::CreateConversation(vela::claude::DefaultHistoryFolder(), conversation, &error)) {
@@ -986,17 +1367,48 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     if (_conversationStarted) options.resume = Text(_conversationId);
     else options.sessionId = Text(_conversationId);
     options.model = vela::AppSettingsStore::Get().GetSettings().claudeModel;
+    options.effort = vela::AppSettingsStore::Get().GetSettings().claudeEffort;
+    _launchedModel = options.model;
+    _launchedEffort = options.effort;
     options.mcpHelper = Text([NSBundle.mainBundle.executablePath.stringByDeletingLastPathComponent
                               stringByAppendingPathComponent:@"vela-mcp"]);
     options.mcpSocket = socketPath;
     options.systemPrompt = SystemPrompt;
+    {
+        static const char *plugins =
+#include "app/vela/resources/plugins.inc"
+        ;
+        std::string text = plugins;
+        const std::string folder = vela::PluginsFolder();
+        for (size_t at; (at = text.find("PLUGINS_FOLDER")) != std::string::npos;) {
+            text.replace(at, 14, folder);
+        }
+        options.systemPrompt += text;
+    }
+        if (vela::AppSettingsStore::Get().GetSettings().imageGeneration) {
+        static const char *instructions =
+#include "app/vela/resources/image_generation.inc"
+        ;
+        options.systemPrompt += instructions;
+    }
 
-    // The CLI works in the scene's folder, so it can read its layers.
-    std::string directory = DocumentPath(*document);
-    directory = directory.empty() ? vela::claude::DefaultHistoryFolder()
-                                  : directory.substr(0, directory.rfind('/'));
+    // Every conversation runs in Vela's own workspace folder, so Claude
+    // Code keeps them together (and no CLAUDE.md near the scene applies);
+    // Claude may also read the scene's folder.
+    if (_directory.empty()) _directory = vela::claude::WorkspaceFolder();
+    const std::string directory = _directory;
     [NSFileManager.defaultManager createDirectoryAtPath:String(directory)
                             withIntermediateDirectories:YES attributes:nil error:nil];
+    // Plugins are written there (see resources/plugins.md).
+    const std::string plugins = vela::PluginsFolder();
+    [NSFileManager.defaultManager createDirectoryAtPath:String(plugins)
+                            withIntermediateDirectories:YES attributes:nil error:nil];
+    options.addDirectories.push_back(plugins);
+    const std::string scene = DocumentPath(*document);
+    if (!scene.empty()) {
+        const std::string sceneFolder = scene.substr(0, scene.rfind('/'));
+        if (sceneFolder != directory) options.addDirectories.push_back(sceneFolder);
+    }
 
     __weak VelaClaudePanelController *weakSelf = self;
     vela::LineProcess::Callbacks callbacks;
@@ -1063,6 +1475,7 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
         return NO;
     }
     _request = request;
+    vela::images::Service::Get().SetOwner(_sessionId, Text(_conversationId) + ":" + Text(NSUUID.UUID.UUIDString));
     _undoMark = entry->document->GetUndoStack().Mark();
     [self addUser:request];
     if (!images.empty()) {
@@ -1085,7 +1498,13 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
 - (void)stop {
     if (!_busy || !_process) return;
     _stopping = YES;
-    _status.stringValue = @"Stopping…";
+    [self statusChanged];
+    if (NSString *queued = [self takeQueued]) {
+        _input.string = _input.string.length ? [NSString stringWithFormat:@"%@\n\n%@", queued, _input.string]
+                                             : queued;
+        [_input setNeedsDisplay:YES];
+    }
+    vela::images::Service::Get().CancelOwner(_sessionId, vela::images::Service::Get().Owner(_sessionId));
     _process->Write(vela::claude::InterruptRequest("stop-" + std::to_string(++_nextRequest)));
     for (NSString *requestId in _approvals.allKeys) [self answer:requestId allow:NO always:NO];
     // If the CLI doesn't end the turn, end the CLI; it resumes next time.
@@ -1118,6 +1537,9 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
             if (!event.sessionId.empty()) _conversationId = String(event.sessionId);
             _conversationStarted = YES;
             [self startLog];
+            if (!event.model.empty()) {
+                _modelPopUp.toolTip = String("The model Claude uses (now " + event.model + ")");
+            }
             break;
         case Kind::TextDelta:
             if (!_liveText) _liveText = [NSMutableString string];
@@ -1188,12 +1610,24 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     [self log:JsObject{{"kind", JsValue("result")}, {"isError", JsValue(bool(error))},
                        {"costUsd", JsValue(_cost)}}];
     _request = nil;
+    vela::images::Service::Get().SetOwner(_sessionId, "");
     _stopping = NO;
     // Tool calls the CLI never answered.
     for (VelaToolCallView *view in _tools.allValues) {
         if (view.running) [view finishWithText:@"" images:@[] error:NO];
     }
     [self setBusy:NO];
+    if (_restartAfterRequest) {
+        _restartAfterRequest = NO;
+        [self endProcess];
+    }
+    // The message typed meanwhile goes next.
+    if (NSString *queued = [self takeQueued]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *error = nil;
+            if (![self ask:queued error:&error] && error) [self addNote:error color:NSColor.systemRedColor];
+        });
+    }
 }
 
 // "Edited the scene. Undo" after a request that changed it.
@@ -1230,9 +1664,10 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
     const bool asks = vela::AppSettingsStore::Get().GetSettings().claudeAsksBeforeEdits;
     auto isQuery = [](const std::string &action) {
         const vela::Action *found = vela::ActionRegistry::Get().Find(action);
-        return found && found->query;
+        return found && (found->query || found->asksUser);
     };
-    const auto decision = vela::claude::Decide(event.toolName, event.input, asks, isQuery);
+    const auto decision = vela::claude::Decide(event.toolName, event.input, asks, isQuery,
+                                               vela::PluginsFolder());
     if (decision == vela::claude::Decision::Allow || _allowedTools.count(event.toolName)) {
         _process->Write(vela::claude::AllowTool(event.requestId, event.input));
         return;
@@ -1382,4 +1817,20 @@ void VelaRegisterClaudeActions(void) {
         return vela::ActionResult{};
     };
     vela::ActionRegistry::Get().Register(std::move(ask));
+
+    vela::Action stop;
+    stop.name = "stop_claude";
+    stop.title = "Stop Claude";
+    stop.description = "Stop the request the document's Claude panel is working on.";
+    stop.enabled = [](const vela::Document &document) {
+        VelaClaudePanelController *panel = [Panels() objectForKey:[NSValue valueWithPointer:&document]];
+        return panel && panel.busy;
+    };
+    stop.run = [](vela::Document &document, const JsObject &) {
+        VelaClaudePanelController *panel = [Panels() objectForKey:[NSValue valueWithPointer:&document]];
+        if (!panel || !panel.busy) return vela::ActionResult::Error("Claude isn't working on anything.");
+        [panel stopRequest];
+        return vela::ActionResult{};
+    };
+    vela::ActionRegistry::Get().Register(std::move(stop));
 }

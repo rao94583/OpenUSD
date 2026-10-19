@@ -63,6 +63,8 @@ std::string DefaultHistoryFolder() {
     return std::string(home ? home : "") + "/Library/Application Support/Vela/Claude";
 }
 
+std::string WorkspaceFolder() { return DefaultHistoryFolder() + "/Workspace"; }
+
 bool CreateConversation(const std::string &folder, const Conversation &conversation,
                         std::string *error) {
     auto fail = [&](const std::string &message) {
@@ -79,6 +81,7 @@ bool CreateConversation(const std::string &folder, const Conversation &conversat
         {"kind", JsValue("conversation")},
         {"title", JsValue(conversation.title)},
         {"document", JsValue(conversation.document)},
+        {"directory", JsValue(conversation.directory)},
         {"created", JsValue(conversation.created)},
     })) << "\n";
     return bool(out);
@@ -130,6 +133,7 @@ std::vector<Conversation> ListConversations(const std::string &folder, const std
         conversation.id = id;
         conversation.title = Text(header, "title");
         conversation.document = Text(header, "document");
+        conversation.directory = Text(header, "directory");
         conversation.created = Number(header, "created");
         struct stat info;
         conversation.updated = stat(path.c_str(), &info) == 0

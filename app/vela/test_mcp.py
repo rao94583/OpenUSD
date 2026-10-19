@@ -227,6 +227,21 @@ try:
               params={'path': str(temp / 'hd.mp4'), 'resolution': '720p', 'start': 1, 'end': 2})
     assert hd['structuredContent']['result']['width'] == 1280, hd
 
+    # An invalid scene camera must fail both screenshot entry points without
+    # dispatching invalid rays, then recover when the camera is repaired.
+    python("camera = UsdGeom.Camera.Define(vela.stage, '/InvalidCamera')\n"
+           "camera.GetClippingRangeAttr().Set(Gf.Vec2f(1, 1))")
+    assert not call('ui_action', action='set_renderer', params={'renderer': 'Embree'})['isError']
+    assert not call('ui_action', action='set_view_camera', params={'path': '/InvalidCamera'})['isError']
+    for tool in ('viewport_screenshot', 'capture_image_reference'):
+        invalid = call(tool, width=64, height=64)
+        assert invalid['isError'] and 'clipping range' in invalid['content'][0]['text'], invalid
+        assert app.poll() is None, 'Invalid camera crashed Vela'
+    python("camera.GetClippingRangeAttr().Set(Gf.Vec2f(1, 100))\n"
+           "UsdGeom.XformCommonAPI(camera).SetTranslate(Gf.Vec3d(0, 0, 10))")
+    assert not call('viewport_screenshot', width=64, height=64)['isError']
+    assert not call('capture_image_reference', width=64, height=64)['isError']
+
     # The stateless protocol revision, on the same connection.
     meta = {'io.modelcontextprotocol/protocolVersion': '2026-07-28',
             'io.modelcontextprotocol/clientInfo': {'name': 'test', 'version': '1'},

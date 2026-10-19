@@ -14,6 +14,12 @@ JsObject ToJson(const AppSettings &settings) {
         {"claudePath", JsValue(settings.claudePath)},
         {"claudeAsksBeforeEdits", JsValue(settings.claudeAsksBeforeEdits)},
         {"claudeModel", JsValue(settings.claudeModel)},
+        {"claudeEffort", JsValue(settings.claudeEffort)},
+        {"imageGeneration", JsValue(settings.imageGeneration)},
+        {"imageAsk", JsValue(settings.imageAsk)},
+        {"imageHighQuality", JsValue(settings.imageHighQuality)},
+        {"imageConnection", JsValue(settings.imageConnection)},
+        {"imageRequestLimit", JsValue(settings.imageRequestLimit)},
     };
 }
 
@@ -32,11 +38,20 @@ void FromJson(const JsObject &json, AppSettings *settings) {
     flag("usePrimaryCamera", &settings->usePrimaryCamera);
     flag("mcpServer", &settings->mcpServer);
     flag("claudeAsksBeforeEdits", &settings->claudeAsksBeforeEdits);
+    flag("imageGeneration", &settings->imageGeneration);
+    flag("imageAsk", &settings->imageAsk);
+    flag("imageHighQuality", &settings->imageHighQuality);
+    if (const JsValue *v = get("imageRequestLimit"); v && (v->IsInt() || v->IsUInt64())) {
+        const int64_t limit = v->IsUInt64() ? int64_t(v->GetUInt64()) : v->GetInt64();
+        if (limit >= 1 && limit <= 100) settings->imageRequestLimit = int(limit);
+    }
     auto text = [&](const char *name, std::string *out) {
         if (const JsValue *v = get(name); v && v->IsString()) *out = v->GetString();
     };
     text("claudePath", &settings->claudePath);
     text("claudeModel", &settings->claudeModel);
+    text("claudeEffort", &settings->claudeEffort);
+    text("imageConnection", &settings->imageConnection);
     if (const JsValue *v = get("threadLimit"); v && (v->IsInt() || v->IsUInt64())) {
         settings->threadLimit = int(v->IsUInt64() ? int64_t(v->GetUInt64()) : v->GetInt64());
     }

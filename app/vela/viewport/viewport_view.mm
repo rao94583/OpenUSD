@@ -514,7 +514,10 @@ vela::Renderer::Pixels Boxed(const vela::Renderer::Pixels &inner, const vela::Fi
     NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:
         [NSString stringWithFormat:@"vela-screenshot-%@.png", NSUUID.UUID.UUIDString]];
     if (!_renderer->WriteImage([self viewOfSize:size], path.UTF8String)) {
-        if (error) *error = @"The viewport could not render an image";
+        if (error) {
+            const std::string reason = _renderer->GetRenderError();
+            *error = reason.empty() ? @"The viewport could not render an image" : @(reason.c_str());
+        }
         return nil;
     }
     NSData *data = [NSData dataWithContentsOfFile:path];

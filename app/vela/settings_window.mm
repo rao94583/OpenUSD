@@ -1,9 +1,11 @@
 #import "settings_window.h"
 #import "document.h"
 #import "scripting.h"
+#import "image_generation.h"
 
 #include "app/vela/core/actions.h"
 #include "app/vela/core/app_settings.h"
+#include "app/vela/core/claude_cli.h"
 
 #include "pxr/base/tf/stringUtils.h"
 
@@ -37,15 +39,6 @@ vela::Document *FrontDocument() {
     return nullptr;
 }
 
-// The Claude panel's model choices: the CLI's default, or an alias for the
-// latest of a family.
-NSArray<NSString *> *ModelTitles() {
-    return @[@"Claude Code's default", @"Opus", @"Sonnet", @"Haiku", @"Fable"];
-}
-NSArray<NSString *> *ModelValues() {
-    return @[@"", @"opus", @"sonnet", @"haiku", @"fable"];
-}
-
 } // namespace
 
 @implementation VelaSettingsWindowController {
@@ -59,6 +52,7 @@ NSArray<NSString *> *ModelValues() {
     NSTextField *_mcpStatus;
     NSTextField *_mcpCommand;
     NSPopUpButton *_claudeModel;
+    NSPopUpButton *_claudeEffort;
     NSButton *_claudeAsks;
     NSTextField *_claudePath;
     int _observer;
@@ -106,11 +100,15 @@ NSArray<NSString *> *ModelValues() {
     NSStackView *command = [NSStackView stackViewWithViews:@[_mcpCommand, copyCommand]];
     // The Claude panel: model, approvals and where Claude Code is.
     _claudeModel = [NSPopUpButton new];
-    for (NSString *title in ModelTitles()) [_claudeModel addItemWithTitle:title];
+    for (const auto &choice : vela::claude::ModelChoices()) [_claudeModel addItemWithTitle:@(choice.title)];
     _claudeModel.target = self;
     _claudeModel.action = @selector(optionChanged:);
+    _claudeEffort = [NSPopUpButton new];
+    for (const auto &choice : vela::claude::EffortChoices()) [_claudeEffort addItemWithTitle:@(choice.title)];
+    _claudeEffort.target = self;
+    _claudeEffort.action = @selector(optionChanged:);
     NSStackView *model = [NSStackView stackViewWithViews:@[
-        [NSTextField labelWithString:@"Model:"], _claudeModel]];
+        [NSTextField labelWithString:@"Model:"], _claudeModel, _claudeEffort]];
     _claudeAsks = checkbox(@"Ask before Claude edits the scene");
     _claudePath = Note(@"");
     NSButton *choosePath = [NSButton buttonWithTitle:@"Choose…" target:self
@@ -145,6 +143,7 @@ NSArray<NSString *> *ModelValues() {
         Note(@"Otherwise Claude edits at once and the panel says what changed. Either "
              @"way, each request is one step that Undo reverts."),
         _claudePath, pathButtons,
+        [NSButton buttonWithTitle:@"Image Generation Settings…" target:self action:@selector(imageSettings:)],
         _mcpServer, _mcpStatus,
         Note(@"To use Vela from Claude Code in Terminal, add it as an MCP server:"),
         command,
@@ -190,12 +189,15 @@ NSArray<NSString *> *ModelValues() {
     _threadLimit.stringValue = [NSString stringWithFormat:@"%d", s.threadLimit];
     _mcpServer.state = s.mcpServer ? NSControlStateValueOn : NSControlStateValueOff;
     _mcpStatus.stringValue = VelaMcpStatus();
-    [_claudeModel selectItemAtIndex:0];
-    for (NSUInteger i = 0; i < ModelValues().count; ++i) {
-        if ([ModelValues()[i] isEqualToString:@(s.claudeModel.c_str())]) {
-            [_claudeModel selectItemAtIndex:NSInteger(i)];
+    auto select = [](NSPopUpButton *popUp, const std::vector<vela::claude::Choice> &choices,
+                     const std::string &value) {
+        [popUp selectItemAtIndex:0];
+        for (size_t i = 0; i < choices.size(); ++i) {
+            if (value == choices[i].value) [popUp selectItemAtIndex:NSInteger(i)];
         }
-    }
+    };
+    select(_claudeModel, vela::claude::ModelChoices(), s.claudeModel);
+    select(_claudeEffort, vela::claude::EffortChoices(), s.claudeEffort);
     _claudeAsks.state = s.claudeAsksBeforeEdits ? NSControlStateValueOn : NSControlStateValueOff;
     _claudePath.stringValue = s.claudePath.empty()
         ? @"Vela finds Claude Code by itself."
@@ -215,11 +217,14 @@ NSArray<NSString *> *ModelValues() {
     const bool bounds = _unloadedAsBounds.state == NSControlStateValueOn;
     const bool mcp = _mcpServer.state == NSControlStateValueOn;
     const bool asks = _claudeAsks.state == NSControlStateValueOn;
-    const NSInteger modelIndex = MAX(0, _claudeModel.indexOfSelectedItem);
-    const std::string model = ModelValues()[NSUInteger(modelIndex)].UTF8String;
+    const std::string model =
+        vela::claude::ModelChoices()[size_t(MAX(0, _claudeModel.indexOfSelectedItem))].value;
+    const std::string effort =
+        vela::claude::EffortChoices()[size_t(MAX(0, _claudeEffort.indexOfSelectedItem))].value;
     [self update:^(vela::AppSettings &s) {
         s.claudeAsksBeforeEdits = asks;
         s.claudeModel = model;
+        s.claudeEffort = effort;
         s.mcpServer = mcp;
         s.loadPayloads = payloads;
         s.usePrimaryCamera = camera;
@@ -267,6 +272,8 @@ NSArray<NSString *> *ModelValues() {
         [self update:^(vela::AppSettings &s) { s.claudePath = path; }];
     }];
 }
+
+- (void)imageSettings:(id)sender { VelaShowImageSettings(); }
 
 - (void)findClaude:(id)sender {
     [self update:^(vela::AppSettings &s) { s.claudePath.clear(); }];

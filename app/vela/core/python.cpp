@@ -177,8 +177,12 @@ std::string Text(PyObject *object) {
 
 } // namespace
 
+std::string PythonVersion() {
+    return std::to_string(PY_MAJOR_VERSION) + "." + std::to_string(PY_MINOR_VERSION);
+}
+
 bool InitializePython(const std::string &home, const std::vector<std::string> &paths,
-                      std::string *error) {
+                      std::string *error, const std::string &userSite) {
     if (initialized) return true;
     PyImport_AppendInittab("_vela", &InitModule);
     PyConfig config;
@@ -204,6 +208,14 @@ bool InitializePython(const std::string &home, const std::vector<std::string> &p
         PyObject *path = String(paths[i]);
         PyList_Insert(sysPath, Py_ssize_t(i), path);
         Py_DECREF(path);
+    }
+    if (!userSite.empty()) {
+        PyObject *site = PyImport_ImportModule("site");
+        PyObject *added = site ? PyObject_CallMethod(site, "addsitedir", "s", userSite.c_str())
+                               : nullptr;
+        if (!added) PyErr_Clear();
+        Py_XDECREF(added);
+        Py_XDECREF(site);
     }
     if (PyRun_SimpleString(Bootstrap) != 0) {
         if (error) *error = "Could not install the vela module";
@@ -254,6 +266,30 @@ PythonResult RunPython(const std::string &code, const std::string &key, int docu
     Py_XDECREF(reply);
     PyGILState_Release(gil);
     return result;
+}
+
+bool CallPython(const std::string &function, const std::string &argsJson,
+                std::string *result, std::string *error) {
+    if (!initialized) {
+        if (error) *error = "Python is not available";
+        return false;
+    }
+    PyGILState_STATE gil = PyGILState_Ensure();
+    PyObject *args = Py_BuildValue("(s#s#)", function.data(), Py_ssize_t(function.size()),
+                                   argsJson.data(), Py_ssize_t(argsJson.size()));
+    PyObject *reply = args ? CallVela("_call", args) : nullptr;
+    Py_XDECREF(args);
+    const bool ok = reply && PyUnicode_Check(reply);
+    if (ok) {
+        if (result) *result = Text(reply);
+    } else if (error) {
+        *error = reply ? "vela._call returned no text" : TakeError();
+    } else {
+        PyErr_Clear();
+    }
+    Py_XDECREF(reply);
+    PyGILState_Release(gil);
+    return ok;
 }
 
 bool IsCompletePython(const std::string &code) {

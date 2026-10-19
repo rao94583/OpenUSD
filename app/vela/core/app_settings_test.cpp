@@ -57,6 +57,12 @@ void TestAppSettings() {
     a.claudePath = "/opt/claude";
     a.claudeAsksBeforeEdits = true;
     a.claudeModel = "opus";
+    a.claudeEffort = "high";
+    a.imageGeneration = true;
+    a.imageAsk = false;
+    a.imageHighQuality = true;
+    a.imageConnection = "gemini";
+    a.imageRequestLimit = 7;
     a.view.background = Background::Black;
     AppSettings read;
     FromJson(JsParseString(JsWriteToString(JsValue(ToJson(a)))).GetJsObject(), &read);

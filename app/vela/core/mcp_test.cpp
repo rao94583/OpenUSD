@@ -90,7 +90,9 @@ void TestProtocol() {
         names.push_back(t.at("name").GetString());
         CHECK(t.at("inputSchema").GetJsObject().at("type").GetString() == "object");
     }
-    CHECK((names == std::vector<std::string>{"get_app_state", "list_actions", "ui_action",
+    CHECK((names == std::vector<std::string>{"list_image_models", "capture_image_reference", "generate_image",
+                                             "get_image_job", "cancel_image_job", "list_generated_images",
+                                             "get_generated_image", "get_app_state", "list_actions", "ui_action",
                                              "run_python", "query_python",
                                              "viewport_screenshot",
                                              "open_document"}));

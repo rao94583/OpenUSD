@@ -21,6 +21,10 @@ struct Conversation {
     std::string id;        // the CLI's session id
     std::string title;     // the first request, shortened
     std::string document;  // the document's file path ("" if unsaved)
+    // The CLI's working folder, which resuming needs (Claude Code keeps
+    // sessions by folder); "" for conversations from before it was kept,
+    // which ran in the document's folder.
+    std::string directory;
     double created = 0.0;  // seconds since 1970
     double updated = 0.0;  // the log's modification time
 };
@@ -28,6 +32,10 @@ struct Conversation {
 // ~/Library/Application Support/Vela/Claude, or VELA_CLAUDE_HISTORY when
 // set (for tests).
 std::string DefaultHistoryFolder();
+// The CLI's working folder for new conversations: <history>/Workspace, so
+// that every conversation is in one Claude Code project, whichever
+// document it is about.
+std::string WorkspaceFolder();
 
 // Starts a conversation's log; does nothing if it exists.
 bool CreateConversation(const std::string &folder, const Conversation &conversation,

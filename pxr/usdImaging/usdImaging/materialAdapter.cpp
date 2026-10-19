@@ -254,21 +254,6 @@ UsdImagingMaterialAdapter::InvalidateImagingSubprim(
     return result;
 }
 
-// XXX From dataSourceMaterial.cpp; can we share this somewhere?
-// Extract the renderContext from an output name, ex:
-// "outputs:surface" -> ""
-// "outputs:ri:surface" -> "ri"
-static TfToken
-_GetRenderContextForShaderOutput(UsdShadeOutput const& output)
-{
-    TfToken ns = output.GetAttr().GetNamespace();
-    if (TfStringStartsWith(ns, UsdShadeTokens->outputs)) {
-        return TfToken(ns.GetString().substr(UsdShadeTokens->outputs.size()));
-    }
-    // Empty namespace, e.g. "outputs:foo" -> ""
-    return TfToken();
-}
-
 HdDataSourceLocatorSet
 UsdImagingMaterialAdapter::InvalidateImagingSubprimFromDescendent(
         UsdPrim const& prim,
@@ -284,10 +269,10 @@ UsdImagingMaterialAdapter::InvalidateImagingSubprimFromDescendent(
         return result;
     }
 
-    // Check whether the only changes made were UI related.
-    // If so do not invalidate the material, since UI changes are not propagated
-    // to Hydra
-    bool onlyUIChanges = true;
+    // Ignore only explicit UI property updates. An empty property list, or a
+    // structural resync, can represent removal/replacement of shader prims.
+    bool onlyUIChanges = !properties.empty() &&
+        invalidationType == UsdImagingPropertyInvalidationType::Update;
     static const std::string uiNodegraph("ui:nodegraph:");
     for (const TfToken& property : properties) {
         if (!TfStringStartsWith(property.GetString(), uiNodegraph)) {
@@ -295,44 +280,18 @@ UsdImagingMaterialAdapter::InvalidateImagingSubprimFromDescendent(
             break;
         }
     }
-
     if (onlyUIChanges) {
         return result;
     }
 
-    // Find which terminal (if any) we should dirty
-    for (UsdShadeOutput& output : material.GetOutputs()) {
-        bool outputIsDirty = false;
-        for (UsdShadeConnectionSourceInfo& connection :
-             output.GetConnectedSources()) {
-            _ConnectionSet seenConnections;
-            if (_IsConnectionDirty(descendentPrim, properties, material,
-                                   connection, seenConnections)) {
-                result.insert(_CreateTerminalLocator(output.GetBaseName()));
-                outputIsDirty = true;
-                break;
-            }
-        }
-        if (outputIsDirty) {
-            // Dirty the associated shader node used by this output.
-            // Also dirty the shader node in the "all" context.
-            for (TfToken const& renderContext:
-                 { _GetRenderContextForShaderOutput(output),
-                   HdMaterialSchemaTokens->all })
-            {
-                result.insert(
-                    HdMaterialSchema::GetDefaultLocator()
-                    .Append(renderContext)
-                    .Append(HdMaterialNetworkSchemaTokens->nodes)
-                    .Append(descendentPrim.GetName()));
-            }
-        }
-    }
-
-    // Otherwise dirty our whole material
-    if (result.IsEmpty()) {
-        result.insert(HdMaterialSchema::GetDefaultLocator());
-    }
+    // UsdImagingDataSourceMaterial retains the set of reachable nodes, and
+    // downstream scene indexes cache their input connections. An input update
+    // can change topology, not just a parameter value. Invalidating only the
+    // changed node leaves other cached nodes/connections pointing at expired
+    // shader prims after a graph replacement (including nested nodegraphs).
+    // Invalidate the material root so the graph and all cached descendants are
+    // rebuilt together, as for material interface/output edits above.
+    result.insert(HdMaterialSchema::GetDefaultLocator());
 
     return result;
 }

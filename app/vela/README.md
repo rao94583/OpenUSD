@@ -162,21 +162,59 @@ to see the code and its result, and viewport screenshots show as
 thumbnails. The camera button attaches an image of the viewport to a
 request. Each request carries the selection, edit target and time, and
 becomes one undo step ("Claude: …"), which the panel's Undo button or ⌘Z
-reverts. Return sends, Shift-Return adds a line, and Escape or the stop
-button interrupts. The menu above the transcript starts a new conversation
-or resumes one of this document's earlier ones. The command palette sends
-text that matches no command to Claude ("Ask Claude: …"), and the
+reverts.
+
+The panel works like Claude Code's editor panels:
+
+- **History:** the clock button lists this document's earlier
+  conversations, newest first, with a search field. Click one (or Return)
+  to open it: the transcript replays and the conversation continues where
+  it left off. Delete or the context menu removes one. "+" starts a new
+  conversation.
+- **Stop:** while Claude works, a spinner and a Stop button show in the
+  header, and the send button becomes a stop button. Escape stops too, as
+  does the `stop_claude` action. You can keep typing: Return queues the
+  message, which sends when Claude finishes. Stop puts it back in the
+  input.
+- **Model, effort and edit mode:** the menus under the input choose the
+  model (Claude Code's default, Opus, Sonnet, Haiku or Fable), the effort
+  (default, low, medium, high, extra high or max) and whether Claude edits
+  automatically or asks first. Vela remembers these, and Settings → Claude
+  and MCP shows them too. A new model or effort applies from the next
+  message; the conversation carries on.
+
+Return sends, and Shift-Return adds a line. The command palette sends text
+that matches no command to Claude ("Ask Claude: …"), and the
 `ask_claude` action does the same from scripts.
 
 The panel runs your `claude` CLI (Claude Code 2.1.296 or later, logged in),
 which Vela finds in `~/.local/bin`, Homebrew or your shell's `PATH`.
-Settings → Claude and MCP can point it elsewhere, choose the model, and turn
-on "Ask before Claude edits the scene". Questions never need approval;
+Settings → Claude and MCP can point it elsewhere. Questions never need approval;
 edits do only with that setting. Anything outside Vela's tools always asks.
+
+Image generation is configured through Settings → Image Generation Settings….
+Enable it, choose OpenAI (GPT Image) or Google (Gemini), and save that provider's
+API key in Keychain. Then ask Claude to generate a texture or create a concept
+from the viewport. Image requests have their own approval setting and API
+billing. Window → Generated Images… shows approvals, job status, references,
+previews, Save As and Continue with Claude. Window → Generate Image… also works
+without Claude. Save textures into your project before asking Claude to bind
+them; generating an image itself does not edit the USD scene.
+
+The provider interface supports adding other hosted or local models; Hugging
+Face and local adapters are not included yet. ChatGPT-plan image generation is
+currently unsupported by its integration API. See
+[IMAGE_GENERATION.md](IMAGE_GENERATION.md) for architecture, supported options,
+validation and limitations. Tests use fixture providers without network calls;
+live image output requires a configured provider account.
 The CLI gets Vela's tools on a private socket bound to the window's
 document, plus Read, Glob and Grep for the scene's files, and nothing else.
 The panel keeps its own record of each conversation in
-`~/Library/Application Support/Vela/Claude/`. Try it on
+`~/Library/Application Support/Vela/Claude/`. The CLI runs in that
+folder's `Workspace` subfolder (with `--add-dir` for the scene's folder),
+so Claude Code keeps all of Vela's sessions in one project under
+`~/.claude/projects/`, whatever folder the scene is in, and no `CLAUDE.md`
+near the scene applies. Try it on
 [examples/living_room](examples/living_room/README.md).
 
 Vela is also an MCP server, so Claude Code in a terminal can query and edit
@@ -197,6 +235,71 @@ read-only: any edit is reverted and reported), `viewport_screenshot` and
 MCP protocol eras: the stateless 2026-07-28 revision (per-request `_meta`,
 `server/discover`) and the `initialize` handshake of 2025-11-25 and
 earlier.
+
+## Plugins
+
+Vela loads plugins the way usdview does, with the same API under Vela's
+names, so usdview plugins port by changing their imports. A plugin is a
+Python package with a `plugInfo.json` that declares a container type
+derived from `vela.PluginContainer`. USD's plugin registry finds it in
+`~/Library/Application Support/Vela/Plugins` (Plugins → Show Plugins
+Folder) or on `PXR_PLUGINPATH_NAME`:
+
+```json
+{"Plugins": [{"Type": "python", "Name": "scene_stats", "Info": {"Types": {
+    "scene_stats.Container": {"bases": ["vela.PluginContainer"]}}}}]}
+```
+
+The container's `registerPlugins(registry, plugCtx)` calls
+`registry.registerCommandPlugin(name, displayName, callback, description)`,
+and `configureView(registry, builder)` adds commands to menus with
+`builder.findOrCreateMenu('Tools').addItem(command, shortcut='Ctrl+K')`,
+`findOrCreateSubmenu` and `addSeparator`. A menu's title can name one of
+Vela's menus (Edit, View, …) or a new one, placed before Window. Each
+command becomes a Vela action: it shows in the command palette, and
+`vela.run`, MCP and Claude can run it. Its callback gets the
+`vela.Document` it runs on, its printed output goes to the Log, and its
+edits are one undo step.
+
+Plugins can make AppKit UI with PyObjC (`pyobjc-core` and
+`pyobjc-framework-Cocoa` are in the bundle). Objective-C classes can't be
+defined twice, so for button and menu targets use
+`vela.Target(callback)` rather than subclassing `NSObject`, which would
+break reloading. Plugins → Reload Plugins (the `reload_plugins` action)
+finds new plugins and reloads changed ones, and reports errors with their
+tracebacks in the Log.
+
+Plugins can use Python packages the bundle doesn't have. They declare
+them in `plugInfo.json`, next to `Types`: `"PythonRequires": ["numpy>=2"]`.
+A plugin whose packages aren't installed waits. At launch Vela offers to
+install them, and Plugins → Install Packages for Plugins does it later.
+Vela always asks first, listing the packages and where they come from.
+Then the bundled pip installs them for your user account into
+`~/Library/Application Support/Vela/Python/3.11` (Plugins → Show Python
+Packages Folder), with a progress window and Cancel, and the plugin loads.
+Scripts can ask too: `vela.install_packages('requests')` (the
+`install_python_packages` action).
+
+- **Search order:** Python searches USD's `pxr` first, then the bundle's
+  own packages, then yours. The bundle's packages can't be replaced:
+  asking for another PyObjC version fails. Packages that bring a second
+  USD (`usd-core`) are refused.
+- **One shared set:** every install resolves all plugins' requirements
+  together, so a request that conflicts with what a plugin needs fails
+  rather than breaking the plugin.
+- **Your pip configuration still applies:** its index, certificates and
+  proxy.
+- **Reset Python Packages** deletes the installed packages and installs
+  again what plugins and scripts asked for. The folder is per Python
+  version, so a Vela with a newer Python starts afresh.
+
+Claude can write plugins: ask the Claude panel for a command, menu item
+or tool window that should stay in Vela. It writes the package into the
+Plugins folder, reloads plugins and tries the command. Writing files in
+that folder follows the panel's edit mode, and writing anywhere else
+always asks. [examples/plugins/scene_stats](examples/plugins/scene_stats)
+is a tool window Claude wrote from a one-line request; copy it into the
+Plugins folder to try it.
 
 ## Command line
 

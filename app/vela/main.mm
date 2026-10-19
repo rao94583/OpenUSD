@@ -11,6 +11,9 @@
 #import "form_sheet.h"
 #import "menus.h"
 #import "claude_panel.h"
+#import "packages_ui.h"
+#import "plugins_ui.h"
+#import "image_generation.h"
 #import "palette.h"
 #import "scripting.h"
 #import "settings_window.h"
@@ -88,6 +91,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     [NSApp activateIgnoringOtherApps:YES];
     [VelaPaletteController installShortcut];
     VelaStartScripting();
+    VelaStartPlugins();
     if (_launchFile) {
         [NSDocumentController.sharedDocumentController openDocumentWithContentsOfURL:_launchFile
             display:YES completionHandler:^(NSDocument *document, BOOL, NSError *error) {
@@ -494,6 +498,9 @@ int main(int argc, const char *argv[]) {
     @autoreleasepool {
         // App actions the core can't provide, before menus and --describe-actions.
         VelaRegisterClaudeActions();
+        VelaRegisterPluginAppActions();
+        VelaRegisterPackageActions();
+        VelaRegisterImageActions();
         NSString *runtime = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"Runtime/usd"];
         PlugRegistry::GetInstance().RegisterPlugins(
             [[runtime stringByAppendingPathComponent:@"lib/usd/plugInfo.json"] UTF8String]);
@@ -586,6 +593,7 @@ int main(int argc, const char *argv[]) {
             return std::find(args.begin(), args.end(), flag) != args.end();
         };
         LoadSettings(has("--clearsettings"), has("--defaultsettings"));
+        VelaInitializeImages(has("--defaultsettings"));
         vela::LaunchOptions launch =
             vela::DefaultLaunchOptions(vela::AppSettingsStore::Get().GetSettings());
         std::string error;

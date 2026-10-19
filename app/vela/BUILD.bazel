@@ -60,11 +60,14 @@ cc_library(
         "core/file_actions.cpp",
         "core/free_camera.cpp",
         "core/hud.cpp",
+        "core/image_jobs.cpp",
         "core/launch_options.cpp",
         "core/log.cpp",
         "core/mcp.cpp",
         "core/mcp_socket.cpp",
+        "core/packages.cpp",
         "core/palette.cpp",
+        "core/plugins.cpp",
         "core/python.cpp",
         "core/session.cpp",
         "core/standard_actions.cpp",
@@ -87,12 +90,15 @@ cc_library(
         "core/export_framing.h",
         "core/free_camera.h",
         "core/hud.h",
+        "core/image_jobs.h",
         "core/launch_options.h",
         "core/log.h",
         "core/mcp.h",
         "core/mcp_path.h",
         "core/mcp_socket.h",
+        "core/packages.h",
         "core/palette.h",
+        "core/plugins.h",
         "core/python.h",
         "core/session.h",
         "core/undo.h",
@@ -139,10 +145,14 @@ cc_test(
     "export_framing_test",
     "file_actions_test",
     "hud_test",
+    "image_jobs_test",
     "launch_options_test",
     "log_test",
     "mcp_test",
+    "material_invalidation_test",
+    "packages_test",
     "palette_test",
+    "plugins_test",
     "document_test",
     "undo_test",
     "validation_test",
@@ -169,10 +179,17 @@ objc_library(
         "log_view.h",
         "log_view.mm",
         "main.mm",
+        "image_generation.h",
+        "image_generation.mm",
+
         "menus.h",
         "menus.mm",
+        "packages_ui.h",
+        "packages_ui.mm",
         "palette.h",
         "palette.mm",
+        "plugins_ui.h",
+        "plugins_ui.mm",
         "python_console.h",
         "python_console.mm",
         "scripting.h",
@@ -194,7 +211,7 @@ objc_library(
         "viewport/viewport_view.h",
         "viewport/viewport_view.mm",
     ],
-    copts = ["-fobjc-arc"],
+    copts = ["-fobjc-arc", "-std=c++20"],
     sdk_frameworks = [
         "AVFoundation",
         "AppKit",
@@ -202,10 +219,17 @@ objc_library(
         "CoreVideo",
         "Metal",
         "QuartzCore",
+        "Security",
+        "ImageIO",
         "UniformTypeIdentifiers",
+    ],
+    textual_hdrs = [
+        ":image_instructions",
+        ":plugin_instructions",
     ],
     deps = [
         ":core",
+        ":image_provider",
         ":usd_headers",
         ":usd_shared",
         "@rules_python//python/cc:current_py_cc_libs",
@@ -214,7 +238,15 @@ objc_library(
 
 py_binary(name = "copy_runtime", srcs = ["copy_runtime.py"])
 py_binary(name = "sign_runtime", srcs = ["sign_runtime.py"])
-vela_runtime(name = "runtime", usd = ["//bazel/install:python"])
+vela_runtime(
+    name = "runtime",
+    # PyObjC, for plugins that make AppKit UI.
+    site_packages = [
+        "@pypi//pyobjc_core:pkg",
+        "@pypi//pyobjc_framework_cocoa:pkg",
+    ],
+    usd = ["//bazel/install:python"],
+)
 
 # vela-mcp, in Contents/MacOS: bridges an MCP client's stdio to the app's
 # socket. It links nothing of USD's.
@@ -375,6 +407,87 @@ py_test(
     name = "claude_ui_test",
     srcs = ["test_claude.py"],
     main = "test_claude.py",
+    args = ["$(rootpath :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
+)
+
+genrule(
+    name = "image_instructions",
+    srcs = ["resources/image_generation.md"],
+    outs = ["resources/image_generation.inc"],
+    cmd = "(echo 'R\"vela_image('; cat $<; echo ')vela_image\"') > $@",
+)
+
+# How Claude writes plugins, compiled into the Claude panel's prompt.
+genrule(
+    name = "plugin_instructions",
+    srcs = ["resources/plugins.md"],
+    outs = ["resources/plugins.inc"],
+    cmd = "(echo 'R\"vela_plugins('; cat $<; echo ')vela_plugins\"') > $@",
+)
+
+objc_library(
+    name = "image_provider",
+    srcs = ["image_provider.mm"],
+    hdrs = ["image_provider.h"],
+    copts = ["-fobjc-arc", "-std=c++20"],
+    sdk_frameworks = ["Foundation", "ImageIO", "Security", "CoreGraphics", "UniformTypeIdentifiers"],
+    deps = [":core"],
+)
+
+objc_library(
+    name = "image_provider_fixtures",
+    srcs = ["image_provider_test.mm"],
+    textual_hdrs = ["core/test_support.h"],
+    copts = ["-fobjc-arc", "-std=c++20"],
+    deps = [":image_provider", ":core"],
+)
+cc_test(
+    name = "image_provider_test",
+    srcs = ["image_provider_test_main.cpp"],
+    deps = [":image_provider_fixtures"],
+)
+
+py_test(
+    name = "image_generation_ui_test",
+    srcs = ["test_image_generation.py"],
+    main = "test_image_generation.py",
+    args = ["$(rootpath :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
+)
+
+cc_test(
+    name = "embree_invalid_ray_test",
+    srcs = ["embree_invalid_ray_test.cpp"],
+    deps = ["//vendor/embree"],
+)
+
+py_test(
+    name = "material_resync_ui_test",
+    srcs = ["test_material_resync.py"],
+    main = "test_material_resync.py",
+    args = ["$(rootpath :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
+)
+
+# Plugins, as usdview has them, with PyObjC UI.
+py_test(
+    name = "plugins_ui_test",
+    srcs = ["test_plugins.py"],
+    main = "test_plugins.py",
+    args = ["$(rootpath :archive)"],
+    data = [":archive"],
+    tags = ["requires-darwin"],
+)
+
+# Python packages installed for plugins and scripts, from a local index.
+py_test(
+    name = "packages_ui_test",
+    srcs = ["test_packages.py"],
+    main = "test_packages.py",
     args = ["$(rootpath :archive)"],
     data = [":archive"],
     tags = ["requires-darwin"],

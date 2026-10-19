@@ -112,6 +112,16 @@ ActionRegistry &ActionRegistry::Get() {
     return *registry;
 }
 
+bool ActionRegistry::Unregister(const std::string &name) {
+    for (auto it = _actions.begin(); it != _actions.end(); ++it) {
+        if (it->name == name) {
+            _actions.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
 void ActionRegistry::Register(Action action) {
     if (!action.run) {
         TF_CODING_ERROR("Action '%s' has no handler", action.name.c_str());
@@ -168,11 +178,13 @@ ActionResult ActionRegistry::Run(Document &document, const std::string &name,
     if (!IsEnabled(*action, document)) {
         return ActionResult::Error(name + " is not available now");
     }
+    // A copy: the handler may change the registry (reloading plugins).
+    const auto run = action->run;
     if (action->undoable) {
         UndoBlock block(document.GetUndoStack(), action->title);
-        return action->run(document, params);
+        return run(document, params);
     }
-    return action->run(document, params);
+    return run(document, params);
 }
 
 JsValue ActionRegistry::Describe() const {

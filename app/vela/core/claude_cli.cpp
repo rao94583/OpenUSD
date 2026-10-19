@@ -138,7 +138,9 @@ std::vector<std::string> Arguments(const LaunchOptions &options) {
         "--permission-prompt-tool", "stdio",
         // Only the app's tools and reading files: the scene is edited
         // through Vela, where every edit can be undone.
-        "--tools", "Read,Glob,Grep",
+        // Writing is for plugins: Decide asks for anything outside their
+        // folder.
+        "--tools", "Read,Glob,Grep,Write,Edit",
         "--strict-mcp-config",
     };
     const JsObject server{
@@ -160,11 +162,33 @@ std::vector<std::string> Arguments(const LaunchOptions &options) {
         args.push_back("--model");
         args.push_back(options.model);
     }
+    for (const std::string &directory : options.addDirectories) {
+        args.push_back("--add-dir");
+        args.push_back(directory);
+    }
+    if (!options.effort.empty()) {
+        args.push_back("--effort");
+        args.push_back(options.effort);
+    }
     if (!options.systemPrompt.empty()) {
         args.push_back("--append-system-prompt");
         args.push_back(options.systemPrompt);
     }
     return args;
+}
+
+const std::vector<Choice> &ModelChoices() {
+    static const std::vector<Choice> choices = {
+        {"", "Default model"}, {"opus", "Opus"}, {"sonnet", "Sonnet"},
+        {"haiku", "Haiku"}, {"fable", "Fable"}};
+    return choices;
+}
+
+const std::vector<Choice> &EffortChoices() {
+    static const std::vector<Choice> choices = {
+        {"", "Default effort"}, {"low", "Low effort"}, {"medium", "Medium effort"},
+        {"high", "High effort"}, {"xhigh", "Extra high effort"}, {"max", "Max effort"}};
+    return choices;
 }
 
 std::string InitializeRequest(const std::string &requestId) {
@@ -322,15 +346,39 @@ std::vector<Event> Parse(const std::string &line) {
     return events;
 }
 
+bool IsInside(const std::string &path, const std::string &folder) {
+    if (folder.empty() || path.empty() || path[0] != '/') return false;
+    if (path.find("/../") != std::string::npos || path.find("/./") != std::string::npos ||
+        (path.size() >= 3 && path.compare(path.size() - 3, 3, "/..") == 0)) {
+        return false;
+    }
+    std::string prefix = folder;
+    while (prefix.size() > 1 && prefix.back() == '/') prefix.pop_back();
+    return path.size() > prefix.size() + 1 && path.compare(0, prefix.size(), prefix) == 0 &&
+        path[prefix.size()] == '/';
+}
+
 Decision Decide(const std::string &toolName, const JsObject &input, bool asksBeforeEdits,
-                const std::function<bool(const std::string &action)> &isQuery) {
+                const std::function<bool(const std::string &action)> &isQuery,
+                const std::string &writableFolder) {
     static const std::set<std::string> reading = {"Read", "Glob", "Grep"};
     if (reading.count(toolName)) return Decision::Allow;
+    static const std::set<std::string> writing = {"Write", "Edit", "MultiEdit"};
+    if (writing.count(toolName)) {
+        if (!IsInside(String(input, "file_path"), writableFolder)) return Decision::Ask;
+        return asksBeforeEdits ? Decision::Ask : Decision::Allow;
+    }
     const std::string tool = AppTool(toolName);
     if (tool.empty()) return Decision::Ask;
     static const std::set<std::string> readOnly = {
         "get_app_state", "list_actions", "query_python", "viewport_screenshot"};
     if (readOnly.count(tool)) return Decision::Allow;
+    // Image submission only creates a job; the service enforces its own
+    // paid-request/upload policy for every caller.
+    static const std::set<std::string> imageTools = {
+        "list_image_models", "capture_image_reference", "generate_image",
+        "get_image_job", "cancel_image_job", "list_generated_images", "get_generated_image"};
+    if (imageTools.count(tool)) return Decision::Allow;
     if (tool == "ui_action") {
         const std::string action = String(input, "action");
         if (isQuery && isQuery(action)) return Decision::Allow;

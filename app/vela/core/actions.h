@@ -101,6 +101,9 @@ struct Action {
     // Returns information without changing anything (e.g. get_settings):
     // the palette leaves it out, and tools can mark it read-only.
     bool query = false;
+    // Asks the user itself before acting (e.g. installing packages), so
+    // Claude's panel needn't ask first.
+    bool asksUser = false;
 
     // Edits made by the handler become one undo step named after the
     // title. Actions that only change the view leave undo alone.
@@ -120,6 +123,9 @@ public:
 
     // Adds an action, replacing one with the same name.
     void Register(Action action);
+    // Removes an action, e.g. a plugin's on reload; false if none has the
+    // name.
+    bool Unregister(const std::string &name);
     const Action *Find(const std::string &name) const;
     // In registration order, which menus follow.
     const std::vector<Action> &GetActions() const { return _actions; }

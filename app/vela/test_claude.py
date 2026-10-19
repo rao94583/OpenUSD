@@ -18,7 +18,7 @@ import tempfile
 import time
 
 FAKE = r'''#!PYTHON
-import json, os, subprocess, sys
+import json, os, select, subprocess, sys, time
 LOG = os.environ['FAKE_CLAUDE_LOG']
 args = sys.argv[1:]
 if args == ['--version']:
@@ -153,6 +153,32 @@ while True:
         tool('run_python', {'code': 'vela.stage.DefinePrim("/Denied")'})
         say('You said no.')
         result('ok')
+    elif request.startswith('generate an image'):
+        models = tool('list_image_models', {})
+        reference = tool('capture_image_reference', {'width': 128, 'height': 128})['structuredContent']['artifact_id']
+        job = tool('generate_image', {'request_id': 'claude-image', 'prompt': 'Sunset concept', 'reference_ids': [reference]})['structuredContent']['job_id']
+        record('image_job', job)
+        say('The image is awaiting approval in Generated Images.')
+        result('ok')
+    elif request.startswith('slow'):
+        # Streams for a while, ending early on an interrupt.
+        stopped = False
+        for i in range(100):
+            ready, _, _ = select.select([sys.stdin], [], [], 0.1)
+            if ready:
+                message = read()
+                if message['type'] == 'control_request':
+                    record('control', message['request']['subtype'])
+                    emit({'type': 'control_response', 'response': {'subtype': 'success',
+                          'request_id': message['request_id'], 'response': {}}})
+                    if message['request']['subtype'] == 'interrupt':
+                        stopped = True
+                        break
+            emit({'type': 'stream_event', 'event': {'type': 'content_block_delta', 'index': 0,
+                  'delta': {'type': 'text_delta', 'text': 'word '}},
+                  'parent_tool_use_id': None, 'session_id': session})
+        say('word ' * 10)
+        result('Interrupted' if stopped else 'ok', error=stopped)
     elif request.startswith('crash'):
         sys.stderr.write('Not logged in. Please run /login\n')
         sys.exit(1)
@@ -185,8 +211,12 @@ def main():
                          '    def Cube "Box" {\n    }\n'
                          '}\n')
         socket = socket_dir / 'mcp.sock'
-        env = {**os.environ, 'VELA_MCP_SOCKET': str(socket), 'VELA_CLAUDE': str(fake),
-               'VELA_CLAUDE_HISTORY': str(history), 'FAKE_CLAUDE_LOG': str(log)}
+        fixture = temp / 'fixture.png'
+        import base64
+        fixture.write_bytes(base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aI1sAAAAASUVORK5CYII='))
+        env = {**os.environ, 'VELA_IMAGE_FIXTURE': str(fixture), 'VELA_IMAGE_LIBRARY': str(temp / 'images'), 'VELA_MCP_SOCKET' : str(socket), 'VELA_CLAUDE': str(fake),
+               'VELA_CLAUDE_HISTORY': str(history),
+               'VELA_PLUGINS_FOLDER': str(temp / 'Plugins'), 'FAKE_CLAUDE_LOG': str(log)}
         app = subprocess.Popen([vela, scene, '--defaultsettings'], env=env,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         deadline = time.time() + 120
@@ -254,12 +284,17 @@ def main():
         assert after == ('(1.0, 1.0, 0.8333)', '(0.6, 0.5, 0.4167)'), after
         argv = records('argv')[0]
         for flag, value in [('--input-format', 'stream-json'), ('--output-format', 'stream-json'),
-                            ('--permission-prompt-tool', 'stdio'), ('--tools', 'Read,Glob,Grep')]:
+                            ('--permission-prompt-tool', 'stdio'), ('--tools', 'Read,Glob,Grep,Write,Edit')]:
             assert argv[argv.index(flag) + 1] == value, (flag, argv)
         assert '--strict-mcp-config' in argv and '--session-id' in argv, argv
         session = argv[argv.index('--session-id') + 1]
         assert records('control')[0] == 'initialize'
-        assert os.path.samefile(records('cwd')[0], scene_dir), records('cwd')
+        # The CLI runs in Vela's workspace and may read the scene's folder.
+        assert os.path.samefile(records('cwd')[0], history / 'Workspace'), records('cwd')
+        added = [argv[i + 1] for i, a in enumerate(argv) if a == '--add-dir']
+        assert any(os.path.samefile(d, scene_dir) for d in added), added
+        # And the plugins folder, the one place Claude writes files.
+        assert any(os.path.samefile(d, temp / 'Plugins') for d in added), added
         user = records('user')[0]['text']
         assert user.startswith('<vela-context>') and 'Selection: /Room/Box' in user, user
         assert 'room.usda' in user and user.endswith(prompt), user
@@ -288,6 +323,7 @@ def main():
         # The history has the conversation, for the panel's menu.
         lines = [json.loads(l) for l in logged.read_text().splitlines()]
         assert lines[0]['kind'] == 'conversation' and lines[0]['title'] == prompt, lines[0]
+        assert os.path.samefile(lines[0]['directory'], history / 'Workspace'), lines[0]
         assert os.path.samefile(lines[0]['document'], scene), lines[0]
         kinds = [l['kind'] for l in lines[1:]]
         assert kinds[:2] == ['user', 'assistant'], kinds
@@ -295,6 +331,16 @@ def main():
         shot = [l for l in lines if l['kind'] == 'tool_result' and l['images']]
         assert len(shot) == 1, 'the screenshot was not kept'
         assert any(l['kind'] == 'note' and 'Changed the scene' in l['text'] for l in lines), kinds
+
+        # Stop, as the panel's Stop button does: the CLI is interrupted and
+        # the request ends.
+        ask('slow story')
+        wait(lambda: len(records('user')) == 3, 'the slow request')
+        time.sleep(0.5)
+        result = call('ui_action', action='stop_claude')
+        assert not result['isError'], result
+        wait(lambda: 'interrupt' in records('control'), 'the interrupt')
+        wait(lambda: '"text":"Stopped."' in logged.read_text(), 'Stopped in the history')
 
         # The CLI stopping is reported, and the next request resumes the
         # conversation in a new CLI.
@@ -304,8 +350,22 @@ def main():
         wait(lambda: len(records('argv')) == 2, 'a new CLI')
         argv = records('argv')[1]
         assert argv[argv.index('--resume') + 1] == session, argv
-        wait(lambda: len(records('user')) == 4, 'the resumed request')
+        wait(lambda: len(records('user')) == 5, 'the resumed request')
+        assert os.path.samefile(records('cwd')[-1], history / 'Workspace'), records('cwd')
 
+        # The embedded agent discovers providers and submits a reference edit.
+        # This creates a native pending approval, without HTTP or a key.
+        ask('generate an image of this scene at sunset')
+        wait(lambda: len(records('image_job')) == 1, 'the image job')
+        job = records('image_job')[0]
+        image_state = call('get_image_job', job_id=job)['structuredContent']
+        assert image_state['state'] == 'awaiting_approval', image_state
+        assert image_state['reference_ids'], image_state
+        assert state()['undo'] == 'Claude: ' + prompt, state()
+        assert 'Image generation in Vela' in records('argv')[0][records('argv')[0].index('--append-system-prompt') + 1]
+        assert [p['tool'] for p in records('permission')[-3:]] == ['list_image_models', 'capture_image_reference', 'generate_image']
+        assert all(p['behavior'] == 'allow' for p in records('permission')[-3:])
+        call('cancel_image_job', job_id=job)
         print('Claude panel checks passed')
     finally:
         if helper:

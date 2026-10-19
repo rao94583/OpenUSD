@@ -700,7 +700,8 @@ void RegisterViewActions(ActionRegistry &r) {
         .name = "set_settings", .title = "Change Settings",
         .description = "Change the app's settings: an object with any of the keys "
                        "get_settings returns (a partial \"view\" object changes "
-                       "only the view defaults it names). Unknown keys are errors.",
+                       "only the view defaults it names). Image generation policy is changed "
+                       "only in its native Settings window. Unknown keys are errors.",
         .parameters = ParameterSchema(R"({
             "properties": {"settings": {"type": "object"}},
             "required": ["settings"]
@@ -710,6 +711,7 @@ void RegisterViewActions(ActionRegistry &r) {
             const JsObject known = ToJson(AppSettings());
             for (const auto &[key, value] : given) {
                 if (!known.count(key)) return ActionResult::Error("Unknown setting: " + key);
+                if (key.rfind("image",0) == 0) return ActionResult::Error("Change image generation policy in its native Settings window");
                 if (key == "view") {
                     if (!value.IsObject()) return ActionResult::Error("view must be an object");
                     const JsObject knownView = known.at("view").GetJsObject();

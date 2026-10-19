@@ -1,5 +1,6 @@
 #include "session.h"
 #include "document.h"
+#include "image_jobs.h"
 
 #include "pxr/base/gf/matrix4d.h"
 #include "pxr/usd/usdUtils/stageCache.h"
@@ -20,6 +21,7 @@ int Session::Add(SessionDocument entry) {
             UsdUtilsStageCache::Get().Insert(entry.document->GetStage()).ToLongInt();
     }
     _documents.push_back(std::move(entry));
+    if (added) added(_documents.back());
     return _documents.back().id;
 }
 
@@ -30,6 +32,8 @@ void Session::Remove(int id) {
     if (it->stageCacheId) {
         UsdUtilsStageCache::Get().Erase(UsdStageCache::Id::FromLongInt(it->stageCacheId));
     }
+    images::Service::Get().Close(id);
+    if (removed) removed(id);
     _documents.erase(it);
     if (_front == id) _front = 0;
 }

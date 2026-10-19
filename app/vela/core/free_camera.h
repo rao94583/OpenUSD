@@ -7,10 +7,15 @@
 #include "pxr/base/gf/camera.h"
 #include "pxr/base/gf/range1f.h"
 #include "pxr/base/gf/vec3d.h"
+#include <string>
 
 namespace vela {
 
 PXR_NAMESPACE_USING_DIRECTIVE
+
+// Empty for a renderable camera; otherwise a diagnostic suitable for capture
+// tool errors. Embree has a smaller coordinate domain than finite floats.
+std::string CameraRenderError(const GfCamera &camera, bool embree = false);
 
 // Bits of NSEvent.pressedMouseButtons.
 enum MouseButton : unsigned {

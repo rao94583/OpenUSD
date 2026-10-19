@@ -5,6 +5,7 @@
 
 #include "app/vela/core/app_settings.h"
 #include "app/vela/core/mcp_socket.h"
+#include "app/vela/core/packages.h"
 #include "app/vela/core/python.h"
 #include "app/vela/core/session.h"
 
@@ -88,8 +89,12 @@ BOOL VelaStartPython(void) {
     NSString *runtime = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"Runtime"];
     std::string error;
     if (!vela::InitializePython([runtime stringByAppendingPathComponent:@"python"].UTF8String,
-                                {[runtime stringByAppendingPathComponent:@"usd/lib/python"].UTF8String},
-                                &error)) {
+                                {[runtime stringByAppendingPathComponent:@"usd/lib/python"].UTF8String,
+                                 [runtime stringByAppendingPathComponent:@"site-packages"].UTF8String},
+                                &error,
+                                vela::packages::SitePackages(
+                                    vela::packages::BaseFolder(vela::PythonVersion()),
+                                    vela::PythonVersion()))) {
         NSLog(@"Python: %s", error.c_str());
         return NO;
     }

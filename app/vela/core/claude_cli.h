@@ -46,6 +46,9 @@ struct LaunchOptions {
     std::string sessionId;  // a new conversation's id (a UUID)
     std::string resume;     // or the conversation to continue
     std::string model;      // "" for the CLI's default
+    std::string effort;     // "" for the CLI's default
+    // Folders Claude may read besides its working folder (the scene's).
+    std::vector<std::string> addDirectories;
     // vela-mcp, and the socket it should connect to.
     std::string mcpHelper;
     std::string mcpSocket;
@@ -53,6 +56,15 @@ struct LaunchOptions {
 };
 // The command line, executable first.
 std::vector<std::string> Arguments(const LaunchOptions &options);
+
+// The choices the panel and Settings offer, as (value, title); the first
+// is the CLI's default ("").
+struct Choice {
+    const char *value;
+    const char *title;
+};
+const std::vector<Choice> &ModelChoices();
+const std::vector<Choice> &EffortChoices();
 
 // Messages to the CLI, one line each (without the newline).
 std::string InitializeRequest(const std::string &requestId);
@@ -95,10 +107,15 @@ std::vector<Event> Parse(const std::string &line);
 // Approvals: what the panel does with a can_use_tool request.
 enum class Decision { Allow, Ask };
 // Tools that only read run freely: the app's read-only tools, ui_action
-// with a query action (isQuery says which), and reading files. Edits ask
-// only when asksBeforeEdits; anything else always asks.
+// with a query action or one that asks the user itself (isQuery says
+// which), and reading files. Edits, and
+// writing files in writableFolder (plugins), ask only when
+// asksBeforeEdits; anything else (writing elsewhere) always asks.
 Decision Decide(const std::string &toolName, const JsObject &input, bool asksBeforeEdits,
-                const std::function<bool(const std::string &action)> &isQuery);
+                const std::function<bool(const std::string &action)> &isQuery,
+                const std::string &writableFolder = std::string());
+// Whether path is inside folder: absolute, with no "..".
+bool IsInside(const std::string &path, const std::string &folder);
 
 // A short title for a tool call, e.g. "Run Python", and a one-line summary
 // of its input, e.g. the code's first line or the action's name.

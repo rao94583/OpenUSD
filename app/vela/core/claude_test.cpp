@@ -40,6 +40,8 @@ void TestArguments() {
     options.mcpHelper = "/App/vela-mcp";
     options.mcpSocket = "/tmp/s.sock";
     options.model = "opus";
+    options.effort = "high";
+    options.addDirectories = {"/scenes/room"};
     std::vector<std::string> args = Arguments(options);
     auto after = [&](const std::string &flag) {
         for (size_t i = 0; i + 1 < args.size(); ++i) if (args[i] == flag) return args[i + 1];
@@ -49,17 +51,20 @@ void TestArguments() {
     CHECK(after("--input-format") == "stream-json" && after("--output-format") == "stream-json");
     CHECK(after("--permission-prompt-tool") == "stdio");
     CHECK(after("--session-id") == "abc" && after("--resume") == "<missing>");
-    CHECK(after("--model") == "opus");
-    CHECK(after("--tools") == "Read,Glob,Grep");
+    CHECK(after("--model") == "opus" && after("--effort") == "high");
+    CHECK(after("--add-dir") == "/scenes/room");
+    CHECK(ModelChoices()[0].value == std::string() && EffortChoices().size() == 6);
+    CHECK(after("--tools") == "Read,Glob,Grep,Write,Edit");
     const JsObject config = Json(after("--mcp-config"));
     const JsObject &server = config.at("mcpServers").GetJsObject().at("vela").GetJsObject();
     CHECK(server.at("command").GetString() == "/App/vela-mcp");
     CHECK(server.at("env").GetJsObject().at("VELA_MCP_SOCKET").GetString() == "/tmp/s.sock");
     options.resume = "old";
     options.model.clear();
+    options.effort.clear();
     args = Arguments(options);
     CHECK(after("--resume") == "old" && after("--session-id") == "<missing>");
-    CHECK(after("--model") == "<missing>");
+    CHECK(after("--model") == "<missing>" && after("--effort") == "<missing>");
 }
 
 void TestMessages() {
@@ -149,6 +154,21 @@ void TestDecisions() {
         CHECK(Decide(tool, none, false, isQuery) == Decision::Allow);
         CHECK(Decide(tool, none, true, isQuery) == Decision::Ask);
     }
+    for (const char *tool : {"mcp__vela__generate_image", "mcp__vela__capture_image_reference",
+                             "mcp__vela__get_image_job", "mcp__vela__get_generated_image"}) {
+        CHECK(Decide(tool, none, true, isQuery) == Decision::Allow);
+    }
+    // Writing files: plugins only, as an edit; anywhere else asks.
+    const std::string plugins = "/Users/x/Library/Application Support/Vela/Plugins";
+    const JsObject inside = Json(R"j({"file_path": "/Users/x/Library/Application Support/Vela/Plugins/tools/__init__.py"})j");
+    const JsObject outside = Json(R"j({"file_path": "/Users/x/.zshrc"})j");
+    const JsObject escape = Json(R"j({"file_path": "/Users/x/Library/Application Support/Vela/Plugins/../../evil"})j");
+    CHECK(Decide("Write", inside, false, isQuery, plugins) == Decision::Allow);
+    CHECK(Decide("Edit", inside, true, isQuery, plugins) == Decision::Ask);
+    CHECK(Decide("Write", outside, false, isQuery, plugins) == Decision::Ask);
+    CHECK(Decide("Write", escape, false, isQuery, plugins) == Decision::Ask);
+    CHECK(Decide("Write", inside, false, isQuery) == Decision::Ask);  // no folder
+    CHECK(IsInside("/a/b/c", "/a/b/") && !IsInside("/a/bc", "/a/b") && !IsInside("/a/b", "/a/b"));
     const JsObject edit = Json(R"j({"action": "set_visibility"})j");
     CHECK(Decide("mcp__vela__ui_action", edit, false, isQuery) == Decision::Allow);
     CHECK(Decide("mcp__vela__ui_action", edit, true, isQuery) == Decision::Ask);
@@ -235,8 +255,8 @@ void TestHistory() {
     std::filesystem::remove_all(folder);
     const std::string dir = (folder / "Claude").string();
     CHECK(ListConversations(dir).empty());
-    Conversation a{"aaaa-1", "Make the lights warmer", "/scenes/room.usda", 100.0};
-    Conversation b{"bbbb-2", "Which prims have no material?", "/scenes/other.usda", 200.0};
+    Conversation a{"aaaa-1", "Make the lights warmer", "/scenes/room.usda", "/vela/Workspace", 100.0};
+    Conversation b{"bbbb-2", "Which prims have no material?", "/scenes/other.usda", "", 200.0};
     CHECK(CreateConversation(dir, a));
     CHECK(AppendEntry(dir, a.id, JsObject{{"kind", JsValue("user")}, {"text", JsValue("hi\nthere")}}));
     CHECK(AppendEntry(dir, a.id, JsObject{{"kind", JsValue("assistant")}, {"text", JsValue("done")}}));
@@ -248,10 +268,11 @@ void TestHistory() {
     std::vector<Conversation> all = ListConversations(dir);
     CHECK(all.size() == 2 && all[0].id == "bbbb-2" && all[1].title == "Make the lights warmer");
     CHECK(all[1].document == "/scenes/room.usda" && all[1].created == 100.0 && all[1].updated > 0);
+    CHECK(all[1].directory == "/vela/Workspace" && all[0].directory.empty());
     all = ListConversations(dir, "/scenes/room.usda");
     CHECK(all.size() == 1 && all[0].id == "aaaa-1");
     // Ids can't name other files.
-    CHECK(!CreateConversation(dir, Conversation{"../escape", "", "", 0}));
+    CHECK(!CreateConversation(dir, Conversation{"../escape", "", "", "", 0}));
     CHECK(!AppendEntry(dir, "../escape", JsObject()));
     CHECK(LoadEntries(dir, "nope").empty());
     CHECK(DeleteConversation(dir, a.id) && ListConversations(dir).size() == 1);

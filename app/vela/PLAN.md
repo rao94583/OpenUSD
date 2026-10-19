@@ -199,6 +199,14 @@ C++ core with unit tests. The UI only translates input events.
 
 ### Skills
 
+Image generation for the embedded Claude is described in
+[IMAGE_GENERATION.md](IMAGE_GENERATION.md): Vela-owned asynchronous image
+jobs with pluggable providers (GPT Image first), exposed through MCP, with
+bundled instructions, native previews and
+separate optional USD texture application. The initial implementation includes
+OpenAI and Gemini adapters, Keychain setup, native job/preview controls and
+MCP tools; see the document's implementation record for validation and limits.
+
 - **`usd-python`**: curated idioms and pitfalls (change blocks, edit
   targets, UsdShade binding, UsdLux, variants, time samples), plus a schema
   reference generated from this build's schema registry.
@@ -666,6 +674,142 @@ Left for later:
   with unusual setups.
 - Screenshots are kept in the history as base64, so conversations with many
   screenshots make large files.
+
+## Claude panel, more like the editor integrations (2026-10-18)
+
+The panel now behaves like Claude Code's VS Code panel:
+
+- **Header:** a History button opens a popover with this document's
+  conversations, a search field, relative times, Open and Delete. The
+  conversation's title, a spinner with a Stop button while Claude works,
+  and "+" for a new conversation complete it. Switching conversations
+  while Claude works stops the request first.
+- **Queueing:** typing while Claude works queues the message (shown
+  dimmed), which sends when the request ends. Stop returns it to the
+  input.
+- **Pickers under the input:** model, effort (`--effort`, new
+  `AppSettings::claudeEffort`) and edit mode, stored in the settings and
+  shared with Settings. A model or effort change ends the CLI before the
+  next message, which resumes the conversation with the new flags
+  (checked: `--resume <id> --effort high`).
+- `stop_claude` action. `claude_ui_test` covers it with a slow reply from
+  the stand-in CLI that honors interrupts.
+- **One working folder:** the CLI used to run in the scene's folder, so
+  Claude Code filed each session under that folder's project (and loaded
+  any `CLAUDE.md` above the scene, such as this repository's). It now
+  runs in `~/Library/Application Support/Vela/Claude/Workspace` with
+  `--add-dir` for the scene's folder. Each conversation's record keeps
+  that folder (`directory`), because resuming needs the same one;
+  conversations from before resume in their document's folder. Claude
+  Code's own transcripts stay under `~/.claude/projects/`: moving them
+  would take `CLAUDE_CONFIG_DIR`, which also moves the user's login and
+  settings.
+
+## Plugins (2026-10-18)
+
+Plugins load as usdview's do (`pxr/usdImaging/usdviewq/plugin.py`), with
+the same API under Vela's names: `vela.PluginContainer`
+(`registerPlugins`, `configureView`, `deferredImport`),
+`registerCommandPlugin`, and `findOrCreateMenu`, `findOrCreateSubmenu`,
+`addItem` (Qt-style shortcuts: Ctrl is Command) and `addSeparator`.
+
+- **Discovery:** USD's plugin registry, in
+  `~/Library/Application Support/Vela/Plugins` (`VELA_PLUGINS_FOLDER` in
+  tests) and on `PXR_PLUGINPATH_NAME`. Each plugin's parent folder goes on
+  `sys.path`, because Vela's isolated Python ignores PYTHONPATH. Plugins
+  load after launch, and only if a plugin declares a container
+  (`HasPlugins`, without starting Python), so launches without plugins
+  don't import pxr. Python plugins are imported with `importlib` before
+  `PlugPlugin::Load`, so a failure reports Python's traceback rather than
+  "Load ... failed".
+- **Commands become actions** (`core/plugins.*`): undoable, in their menu
+  for the palette, and runnable by `vela.run`, MCP and Claude. Their output
+  goes to the Log. `ActionRegistry::Unregister` removes them on reload.
+  `ActionRegistry::Run` now calls a copy of the handler, because
+  `reload_plugins` changes the registry while it runs.
+- **Menus** (`VelaInstallPluginMenus`): into menus named by title, or new
+  ones before Window; plugin items are tagged and replaced on reload.
+  Plugins → Reload Plugins (`reload_plugins`, which returns plugins,
+  commands, menus and errors) and Show Plugins Folder.
+- **Reloading:** new plugins are registered, changed modules reloaded (with
+  `Tf.Type.Define` tolerating types that already exist), and removed ones
+  dropped.
+- **PyObjC** 12.2.2 (`pyobjc-core`, `pyobjc-framework-Cocoa`) from PyPI,
+  pinned by hash in `bazel/requirements_lock.txt` and copied into
+  `Runtime/site-packages`. `vela.Target(callback)` is one NSObject
+  subclass for every plugin's targets.
+- **Claude:** the CLI gets `Write` and `Edit` plus `--add-dir` for the
+  Plugins folder, and a guide (`resources/plugins.md`) in its prompt.
+  Writes inside the Plugins folder follow the edit mode; writes anywhere
+  else ask (`claude::Decide`, `IsInside`).
+  Checked with the real CLI: asked for a Scene Stats tool window, Claude
+  wrote the package, reloaded with no errors, opened the window and checked
+  its contents in 26 s (now `examples/plugins/scene_stats`).
+- Tests: `plugins_test` (shortcuts, reports, unregistering) and
+  `plugins_ui_test`. The UI test runs a launched Vela with plugins in both
+  places and checks actions and undo, Vela's and new menus, a PyObjC panel
+  whose button works through `vela.Target`, reloading changed, new, broken
+  and removed plugins, and tracebacks.
+- Not done: running usdview plugins unchanged (they import
+  `pxr.Usdviewq` and Qt). Edits from UI callbacks are separate implicit
+  undo steps.
+
+## Python packages for plugins (2026-10-18)
+
+The bundle can't hold every package a plugin might want, so packages
+install on the user's machine. What changed in the architecture:
+
+- **Three layers on `sys.path`, in a fixed order:** USD's `pxr`, the
+  bundle's pinned packages (`Runtime/site-packages`), then the per-user
+  folder, `~/Library/Application Support/Vela/Python/<3.11>` (pip's
+  `--user` scheme under `PYTHONUSERBASE`), added with `site.addsitedir` so
+  `.pth` files work. The folder is keyed by Python version, because
+  compiled packages only load in the Python they were built for. A
+  `requirements.json` manifest lets a newer Vela (or Reset Python
+  Packages) reinstall everything.
+- **Declared, not imported:** plugins list packages in `plugInfo.json`
+  (`"PythonRequires"`, PEP 508). Loading is two-phase: requirements are
+  checked first, with `importlib.metadata` and pip's vendored
+  `packaging`. Plugins with unmet requirements wait, rather than failing
+  on `import`. `plugInfo.json` is read again on every load for this, since
+  USD's registry reads it only once. Changing a plugin's container types
+  still needs a restart.
+- **One environment, resolved together:** one process can import only one
+  version of a module, so per-plugin environments are impossible
+  in-process. Every install passes pip all plugins' requirements, the
+  scripts' earlier requests (a new request for the same package replaces
+  an old one) and constraints pinning the bundle's distributions (from
+  their `dist-info`). A conflicting request fails instead of breaking a
+  plugin (tested). `usd-core`, options, paths and URLs are refused before
+  pip runs.
+- **One consent point:** `VelaInstallPythonPackages` (`packages_ui.mm`)
+  asks with Vela's own alert, whoever asked: a plugin at launch, Plugins →
+  Install Packages for Plugins, `install_python_packages` (scripts, MCP,
+  Claude) or `reset_python_packages`. Those actions set
+  `Action::asksUser`, so Claude's panel doesn't ask as well. pip is the
+  bundled interpreter in its own process (`LineProcess`), in a known
+  environment (the bundle's packages visible so they count as installed;
+  the user's pip configuration still applies), with a modal progress window
+  and Cancel. Its output goes to the Log.
+- **After installing:** Python forgets that the folder was missing at
+  startup (`sys.path_importer_cache` holds `None` for it, which
+  `importlib.invalidate_caches` keeps), and waiting plugins load. A
+  package already imported stays in use until Vela restarts.
+- **Claude:** its plugin guide says to declare packages and run
+  `install_plugin_packages`, never to run pip.
+- **Signing (Phase 9):** with the hardened runtime, loading downloaded
+  extension modules into Vela needs the
+  `com.apple.security.cs.disable-library-validation` entitlement. With
+  today's ad-hoc signing, numpy from the user folder imports and runs.
+- Tests: `packages_test` (folders, manifest, constraints, refusals, pip's
+  command, argument quoting) and `packages_ui_test`. The UI test runs
+  offline, with wheels it builds itself in a local index (`VELA_PIP_ARGS`)
+  and the confirmation answered (`VELA_PACKAGES_AUTO_APPROVE`). It checks a
+  plugin waiting at launch, then installed and loaded; a script's install
+  with a dependency; the path order; refusals; PyObjC's constraint; a
+  conflict with a plugin; a plugin raising its requirement; and Reset.
+  Checked by hand: the alert, and a real install of `humanize` from PyPI,
+  imported in the same session.
 
 ## Testing
 

@@ -495,3 +495,77 @@ NSString *VelaDescribeMenu(NSMenu *menu) {
     }
     return text;
 }
+
+namespace {
+
+// Marks what plugins added to the menu bar, to remove on reload.
+const NSInteger PluginTag = 0x506C7567;  // 'Plug'
+
+NSMenu *PluginSubmenu(NSMenu *parent, NSString *title, BOOL beforeWindow) {
+    for (NSMenuItem *item in parent.itemArray) {
+        if (item.submenu && [item.submenu.title compare:title
+                options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+            return item.submenu;
+        }
+    }
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title action:nil keyEquivalent:@""];
+    item.submenu = [[NSMenu alloc] initWithTitle:title];
+    item.tag = PluginTag;
+    NSInteger index = parent.numberOfItems;
+    if (beforeWindow) {
+        const NSInteger window = [parent indexOfItemWithSubmenu:NSApp.windowsMenu];
+        if (window >= 0) index = window;
+    }
+    [parent insertItem:item atIndex:index];
+    return item.submenu;
+}
+
+void RemovePluginItems(NSMenu *menu) {
+    for (NSMenuItem *item in [menu.itemArray copy]) {
+        if (item.tag == PluginTag) [menu removeItem:item];
+        else if (item.submenu) RemovePluginItems(item.submenu);
+    }
+}
+
+} // namespace
+
+void VelaInstallPluginMenus(const vela::PluginReport &report) {
+    NSMenu *bar = NSApp.mainMenu;
+    if (!bar) return;
+    RemovePluginItems(bar);
+    VelaActionTarget *target = [VelaActionTarget shared];
+    for (const vela::PluginMenuEntry &entry : report.menus) {
+        NSMenu *menu = bar;
+        for (size_t i = 0; i < entry.path.size(); ++i) {
+            menu = PluginSubmenu(menu, @(entry.path[i].c_str()), i == 0);
+        }
+        // Plugin items follow the menu's own, after a separator.
+        if (menu.numberOfItems && menu.itemArray.lastObject.tag != PluginTag) {
+            NSMenuItem *separator = [NSMenuItem separatorItem];
+            separator.tag = PluginTag;
+            [menu addItem:separator];
+        }
+        if (entry.separator) {
+            NSMenuItem *separator = [NSMenuItem separatorItem];
+            separator.tag = PluginTag;
+            [menu addItem:separator];
+            continue;
+        }
+        const vela::Action *action = vela::ActionRegistry::Get().Find(entry.command);
+        if (!action) continue;
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@(action->title.c_str())
+                                                      action:@selector(runAction:)
+                                               keyEquivalent:@""];
+        std::string key;
+        unsigned modifiers = 0;
+        if (vela::ParsePluginShortcut(entry.shortcut, &key, &modifiers)) {
+            item.keyEquivalent = @(key.c_str());
+            item.keyEquivalentModifierMask = ModifierFlags(modifiers);
+        }
+        item.target = target;
+        item.representedObject = @(action->name.c_str());
+        item.toolTip = @(action->description.c_str());
+        item.tag = PluginTag;
+        [menu addItem:item];
+    }
+}
