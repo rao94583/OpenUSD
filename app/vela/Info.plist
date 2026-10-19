@@ -22,6 +22,8 @@
 			<string>VelaDocument</string>
 		</dict>
 	</array>
+	<key>CFBundleIconFile</key>
+	<string>Vela</string>
 	<key>CFBundleName</key>
 	<string>Vela</string>
 	<key>CFBundleShortVersionString</key>

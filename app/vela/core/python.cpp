@@ -181,6 +181,11 @@ std::string PythonVersion() {
     return std::to_string(PY_MAJOR_VERSION) + "." + std::to_string(PY_MINOR_VERSION);
 }
 
+std::string BytecodeFolder() {
+    const char *home = getenv("HOME");
+    return std::string(home ? home : "") + "/Library/Caches/Vela/Python/" + PythonVersion();
+}
+
 bool InitializePython(const std::string &home, const std::vector<std::string> &paths,
                       std::string *error, const std::string &userSite) {
     if (initialized) return true;
@@ -195,7 +200,9 @@ bool InitializePython(const std::string &home, const std::vector<std::string> &p
         PyConfig_Clear(&config);
         return false;
     };
+    const std::string bytecode = BytecodeFolder();
     if (!check(PyConfig_SetBytesString(&config, &config.home, home.c_str())) ||
+        !check(PyConfig_SetBytesString(&config, &config.pycache_prefix, bytecode.c_str())) ||
         !check(PyConfig_SetBytesString(&config, &config.executable,
                                        (home + "/bin/python3").c_str())) ||
         !check(Py_InitializeFromConfig(&config))) {
