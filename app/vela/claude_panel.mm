@@ -10,6 +10,7 @@
 #include "app/vela/core/claude_cli.h"
 #include "app/vela/core/claude_history.h"
 #include "app/vela/core/claude_process.h"
+#include "app/vela/core/claude_skills.h"
 #include "app/vela/core/document.h"
 #include "app/vela/core/log.h"
 #include "app/vela/core/mcp.h"
@@ -53,7 +54,10 @@ const char *const SystemPrompt =
     "current edit target, and say briefly what you changed. Each message "
     "starts with a <vela-context> block describing the document's state "
     "when it was sent. The panel is small: keep answers short and use "
-    "Markdown sparingly.";
+    "Markdown sparingly. Vela's skills hold the details: load vela:usd-python "
+    "before writing pxr code beyond a simple query (it has this build's "
+    "schema reference), vela:ui before driving the view or exporting, and "
+    "vela:plugins when the user wants a new command, menu or tool in Vela.";
 
 // The shared PATH for the CLI and the tools it runs: the app's is minimal
 // when launched from Finder.
@@ -1374,22 +1378,23 @@ static NSMapTable<NSValue *, VelaClaudePanelController *> *Panels() {
                               stringByAppendingPathComponent:@"vela-mcp"]);
     options.mcpSocket = socketPath;
     options.systemPrompt = SystemPrompt;
+    // Vela's skills, with the actions as they are now (plugins add some).
     {
-        static const char *plugins =
-#include "app/vela/resources/plugins.inc"
-        ;
-        std::string text = plugins;
-        const std::string folder = vela::PluginsFolder();
-        for (size_t at; (at = text.find("PLUGINS_FOLDER")) != std::string::npos;) {
-            text.replace(at, 14, folder);
+        vela::claude::SkillOptions skills;
+        skills.imageGeneration = vela::AppSettingsStore::Get().GetSettings().imageGeneration;
+        skills.pluginsFolder = vela::PluginsFolder();
+        if (skills.imageGeneration) {
+            options.systemPrompt += " Load vela:image-generation before generating or editing images.";
         }
-        options.systemPrompt += text;
-    }
-        if (vela::AppSettingsStore::Get().GetSettings().imageGeneration) {
-        static const char *instructions =
-#include "app/vela/resources/image_generation.inc"
-        ;
-        options.systemPrompt += instructions;
+        const std::string folder = vela::claude::SkillsFolder();
+        std::string skillsError;
+        if (vela::claude::InstallSkills(
+                Text([NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"ClaudePlugin"]),
+                folder, vela::ActionRegistry::Get(), skills, &skillsError)) {
+            options.pluginDirectory = folder;
+        } else {
+            vela::Log::Get().Add(vela::LogEntry::Level::Warning, "Claude", skillsError);
+        }
     }
 
     // Every conversation runs in Vela's own workspace folder, so Claude

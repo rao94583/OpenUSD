@@ -53,6 +53,8 @@ struct LaunchOptions {
     std::string mcpHelper;
     std::string mcpSocket;
     std::string systemPrompt;  // appended to Claude Code's
+    // A Claude Code plugin folder with Vela's skills (see claude_skills.h).
+    std::string pluginDirectory;
 };
 // The command line, executable first.
 std::vector<std::string> Arguments(const LaunchOptions &options);

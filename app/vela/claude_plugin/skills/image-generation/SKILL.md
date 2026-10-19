@@ -1,5 +1,10 @@
+---
+name: image-generation
+description: How to generate and edit images (concept art, texture swatches) with Vela's image tools - providers, jobs, references from the viewport, previews - and how to apply a saved image to the scene as a texture. Use when the user asks to generate, imagine or edit an image, a concept or a texture, not to render the scene (that is export_image).
+---
 
-Image generation in Vela:
+# Image generation in Vela
+
 Use list_image_models to discover enabled provider connections and capabilities.
 Use generate_image to create concepts or textures; export_image renders the
 actual USD scene. Generated concepts do not change geometry or materials.

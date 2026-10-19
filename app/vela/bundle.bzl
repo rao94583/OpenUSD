@@ -75,3 +75,46 @@ vela_archive = rule(
     implementation = _archive_impl,
     attrs = {"app": attr.label(providers = [AppleBundleInfo])},
 )
+
+# The Claude Code plugin with Vela's skills, as Resources/ClaudePlugin: the
+# skill files under prefix, plugin.json, and the usd-python skill's schema
+# reference, generated from this build's schema registry.
+def _claude_plugin_impl(ctx):
+    plugin_json = ctx.actions.declare_file(ctx.label.name + "_plugin.json")
+    ctx.actions.write(plugin_json, json.encode({
+        "name": "vela",
+        "description": "Vela's skills for the Claude panel: USD Python, driving the app, plugins and image generation.",
+    }))
+    entries = [[plugin_json.path, ".claude-plugin/plugin.json"]]
+    for f in ctx.files.srcs:
+        at = f.short_path.find(ctx.attr.prefix + "/")
+        if at < 0:
+            fail("%s is not under %s" % (f.short_path, ctx.attr.prefix))
+        entries.append([f.path, f.short_path[at + len(ctx.attr.prefix) + 1:]])
+    manifest = ctx.actions.declare_file(ctx.label.name + ".json")
+    ctx.actions.write(manifest, json.encode(entries))
+    tree = ctx.actions.declare_directory("ClaudePlugin")
+    ctx.actions.run_shell(
+        command = '"$1" "$2" "$3" && "$4" "$3/skills/usd-python/references/schemas"',
+        arguments = [
+            ctx.executable._copy.path, manifest.path, tree.path, ctx.executable.generator.path,
+        ],
+        inputs = [manifest, plugin_json] + ctx.files.srcs,
+        tools = [ctx.attr._copy[DefaultInfo].files_to_run, ctx.attr.generator[DefaultInfo].files_to_run],
+        outputs = [tree],
+        mnemonic = "VelaClaudePlugin",
+        progress_message = "Generating Vela's Claude skills",
+    )
+    return [DefaultInfo(files = depset([tree]))]
+
+vela_claude_plugin = rule(
+    implementation = _claude_plugin_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = True),
+        "prefix": attr.string(mandatory = True),
+        # Runs pxr, so it is built for the target (this Mac), not again for
+        # the exec configuration.
+        "generator": attr.label(executable = True, cfg = "target"),
+        "_copy": attr.label(default = ":copy_runtime", executable = True, cfg = "exec"),
+    },
+)

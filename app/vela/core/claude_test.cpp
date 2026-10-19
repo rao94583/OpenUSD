@@ -3,6 +3,7 @@
 #include "claude_cli.h"
 #include "claude_history.h"
 #include "claude_process.h"
+#include "claude_skills.h"
 #include "test_support.h"
 
 #include "pxr/base/js/json.h"
@@ -11,8 +12,10 @@
 #include <condition_variable>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <mutex>
 #include <thread>
+#include <unistd.h>
 
 using namespace vela;
 using namespace vela::claude;
@@ -54,7 +57,8 @@ void TestArguments() {
     CHECK(after("--model") == "opus" && after("--effort") == "high");
     CHECK(after("--add-dir") == "/scenes/room");
     CHECK(ModelChoices()[0].value == std::string() && EffortChoices().size() == 6);
-    CHECK(after("--tools") == "Read,Glob,Grep,Write,Edit");
+    CHECK(after("--tools") == "Read,Glob,Grep,Write,Edit,Skill");
+    CHECK(after("--plugin-dir") == "<missing>");
     const JsObject config = Json(after("--mcp-config"));
     const JsObject &server = config.at("mcpServers").GetJsObject().at("vela").GetJsObject();
     CHECK(server.at("command").GetString() == "/App/vela-mcp");
@@ -62,8 +66,10 @@ void TestArguments() {
     options.resume = "old";
     options.model.clear();
     options.effort.clear();
+    options.pluginDirectory = "/Support/Skills";
     args = Arguments(options);
     CHECK(after("--resume") == "old" && after("--session-id") == "<missing>");
+    CHECK(after("--plugin-dir") == "/Support/Skills");
     CHECK(after("--model") == "<missing>" && after("--effort") == "<missing>");
 }
 
@@ -148,6 +154,7 @@ void TestDecisions() {
                      isQuery) == Decision::Allow);
         // Anything outside the app always asks.
         CHECK(Decide("Bash", none, ask, isQuery) == Decision::Ask);
+        CHECK(Decide("Skill", Json(R"j({"skill": "vela:usd-python"})j"), ask, isQuery) == Decision::Allow);
         CHECK(Decide("mcp__other__run_python", none, ask, isQuery) == Decision::Ask);
     }
     for (const char *tool : {"mcp__vela__run_python", "mcp__vela__open_document"}) {
@@ -284,6 +291,79 @@ void TestHistory() {
     CHECK(longTitle == std::string(30, 'a') + "…");
 }
 
+// The skills plugin: the actions reference and installing the bundle's copy.
+void TestSkills() {
+    namespace fs = std::filesystem;
+    ActionRegistry registry;
+    Action edit;
+    edit.name = "set_thing";
+    edit.title = "Set Thing";
+    edit.description = "Sets the thing";
+    edit.menu = "Edit";
+    edit.undoable = true;
+    edit.parameters = ParameterSchema(R"({"properties": {
+        "mode": {"enum": ["a", "b"], "type": "string", "description": "How"},
+        "eye": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}},
+        "required": ["mode"]})");
+    edit.run = [](Document &, const JsObject &) { return ActionResult(); };
+    registry.Register(edit);
+    Action query = edit;
+    query.name = "get_thing";
+    query.title = "Thing";
+    query.menu.clear();
+    query.undoable = false;
+    query.query = true;
+    query.parameters = ParameterSchema("{}");
+    registry.Register(query);
+    Action asks = query;
+    asks.name = "install_thing";
+    asks.query = false;
+    asks.asksUser = true;
+    registry.Register(asks);
+
+    const std::string text = ActionsReference(registry);
+    CHECK(text.find("## Edit\n\n### set_thing\n\nSet Thing *[edits the scene, undoable]*\n\nSets the thing\n\n"
+                    "- `eye` (number[3])\n- `mode` (one of a, b, required): How\n") != std::string::npos);
+    CHECK(text.find("## Scripting only (no menu item)\n\n### get_thing\n\nThing *[query]*\n\nSets") !=
+          std::string::npos);
+    CHECK(text.find("### install_thing\n\nThing *[asks the user]*") != std::string::npos);
+
+    const fs::path root = fs::temp_directory_path() / ("vela_skills_" + std::to_string(getpid()));
+    fs::remove_all(root);
+    const fs::path source = root / "ClaudePlugin";
+    fs::create_directories(source / ".claude-plugin");
+    fs::create_directories(source / "skills/plugins");
+    fs::create_directories(source / "skills/image-generation");
+    std::ofstream(source / ".claude-plugin/plugin.json") << "{}";
+    std::ofstream(source / "skills/plugins/SKILL.md") << "Write in PLUGINS_FOLDER/<name>/ only.";
+    std::ofstream(source / "skills/image-generation/SKILL.md") << "images";
+    // As in the signed bundle.
+    fs::permissions(source / "skills/plugins/SKILL.md", fs::perms::owner_read);
+    auto read = [](const fs::path &path) {
+        std::ifstream in(path);
+        return std::string(std::istreambuf_iterator<char>(in), {});
+    };
+    const fs::path destination = root / "Support/Skills";
+    SkillOptions options;
+    options.pluginsFolder = "/P";
+    std::string error;
+    CHECK(InstallSkills(source.string(), destination.string(), registry, options, &error));
+    CHECK(read(destination / "skills/plugins/SKILL.md") == "Write in /P/<name>/ only.");
+    CHECK(!fs::exists(destination / "skills/image-generation"));
+    CHECK(read(destination / "skills/ui/references/actions.md") == text);
+    // Installing again replaces it, here with image generation on.
+    options.imageGeneration = true;
+    std::ofstream(destination / "stale.md") << "old";
+    CHECK(InstallSkills(source.string(), destination.string(), registry, options, &error));
+    CHECK(fs::exists(destination / "skills/image-generation/SKILL.md"));
+    CHECK(!fs::exists(destination / "stale.md"));
+    CHECK(std::distance(fs::directory_iterator(root / "Support"), fs::directory_iterator()) == 1);
+    CHECK(!InstallSkills((root / "missing").string(), destination.string(), registry, options, &error));
+    CHECK(error.find("missing") != std::string::npos);
+    fs::permissions(source / "skills/plugins/SKILL.md", fs::perms::owner_all);
+    fs::remove_all(root);
+}
+
 } // namespace
 
 int main() {
@@ -294,5 +374,6 @@ int main() {
     TestDecisions();
     TestProcess();
     TestHistory();
+    TestSkills();
     return test::Finish("claude");
 }
