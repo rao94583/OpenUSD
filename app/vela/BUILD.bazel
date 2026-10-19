@@ -6,7 +6,7 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("@rules_python//python:py_binary.bzl", "py_binary")
 load("@rules_python//python:py_test.bzl", "py_test")
-load(":bundle.bzl", "usd_headers", "vela_runtime", "vela_archive")
+load(":bundle.bzl", "usd_headers", "vela_archive", "vela_claude_plugin", "vela_runtime")
 
 usd_headers(
     name = "usd_headers",
@@ -52,6 +52,7 @@ cc_library(
         "core/claude_cli.cpp",
         "core/claude_history.cpp",
         "core/claude_process.cpp",
+        "core/claude_skills.cpp",
         "core/color_codes.cpp",
         "core/color_management.cpp",
         "core/document.cpp",
@@ -84,6 +85,7 @@ cc_library(
         "core/claude_cli.h",
         "core/claude_history.h",
         "core/claude_process.h",
+        "core/claude_skills.h",
         "core/color_codes.h",
         "core/color_management.h",
         "core/document.h",
@@ -223,10 +225,6 @@ objc_library(
         "ImageIO",
         "UniformTypeIdentifiers",
     ],
-    textual_hdrs = [
-        ":image_instructions",
-        ":plugin_instructions",
-    ],
     deps = [
         ":core",
         ":image_provider",
@@ -248,6 +246,32 @@ vela_runtime(
     usd = ["//bazel/install:python"],
 )
 
+# The Claude panel's skills (claude_skills.h), with the schema reference
+# generated from this build.
+py_binary(
+    name = "generate_schema_reference",
+    srcs = ["generate_schema_reference.py"],
+    deps = ["//bazel/install:python"],
+)
+
+vela_claude_plugin(
+    name = "claude_plugin",
+    srcs = glob(["claude_plugin/**"]),
+    prefix = "claude_plugin",
+    generator = ":generate_schema_reference",
+)
+
+# Runs every Python example in the skills against the living room scene.
+py_test(
+    name = "skill_examples_test",
+    srcs = ["test_skill_examples.py"],
+    main = "test_skill_examples.py",
+    args = ["$(rootpath examples/living_room/living_room.usda)"] +
+           ["$(rootpath %s)" % f for f in glob(["claude_plugin/**/*.md"])],
+    data = ["examples/living_room/living_room.usda"] + glob(["claude_plugin/**/*.md"]),
+    deps = ["//bazel/install:python"],
+)
+
 # vela-mcp, in Contents/MacOS: bridges an MCP client's stdio to the app's
 # socket. It links nothing of USD's.
 cc_binary(
@@ -267,6 +291,7 @@ macos_application(
     deps = [":frontend"],
     additional_contents = {
         ":runtime": "Resources/Runtime",
+        ":claude_plugin": "Resources/ClaudePlugin",
         ":vela-mcp": "MacOS",
     },
     ipa_post_processor = ":sign_runtime",
@@ -410,21 +435,6 @@ py_test(
     args = ["$(rootpath :archive)"],
     data = [":archive"],
     tags = ["requires-darwin"],
-)
-
-genrule(
-    name = "image_instructions",
-    srcs = ["resources/image_generation.md"],
-    outs = ["resources/image_generation.inc"],
-    cmd = "(echo 'R\"vela_image('; cat $<; echo ')vela_image\"') > $@",
-)
-
-# How Claude writes plugins, compiled into the Claude panel's prompt.
-genrule(
-    name = "plugin_instructions",
-    srcs = ["resources/plugins.md"],
-    outs = ["resources/plugins.inc"],
-    cmd = "(echo 'R\"vela_plugins('; cat $<; echo ')vela_plugins\"') > $@",
 )
 
 objc_library(

@@ -139,8 +139,8 @@ std::vector<std::string> Arguments(const LaunchOptions &options) {
         // Only the app's tools and reading files: the scene is edited
         // through Vela, where every edit can be undone.
         // Writing is for plugins: Decide asks for anything outside their
-        // folder.
-        "--tools", "Read,Glob,Grep,Write,Edit",
+        // folder. Skill loads Vela's skills (--plugin-dir).
+        "--tools", "Read,Glob,Grep,Write,Edit,Skill",
         "--strict-mcp-config",
     };
     const JsObject server{
@@ -151,6 +151,10 @@ std::vector<std::string> Arguments(const LaunchOptions &options) {
     };
     args.push_back("--mcp-config");
     args.push_back(Line(JsObject{{"mcpServers", JsValue(JsObject{{McpServer, JsValue(server)}})}}));
+    if (!options.pluginDirectory.empty()) {
+        args.push_back("--plugin-dir");
+        args.push_back(options.pluginDirectory);
+    }
     if (!options.resume.empty()) {
         args.push_back("--resume");
         args.push_back(options.resume);
@@ -361,7 +365,8 @@ bool IsInside(const std::string &path, const std::string &folder) {
 Decision Decide(const std::string &toolName, const JsObject &input, bool asksBeforeEdits,
                 const std::function<bool(const std::string &action)> &isQuery,
                 const std::string &writableFolder) {
-    static const std::set<std::string> reading = {"Read", "Glob", "Grep"};
+    // Skill only reads a skill's instructions into the conversation.
+    static const std::set<std::string> reading = {"Read", "Glob", "Grep", "Skill"};
     if (reading.count(toolName)) return Decision::Allow;
     static const std::set<std::string> writing = {"Write", "Edit", "MultiEdit"};
     if (writing.count(toolName)) {
@@ -417,7 +422,7 @@ std::string ToolSummary(const std::string &toolName, const JsObject &input) {
         return FirstLine(summary, 100);
     }
     if (tool == "open_document") return String(input, "path");
-    for (const char *key : {"file_path", "pattern", "path", "command", "url"}) {
+    for (const char *key : {"file_path", "pattern", "path", "command", "url", "skill"}) {
         const std::string value = String(input, key);
         if (!value.empty()) return FirstLine(value, 100);
     }

@@ -208,7 +208,25 @@ currently unsupported by its integration API. See
 validation and limitations. Tests use fixture providers without network calls;
 live image output requires a configured provider account.
 The CLI gets Vela's tools on a private socket bound to the window's
-document, plus Read, Glob and Grep for the scene's files, and nothing else.
+document, Read, Glob and Grep for the scene's files, Write and Edit for
+plugins, and Vela's skills, and nothing else.
+
+The skills are a Claude Code plugin in the bundle
+(`Contents/Resources/ClaudePlugin`), and Claude loads one when a request
+needs it (a "Skill" row in the panel):
+
+- `vela:usd-python`: USD Python idioms and pitfalls (time samples,
+  stronger opinions, bindings, variants, change blocks), with a reference of
+  every schema in this build: each one's attributes, types, fallbacks,
+  allowed tokens and Python getters.
+- `vela:ui`: driving Vela with its actions, with a reference of every
+  action, including your plugins' commands.
+- `vela:plugins`: writing plugins (below).
+- `vela:image-generation`: generating images, while that is turned on.
+
+Each time the panel starts the CLI, it copies the plugin to
+`~/Library/Application Support/Vela/Claude/Skills` and writes the actions
+reference there. Your own Claude Code skills and plugins load too.
 The panel keeps its own record of each conversation in
 `~/Library/Application Support/Vela/Claude/`. The CLI runs in that
 folder's `Workspace` subfolder (with `--add-dir` for the scene's folder),

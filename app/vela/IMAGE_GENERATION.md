@@ -294,10 +294,11 @@ generated color image. Unsupported graphs should produce a useful explanation.
 
 ## Teaching Claude
 
-Bundle `resources/image_generation.md` and append it to the existing panel
-system prompt when the feature is enabled. This uses the established launch
-adapter and avoids depending on personal Claude skill installations. Move it
-to a packaged Claude skill alongside Phase 8 skills once packaging is verified.
+The instructions are the `vela:image-generation` skill
+(`claude_plugin/skills/image-generation/SKILL.md`), in the plugin Vela
+bundles and passes to the panel's CLI (see PLAN.md, "Phase 8 progress"). It
+is left out while the feature is off, so it never depends on personal
+Claude skill installations. (It was first appended to the system prompt.)
 This resource describes Vela tools; it does not expose this development
 environment's imagegen tool to the embedded agent.
 
@@ -346,7 +347,7 @@ The initial implementation uses `core/image_jobs.*` for document-scoped jobs,
 policy and a versioned artifact manifest, `image_provider.*` for native HTTP,
 Keychain, image validation and the OpenAI/Gemini wire adapters, and
 `image_generation.*` for setup, approval, previews, import/export and native
-commands. `resources/image_generation.md` is compiled into the Claude prompt.
+commands. The `vela:image-generation` skill teaches the Claude panel.
 Seven MCP tools expose the capability without provider credentials.
 
 The first built-in choices are GPT Image Flare and Gemini 2.5 Flash Image.

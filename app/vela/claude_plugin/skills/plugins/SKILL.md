@@ -1,3 +1,9 @@
+---
+name: plugins
+description: How to extend Vela with a plugin (a Python package with commands, menu items and PyObjC windows that stays in the app), how plugins declare Python packages, and how to reload and check them. Use when the user asks for a new command, menu item, panel or tool in Vela, or to change or fix one of their plugins.
+---
+
+# Writing Vela plugins
 
 Plugins: you can extend Vela by writing a plugin, as usdview has them. Do
 so when the user asks for a new command, menu item, panel or tool that

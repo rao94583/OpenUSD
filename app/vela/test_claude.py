@@ -284,7 +284,7 @@ def main():
         assert after == ('(1.0, 1.0, 0.8333)', '(0.6, 0.5, 0.4167)'), after
         argv = records('argv')[0]
         for flag, value in [('--input-format', 'stream-json'), ('--output-format', 'stream-json'),
-                            ('--permission-prompt-tool', 'stdio'), ('--tools', 'Read,Glob,Grep,Write,Edit')]:
+                            ('--permission-prompt-tool', 'stdio'), ('--tools', 'Read,Glob,Grep,Write,Edit,Skill')]:
             assert argv[argv.index(flag) + 1] == value, (flag, argv)
         assert '--strict-mcp-config' in argv and '--session-id' in argv, argv
         session = argv[argv.index('--session-id') + 1]
@@ -362,7 +362,16 @@ def main():
         assert image_state['state'] == 'awaiting_approval', image_state
         assert image_state['reference_ids'], image_state
         assert state()['undo'] == 'Claude: ' + prompt, state()
-        assert 'Image generation in Vela' in records('argv')[0][records('argv')[0].index('--append-system-prompt') + 1]
+        first = records('argv')[0]
+        assert 'vela:image-generation' in first[first.index('--append-system-prompt') + 1], first
+        # Vela's skills: installed next to the history, with the live actions.
+        skills = Path(first[first.index('--plugin-dir') + 1])
+        assert os.path.samefile(skills, history / 'Skills'), skills
+        assert (skills / '.claude-plugin/plugin.json').is_file()
+        assert (skills / 'skills/image-generation/SKILL.md').is_file()
+        assert (skills / 'skills/usd-python/references/schemas/UsdLux.md').is_file()
+        assert '\n### set_attribute\n' in (skills / 'skills/ui/references/actions.md').read_text()
+        assert 'PLUGINS_FOLDER' not in (skills / 'skills/plugins/SKILL.md').read_text()
         assert [p['tool'] for p in records('permission')[-3:]] == ['list_image_models', 'capture_image_reference', 'generate_image']
         assert all(p['behavior'] == 'allow' for p in records('permission')[-3:])
         call('cancel_image_job', job_id=job)

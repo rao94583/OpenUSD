@@ -8,7 +8,8 @@ querying scenes in plain English, with skills for the USD Python API and for
 driving the app.
 
 This document records the decisions made so far, the architecture and the
-phases. Phases 1 to 7 are done; see
+phases. Phases 1 to 7 are done, and Phase 8's skills (its evals are
+still to come); see
 [README.md](README.md) for building, using and testing the app.
 
 ## Decisions
@@ -121,8 +122,9 @@ nothing needs registering twice:
 - ⌥Space works even in text fields (where it would type a non-breaking
   space). From Phase 7, text that matches nothing can go to Claude.
 
-The registry is the single source of truth for the `vela-ui` skill and the
-MCP tool schemas, which are generated from it at build time. It also serves
+The registry is the single source of truth for the `vela:ui` skill's
+actions reference (generated from it whenever the Claude panel starts its
+CLI) and the MCP tool schemas. It also serves
 as the test harness for scripted UI tests.
 
 ### Undo
@@ -207,10 +209,16 @@ separate optional USD texture application. The initial implementation includes
 OpenAI and Gemini adapters, Keychain setup, native job/preview controls and
 MCP tools; see the document's implementation record for validation and limits.
 
+The skills are a Claude Code plugin named `vela` (see [Phase 8
+progress](#phase-8-progress-skills)), so they show as `vela:<name>`:
+
 - **`usd-python`**: curated idioms and pitfalls (change blocks, edit
   targets, UsdShade binding, UsdLux, variants, time samples), plus a schema
   reference generated from this build's schema registry.
-- **`vela-ui`**: generated from the action registry.
+- **`ui`** (planned as `vela-ui`): driving the app, with an actions
+  reference generated from the action registry.
+- **`plugins`** and **`image-generation`**: the guides that were appended
+  to the system prompt.
 - **Evals**: test scenes paired with prompts and automated checks (for
   example, that "make every light 20% warmer" changed every light's color).
   They run headless.
@@ -227,7 +235,7 @@ MCP tools; see the document's implementation record for validation and limits.
 | 5 | **Editing and view settings to match usdview:** attribute editing, variants, load/unload, activation, visibility, purposes, draw modes, scene cameras, render settings and AOVs, HUD, OCIO, bounding boxes, validation panel, a Settings window, usdview's command-line flags as settings or live commands (see [Mac-native options](#mac-native-options-not-command-line-flags)), the ⌥Space command palette | A parity checklist built from `pxr/usdImaging/usdviewq` is complete. Selected `testusdview` scenarios are ported to the action API. Nothing is reachable only from the command line; the palette reaches every action. |
 | 6 | **Python and MCP:** embedded interpreter, the `vela` module, a console panel replacing usdview's interpreter, `vela-mcp` and the socket | Claude Code in a terminal can query and edit the open scene |
 | 7 | **Claude panel:** streaming chat, tool-call display, approvals, undo groups, screenshots, session history | The README's example requests work end to end |
-| 8 | **Skills and evals:** both skills, generated references, eval suite | Evals pass at an agreed rate |
+| 8 | **Skills and evals:** both skills, generated references, eval suite (skills done; evals later) | Evals pass at an agreed rate |
 | 9 | **Polish:** performance on huge stages (background open, payloads), signing and notarization, docs. Optionally a compatibility layer for usdview plugins. | Ready to ship |
 
 ## Phase 1 progress
@@ -810,6 +818,55 @@ install on the user's machine. What changed in the architecture:
   conflict with a plugin; a plugin raising its requirement; and Reset.
   Checked by hand: the alert, and a real install of `humanize` from PyPI,
   imported in the same session.
+
+## Phase 8 progress (skills)
+
+Done (2026-10-18), on branch `vela-skills`. The evals wait for later.
+
+- **Packaging:** the skills are a Claude Code plugin, `vela`, passed with
+  `--plugin-dir`; `Skill` joins `--tools` (without it, the CLI lists no
+  plugin skills, checked with 2.1.296) and runs without asking, like
+  `Read`. The CLI shows each skill's description, and loads its
+  instructions when a request needs them, so the system prompt only names
+  them.
+- **Skills** (`claude_plugin/skills/`): `usd-python` (with
+  `references/shading.md`, `references/composition.md` and the schema
+  reference), `ui`, `plugins` (was `resources/plugins.md`) and
+  `image-generation` (was `resources/image_generation.md`, included only
+  while image generation is on).
+- **Built at build time** (`vela_claude_plugin` in `bundle.bzl`,
+  `Resources/ClaudePlugin`): `generate_schema_reference.py` runs this
+  build's `pxr` and writes `references/schemas/index.md` plus a file per
+  library: each schema's own attributes (type, fallback, allowed tokens,
+  getter), relationships, base chain and built-in APIs, about 100 KB in
+  all. Class docs come from each library's `schema.usda` in the install
+  tree, since `generatedSchema.usda` has none (it gives Mesh the Gprim
+  brief). Getters are found by calling every `Get…Attr()` on a prim with
+  the schema.
+- **Finished at launch** (`core/claude_skills.*`): each CLI start copies
+  the bundle's plugin to `~/Library/Application Support/Vela/Claude/
+  Skills` (built beside it and swapped in), fills in the Plugins folder,
+  and writes `skills/ui/references/actions.md` from the live registry, so
+  it includes plugins' commands: by menu, with parameters and marks for
+  query, undoable and asks-the-user actions. A failure is logged and the
+  CLI starts without skills.
+- **Tests:** `skill_examples_test` runs every ```python example in the
+  skills against a fresh copy of the living room scene and fails on any
+  exception or USD error. It caught two mistakes while writing: undefined
+  prims under `CreatePrimInLayer`'s `over`s, and `UnbindDirectBinding`,
+  whose empty binding beats a variant's (the example now checks the bound
+  material). `claude_test` covers the actions reference and installing,
+  `claude_ui_test` that the panel passes the installed plugin.
+- **Checked with the real CLI** (2.1.296, through `ask_claude` on a
+  launched Vela with the living room): "Add a fabric variant set to the
+  chair with linen and velvet options" loaded `vela:usd-python`, found the
+  seat's and back's direct bindings with `GetPropertyStack`, moved them
+  into the variants and checked each (both variants bind correctly; one
+  undo step; 18 s). "Look through the main camera and export a 1080p
+  image" loaded `vela:ui`, Grep-ed the actions reference instead of
+  calling `list_actions` (18 KB against 47 KB), and ran `set_view_camera`
+  and `export_image`. Its first Grep looked for action headings, so actions
+  are now `### name` headings, like schemas.
 
 ## Testing
 
