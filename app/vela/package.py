@@ -61,9 +61,11 @@ def sign(app, identity, entitlements):
     run('/usr/bin/codesign', '--verify', '--deep', '--strict', '--verbose=2', app)
 
 
-def notarize(path, profile):
+def notarize(path, profile, staple=None):
+    """Submits path and staples the ticket to staple (default: path). A zip
+    can't hold a ticket, so an app is submitted zipped and stapled itself."""
     run('/usr/bin/xcrun', 'notarytool', 'submit', path, '--keychain-profile', profile, '--wait')
-    run('/usr/bin/xcrun', 'stapler', 'staple', path)
+    run('/usr/bin/xcrun', 'stapler', 'staple', staple or path)
 
 
 def main():
@@ -96,7 +98,7 @@ def main():
             # The app's own ticket, so it opens offline after being copied out.
             zipped = temp / 'Vela.zip'
             run('/usr/bin/ditto', '-c', '-k', '--keepParent', app, zipped)
-            notarize(zipped, args.notarize)
+            notarize(zipped, args.notarize, staple=app)
             run('/usr/bin/codesign', '--verify', '--deep', '--strict', app)
 
         # The disk image: the app and a shortcut to Applications to drag it to.

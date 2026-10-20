@@ -377,7 +377,9 @@ using `Vela.entitlements` for the executables
 (`disable-library-validation`, because plugins import packages that pip
 installs on the user's Mac). Notarizing submits the app, then the disk
 image, and staples both tickets, so the app opens offline after it is
-copied out.
+copied out. A notarized copy opens with only macOS's usual "downloaded from
+the Internet" confirmation. Allow `codesign` to use the key ("Always
+Allow") the first time, or it asks once per file.
 
 ### What's inside
 
