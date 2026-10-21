@@ -38,6 +38,11 @@ with tempfile.TemporaryDirectory(prefix='Vela relocation ') as temp:
     plist = subprocess.run(['/usr/bin/plutil', '-extract', 'CFBundleIconFile', 'raw',
                             str(contents / 'Info.plist')], capture_output=True, text=True)
     assert plist.stdout.strip() == 'Vela', plist
+    # Gatekeeper treats only an APPL bundle as an app.
+    package = subprocess.run(['/usr/bin/plutil', '-extract', 'CFBundlePackageType', 'raw',
+                              str(contents / 'Info.plist')], capture_output=True, text=True)
+    assert package.stdout.strip() == 'APPL', package
+    assert (contents / 'PkgInfo').read_bytes().startswith(b'APPL'), 'PkgInfo is not APPL'
 
     # A clean environment, as a new user's: no Python, USD or Homebrew.
     home = temp / 'home'

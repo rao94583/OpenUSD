@@ -899,9 +899,17 @@ release app, hardened and ad-hoc signed, passed the Python, plugins
 `bundle_smoke_test` now checks the contents, runs Vela in a clean
 environment with dyld's library log, and verifies the signature after.
 
-Not done: Developer ID signing and notarization themselves (no identity
-on this Mac yet; the commands are in the README). Intel Macs are out of
-scope.
+Intel Macs are out of scope.
+
+Notarized (2026-10-19) with the user's Developer ID (team TVAU2SQAM3):
+Apple accepted the app and the disk image, both stapled. A copy marked as
+downloaded (quarantined) passes Gatekeeper as "Notarized Developer ID",
+and opening it shows only macOS's one-time "downloaded from the Internet"
+confirmation. Two fixes on the way: the app is submitted as a zip but the
+ticket is stapled to the app (a zip can't hold one), and Info.plist now
+declares `CFBundlePackageType` APPL. Without it `PkgInfo` was `????????`
+and Gatekeeper refused the bundle as "not an app", though it ran
+locally; `bundle_smoke_test` now checks both.
 
 ## Testing
 
